@@ -1,0 +1,36 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { FavoriteButton } from "@/components/programs/FavoriteButton";
+import { fetchFavorites } from "@/lib/favorites";
+
+interface ProgramDetailFavoriteButtonProps {
+  programId: string;
+}
+
+/**
+ * Wrapper that loads the initial favorited state client-side
+ * and renders the FavoriteButton at the "md" size for the detail page header.
+ */
+export function ProgramDetailFavoriteButton({ programId }: ProgramDetailFavoriteButtonProps) {
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetchFavorites().then((favs) => {
+      setIsFavorited(favs.some((f) => f.program_id === programId));
+      setLoaded(true);
+    });
+  }, [programId]);
+
+  if (!loaded) return null;
+
+  return (
+    <FavoriteButton
+      programId={programId}
+      initialFavorited={isFavorited}
+      size="md"
+      onToggle={setIsFavorited}
+    />
+  );
+}
