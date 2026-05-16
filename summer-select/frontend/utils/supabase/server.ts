@@ -1,28 +1,32 @@
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export const supabaseServer = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY || "";
+/**
+ * Server-side Supabase client for Server Components and Server Actions.
+ * Uses cookies() so auth persists across requests.
+ */
+export async function supabaseServer() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
 
-  const cookieMethods = {
-    get: async (name: string) => {
-      const cookieStore = await cookies();
-      const cookie = cookieStore.get(name);
-      return cookie?.value || null;
-    },
-    getAll: async () => {
-      throw new Error("getAll is not supported in this environment.");
-    },
-    set: () => {
-      throw new Error("Setting cookies is not supported in this environment.");
-    },
-    delete: () => {
-      throw new Error("Deleting cookies is not supported in this environment.");
-    },
-  };
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_KEY environment variables."
+    );
+  }
 
-  return createServerClient(supabaseUrl, supabaseKey, {
-    cookies: cookieMethods,
+  const cookieStore = await cookies();
+
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          cookieStore.set(name, value, options);
+        });
+      },
+    },
   });
-};
+}
