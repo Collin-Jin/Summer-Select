@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {
+    // Prevent Next from accidentally picking a different workspace root
+    // (e.g. due to multiple lockfiles on the machine), which can slow down dev.
+    root: __dirname,
+  },
 };
 
 export default nextConfig;
