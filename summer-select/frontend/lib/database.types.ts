@@ -149,15 +149,129 @@ export interface Database {
         Row: {
           id: string;
           is_paid: boolean | null;
+          active_session_id: string | null;
         };
         Insert: {
           id: string;
           is_paid?: boolean | null;
+          active_session_id?: string | null;
         };
         Update: {
           is_paid?: boolean | null;
+          active_session_id?: string | null;
         };
         Relationships: [];
+      };
+
+      /**
+       * Example essays for summer programs — fetched by the essays page.
+       * RLS restricts SELECT to paid users.
+       */
+      example_essays: {
+        Row: {
+          id: string;
+          program_name: string;
+          program_slug: string;
+          prompt: string;
+          prompt_zh: string | null;
+          essay: string;
+          essay_zh: string | null;
+          word_count: number | null;
+          year: number | null;
+          outcome: string | null;
+          sort_order: number | null;
+          is_published: boolean | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_name: string;
+          program_slug: string;
+          prompt: string;
+          prompt_zh?: string | null;
+          essay: string;
+          essay_zh?: string | null;
+          word_count?: number | null;
+          year?: number | null;
+          outcome?: string | null;
+          sort_order?: number | null;
+          is_published?: boolean | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["example_essays"]["Insert"]>;
+        Relationships: [];
+      };
+
+      /**
+       * Interview preparation guides (one row per program).
+       * RLS restricts SELECT to paid users.
+       */
+      interview_guides: {
+        Row: {
+          id: string;
+          program_name: string;
+          program_slug: string;
+          format_note: string | null;
+          format_note_zh: string | null;
+          sort_order: number | null;
+          is_published: boolean | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_name: string;
+          program_slug: string;
+          format_note?: string | null;
+          format_note_zh?: string | null;
+          sort_order?: number | null;
+          is_published?: boolean | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_guides"]["Insert"]>;
+        Relationships: [];
+      };
+
+      /**
+       * Individual interview questions linked to a guide.
+       * RLS restricts SELECT to paid users.
+       */
+      interview_questions: {
+        Row: {
+          id: string;
+          guide_id: string;
+          question: string;
+          question_zh: string | null;
+          tips: string | null;
+          tips_zh: string | null;
+          sample_answer: string | null;
+          sample_answer_zh: string | null;
+          category: string | null;
+          sort_order: number | null;
+          is_published: boolean | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          guide_id: string;
+          question: string;
+          question_zh?: string | null;
+          tips?: string | null;
+          tips_zh?: string | null;
+          sample_answer?: string | null;
+          sample_answer_zh?: string | null;
+          category?: string | null;
+          sort_order?: number | null;
+          is_published?: boolean | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_questions"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "interview_questions_guide_id_fkey";
+            columns: ["guide_id"];
+            referencedRelation: "interview_guides";
+            referencedColumns: ["id"];
+          }
+        ];
       };
 
       /**
@@ -201,6 +315,20 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 /** A row from the `favorites` table. */
 export type Favorite = Database["public"]["Tables"]["favorites"]["Row"];
+
+/** A row from the `example_essays` table. */
+export type ExampleEssay = Database["public"]["Tables"]["example_essays"]["Row"];
+
+/** A row from the `interview_guides` table. */
+export type InterviewGuide = Database["public"]["Tables"]["interview_guides"]["Row"];
+
+/** A row from the `interview_questions` table. */
+export type InterviewQuestion = Database["public"]["Tables"]["interview_questions"]["Row"];
+
+/** An interview guide with its questions hydrated. */
+export type InterviewGuideWithQuestions = InterviewGuide & {
+  interview_questions: InterviewQuestion[];
+};
 
 /** Language codes supported by the app. */
 export type Lang = "en" | "zh";
