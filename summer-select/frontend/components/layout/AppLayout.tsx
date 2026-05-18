@@ -14,7 +14,7 @@ interface AppLayoutProps {
  */
 export function AppLayout({ children, userEmail }: AppLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--background)" }}>
       <Navbar userEmail={userEmail} />
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}

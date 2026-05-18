@@ -11,7 +11,6 @@ import {
   LogOut,
   Menu,
   X,
-  GraduationCap,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useLanguage } from "@/context/LanguageContext";
@@ -19,21 +18,12 @@ import { supabaseClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
 const navLinks = [
-  { href: "/dashboard", label: "Dashboard", labelZh: "主页", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Programs", labelZh: "项目库", icon: LayoutDashboard },
   { href: "/dashboard/my-list", label: "My List", labelZh: "收藏", icon: Bookmark },
   { href: "/dashboard/essays", label: "Essays", labelZh: "文书", icon: BookOpen },
   { href: "/dashboard/interviews", label: "Interviews", labelZh: "面试", icon: MessageSquare },
 ];
 
-/**
- * Top navigation bar for all authenticated (paid) routes.
- * Features:
- * - Brand logo + app name
- * - Navigation links with active state
- * - EN / 中文 language toggle
- * - User email display with sign-out action
- * - Mobile-responsive hamburger menu
- */
 export function Navbar({ userEmail }: { userEmail?: string | null }) {
   const pathname = usePathname();
   const { lang, setLang } = useLanguage();
@@ -47,18 +37,35 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
   };
 
   return (
-    <nav className="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <nav
+      className="sticky top-0 z-40"
+      style={{ background: "var(--color-brand-500)", borderBottom: "1px solid var(--color-brand-600)" }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Brand */}
+          {/* Brand wordmark */}
           <Link
             href="/dashboard"
-            className="flex items-center gap-2.5 text-indigo-700 hover:text-indigo-800 transition-colors"
+            className="flex items-center gap-2.5 group"
           >
-            <GraduationCap className="h-7 w-7" />
-            <span className="text-xl font-bold tracking-tight">
-              Summer Select
-            </span>
+            <div className="flex flex-col leading-none">
+              <span
+                className="text-lg font-extrabold tracking-tight uppercase"
+                style={{
+                  fontFamily: "var(--font-syne, sans-serif)",
+                  color: "#FFFFFB",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Summer Select
+              </span>
+              <span
+                className="text-xs font-semibold tracking-widest uppercase"
+                style={{ color: "var(--color-brand-accent)", letterSpacing: "0.22em" }}
+              >
+                by Collin
+              </span>
+            </div>
           </Link>
 
           {/* Desktop nav links */}
@@ -73,11 +80,19 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
                   key={href}
                   href={href}
                   className={clsx(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
                     isActive
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      ? "text-white"
+                      : "text-white/70 hover:text-white hover:bg-white/10"
                   )}
+                  style={
+                    isActive
+                      ? {
+                          background: "rgba(255,255,255,0.18)",
+                          boxShadow: "0 0 0 1px rgba(255,255,255,0.15)",
+                        }
+                      : {}
+                  }
                 >
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
@@ -91,23 +106,43 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
             {/* Language toggle */}
             <button
               onClick={() => setLang(lang === "en" ? "zh" : "en")}
-              className="px-3 py-1.5 text-sm font-medium border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors"
+              className="px-3 py-1.5 text-sm font-semibold rounded-lg transition-all"
+              style={{
+                background: "rgba(255,255,255,0.12)",
+                color: "#FFFFFB",
+                border: "1px solid rgba(255,255,255,0.2)",
+              }}
               title="Switch language"
             >
               {lang === "en" ? "中文" : "EN"}
             </button>
 
             {/* User + sign out */}
-            <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+            <div
+              className="flex items-center gap-2 pl-3"
+              style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}
+            >
               {userEmail && (
-                <span className="text-xs text-slate-500 max-w-[140px] truncate">
+                <span
+                  className="text-xs max-w-[140px] truncate"
+                  style={{ color: "rgba(255,255,255,0.7)" }}
+                >
                   {userEmail}
                 </span>
               )}
               <button
                 onClick={handleSignOut}
                 title="Sign out"
-                className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                className="p-1.5 rounded-lg transition-all"
+                style={{ color: "rgba(255,255,255,0.7)" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--color-brand-coral)";
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,107,108,0.12)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
+                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                }}
               >
                 <LogOut className="h-4 w-4" />
               </button>
@@ -116,22 +151,24 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100"
+            className="md:hidden p-2 rounded-lg transition-colors"
+            style={{ color: "#FFFFFB", background: "rgba(255,255,255,0.1)" }}
             onClick={() => setMobileOpen((o) => !o)}
             aria-label="Toggle menu"
           >
-            {mobileOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white">
+        <div
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.15)",
+            background: "var(--color-brand-600)",
+          }}
+        >
           <div className="px-4 pt-3 pb-4 space-y-1">
             {navLinks.map(({ href, label, labelZh, icon: Icon }) => {
               const isActive =
@@ -145,26 +182,38 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
                   onClick={() => setMobileOpen(false)}
                   className={clsx(
                     "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-600 hover:bg-slate-100"
+                    isActive ? "text-white" : "text-white/70"
                   )}
+                  style={
+                    isActive
+                      ? { background: "rgba(255,255,255,0.15)" }
+                      : {}
+                  }
                 >
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
                 </Link>
               );
             })}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <div
+              className="pt-3 flex items-center justify-between"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}
+            >
               <button
                 onClick={() => setLang(lang === "en" ? "zh" : "en")}
-                className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50"
+                className="px-3 py-1.5 text-sm font-semibold rounded-lg"
+                style={{
+                  background: "rgba(255,255,255,0.12)",
+                  color: "#FFFFFB",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                }}
               >
                 {lang === "en" ? "中文" : "EN"}
               </button>
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 px-3 py-2"
+                className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg"
+                style={{ color: "var(--color-brand-rose)" }}
               >
                 <LogOut className="h-4 w-4" />
                 Sign Out

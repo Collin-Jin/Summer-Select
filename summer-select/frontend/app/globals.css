@@ -3,19 +3,24 @@
 /* ── Brand Design Tokens ──────────────────────────────────────────────────── */
 @theme inline {
   --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-syne);
 
-  /* Brand palette */
-  --color-brand-50:  #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
+  /* Brand palette — Summer Select */
+  --color-brand-50:  #EEEEF7;
+  --color-brand-100: #B8B8D1;
+  --color-brand-200: #9090BC;
+  --color-brand-500: #5B5F97;
+  --color-brand-600: #4E527F;
+  --color-brand-700: #3a3d6e;
+  --color-brand-accent: #FFC145;
+  --color-brand-coral: #FF6B6C;
+  --color-brand-rose:  #FFB5B4;
 }
 
 /* ── Base Resets ──────────────────────────────────────────────────────────── */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #FFFFFB;
+  --foreground: #1a1a2e;
 }
 
 html {
@@ -32,14 +37,14 @@ body {
 
 /* ── Focus ring utility ───────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid #4f46e5;
+  outline: 2px solid #5B5F97;
   outline-offset: 2px;
 }
 
 /* ── Selection color ──────────────────────────────────────────────────────── */
 ::selection {
-  background-color: #e0e7ff;
-  color: #1e1b4b;
+  background-color: #B8B8D1;
+  color: #1a1a2e;
 }
 
 /* ── Scrollbar styling (webkit) ───────────────────────────────────────────── */
@@ -51,9 +56,16 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #B8B8D1;
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #5B5F97;
+}
+
+/* ── Copy protection ──────────────────────────────────────────────────────── */
+.protected-content {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
