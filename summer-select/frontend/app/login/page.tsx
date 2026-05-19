@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { clsx } from "clsx";
-import { handleSignIn, handleSignUp } from "./actions";
+import { handleSignIn, handleSignUp, handleResendVerification } from "./actions";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { Mail, ArrowLeft, RefreshCw } from "lucide-react";
 
 type Tab = "signin" | "signup";
+type SignUpState = "idle" | { stage: "verify_email"; email: string };
 
 function SubmitButton({
   label,
@@ -57,6 +59,9 @@ function DuplicateSessionAlert() {
 export default function LoginPage() {
   const [tab, setTab] = useState<Tab>("signin");
   const [error, setError] = useState<string | null>(null);
+  const [signUpState, setSignUpState] = useState<SignUpState>("idle");
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [resendError, setResendError] = useState<string | null>(null);
 
   return (
     <div
@@ -100,167 +105,259 @@ export default function LoginPage() {
             boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
           }}
         >
-          {/* Tabs */}
-          <div className="flex" style={{ borderBottom: "1px solid #EEEEF7" }}>
-            {(["signin", "signup"] as Tab[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => {
-                  setTab(t);
-                  setError(null);
-                }}
-                className={clsx(
-                  "flex-1 py-3.5 text-sm font-semibold transition-all focus-visible:outline-none"
-                )}
-                style={
-                  tab === t
-                    ? {
-                        color: "var(--color-brand-600)",
-                        borderBottom: "2px solid var(--color-brand-500)",
-                        background: "var(--color-brand-50)",
-                      }
-                    : { color: "#94a3b8" }
-                }
-              >
-                {t === "signin" ? "Sign In" : "Create Account"}
-              </button>
-            ))}
-          </div>
-
-          {/* Form */}
-          <div className="p-8">
-            <Suspense>
-              <DuplicateSessionAlert />
-            </Suspense>
-
-            {error && (
-              <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            )}
-
-            <form
-              className="space-y-5"
-              action={async (formData) => {
-                setError(null);
-                const result =
-                  tab === "signin"
-                    ? await handleSignIn(formData)
-                    : await handleSignUp(formData);
-                if (result?.error) setError(result.error);
-              }}
-            >
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium mb-1.5"
+          {signUpState !== "idle" ? (
+            /* ── Email verification panel ─────────────────────────────────── */
+            <div className="p-8">
+              <div className="text-center mb-6">
+                <div
+                  className="inline-flex items-center justify-center h-14 w-14 rounded-2xl mb-4"
+                  style={{ background: "var(--color-brand-50)" }}
+                >
+                  <Mail className="h-7 w-7" style={{ color: "var(--color-brand-500)" }} />
+                </div>
+                <h2
+                  className="text-xl font-bold mb-2"
                   style={{ color: "var(--color-brand-700)" }}
                 >
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="w-full px-4 py-2.5 text-sm rounded-xl bg-white placeholder:text-slate-400 transition focus:outline-none"
-                  style={{
-                    border: "1.5px solid var(--color-brand-100)",
-                    color: "var(--color-brand-700)",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "var(--color-brand-500)";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,95,151,0.12)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--color-brand-100)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                  placeholder="you@example.com"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium mb-1.5"
-                  style={{ color: "var(--color-brand-700)" }}
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete={tab === "signin" ? "current-password" : "new-password"}
-                  required
-                  minLength={8}
-                  className="w-full px-4 py-2.5 text-sm rounded-xl bg-white placeholder:text-slate-400 transition focus:outline-none"
-                  style={{
-                    border: "1.5px solid var(--color-brand-100)",
-                    color: "var(--color-brand-700)",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "var(--color-brand-500)";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,95,151,0.12)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--color-brand-100)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                  placeholder="Minimum 8 characters"
-                />
-              </div>
-
-              {tab === "signup" && (
-                <p className="text-xs text-slate-400">
-                  By creating an account you agree to our Terms of Service.
-                  Access to the program directory requires a paid subscription.
+                  Check your inbox
+                </h2>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  We sent a verification link to
                 </p>
+                <p
+                  className="text-sm font-semibold mt-1 break-all"
+                  style={{ color: "var(--color-brand-600)" }}
+                >
+                  {signUpState.email}
+                </p>
+                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                  Click the link in the email to activate your account, then sign in.
+                </p>
+              </div>
+
+              {/* Resend feedback */}
+              {resendStatus === "sent" && (
+                <div className="mb-4 px-4 py-3 rounded-xl border text-sm text-center"
+                  style={{ background: "#F0FDF4", borderColor: "#BBF7D0", color: "#166534" }}>
+                  Verification email resent successfully.
+                </div>
+              )}
+              {resendStatus === "error" && resendError && (
+                <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-center text-red-700">
+                  {resendError}
+                </div>
               )}
 
-              <SubmitButton
-                label={tab === "signin" ? "Sign In" : "Create Account"}
-                pendingLabel="Working…"
-              />
-            </form>
+              <button
+                type="button"
+                disabled={resendStatus === "sending" || resendStatus === "sent"}
+                onClick={async () => {
+                  setResendStatus("sending");
+                  setResendError(null);
+                  const result = await handleResendVerification(signUpState.email);
+                  if ("error" in result) {
+                    setResendStatus("error");
+                    setResendError(result.error ?? null);
+                  } else {
+                    setResendStatus("sent");
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed mb-4"
+                style={{
+                  background: "var(--color-brand-50)",
+                  color: "var(--color-brand-600)",
+                  border: "1.5px solid var(--color-brand-100)",
+                }}
+              >
+                <RefreshCw className={clsx("h-4 w-4", resendStatus === "sending" && "animate-spin")} />
+                {resendStatus === "sending" ? "Sending…" : resendStatus === "sent" ? "Email Sent" : "Resend Verification Email"}
+              </button>
 
-            {/* Toggle tab link */}
-            <p className="mt-5 text-center text-sm text-slate-400">
-              {tab === "signin" ? (
-                <>
-                  Don&apos;t have an account?{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setSignUpState("idle");
+                  setTab("signin");
+                  setResendStatus("idle");
+                  setResendError(null);
+                }}
+                className="w-full flex items-center justify-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Sign In
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* ── Tabs ──────────────────────────────────────────────────── */}
+              <div className="flex" style={{ borderBottom: "1px solid #EEEEF7" }}>
+                {(["signin", "signup"] as Tab[]).map((t) => (
                   <button
-                    type="button"
+                    key={t}
                     onClick={() => {
-                      setTab("signup");
+                      setTab(t);
                       setError(null);
                     }}
-                    className="font-semibold underline-offset-2 hover:underline"
-                    style={{ color: "var(--color-brand-500)" }}
+                    className={clsx(
+                      "flex-1 py-3.5 text-sm font-semibold transition-all focus-visible:outline-none"
+                    )}
+                    style={
+                      tab === t
+                        ? {
+                            color: "var(--color-brand-600)",
+                            borderBottom: "2px solid var(--color-brand-500)",
+                            background: "var(--color-brand-50)",
+                          }
+                        : { color: "#94a3b8" }
+                    }
                   >
-                    Create one
+                    {t === "signin" ? "Sign In" : "Create Account"}
                   </button>
-                </>
-              ) : (
-                <>
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTab("signin");
-                      setError(null);
-                    }}
-                    className="font-semibold underline-offset-2 hover:underline"
-                    style={{ color: "var(--color-brand-500)" }}
-                  >
-                    Sign in
-                  </button>
-                </>
-              )}
-            </p>
-          </div>
+                ))}
+              </div>
+
+              {/* ── Form ──────────────────────────────────────────────────── */}
+              <div className="p-8">
+                <Suspense>
+                  <DuplicateSessionAlert />
+                </Suspense>
+
+                {error && (
+                  <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+
+                <form
+                  className="space-y-5"
+                  action={async (formData) => {
+                    setError(null);
+                    if (tab === "signin") {
+                      const result = await handleSignIn(formData);
+                      if (result?.error) setError(result.error);
+                    } else {
+                      const result = await handleSignUp(formData);
+                      if (result?.error) {
+                        setError(result.error);
+                      } else if (result?.success === "verify_email") {
+                        setSignUpState({ stage: "verify_email", email: result.email });
+                      }
+                    }
+                  }}
+                >
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium mb-1.5"
+                      style={{ color: "var(--color-brand-700)" }}
+                    >
+                      Email address
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      className="w-full px-4 py-2.5 text-sm rounded-xl bg-white placeholder:text-slate-400 transition focus:outline-none"
+                      style={{
+                        border: "1.5px solid var(--color-brand-100)",
+                        color: "var(--color-brand-700)",
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = "var(--color-brand-500)";
+                        e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,95,151,0.12)";
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = "var(--color-brand-100)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium mb-1.5"
+                      style={{ color: "var(--color-brand-700)" }}
+                    >
+                      Password
+                    </label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete={tab === "signin" ? "current-password" : "new-password"}
+                      required
+                      minLength={8}
+                      className="w-full px-4 py-2.5 text-sm rounded-xl bg-white placeholder:text-slate-400 transition focus:outline-none"
+                      style={{
+                        border: "1.5px solid var(--color-brand-100)",
+                        color: "var(--color-brand-700)",
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = "var(--color-brand-500)";
+                        e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,95,151,0.12)";
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = "var(--color-brand-100)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                      placeholder="Minimum 8 characters"
+                    />
+                  </div>
+
+                  {tab === "signup" && (
+                    <p className="text-xs text-slate-400">
+                      By creating an account you agree to our Terms of Service.
+                      Access to the program directory requires a paid subscription.
+                    </p>
+                  )}
+
+                  <SubmitButton
+                    label={tab === "signin" ? "Sign In" : "Create Account"}
+                    pendingLabel="Working…"
+                  />
+                </form>
+
+                {/* Toggle tab link */}
+                <p className="mt-5 text-center text-sm text-slate-400">
+                  {tab === "signin" ? (
+                    <>
+                      Don&apos;t have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTab("signup");
+                          setError(null);
+                        }}
+                        className="font-semibold underline-offset-2 hover:underline"
+                        style={{ color: "var(--color-brand-500)" }}
+                      >
+                        Create one
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTab("signin");
+                          setError(null);
+                        }}
+                        className="font-semibold underline-offset-2 hover:underline"
+                        style={{ color: "var(--color-brand-500)" }}
+                      >
+                        Sign in
+                      </button>
+                    </>
+                  )}
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         <p className="text-center text-xs mt-6" style={{ color: "rgba(255,255,255,0.4)" }}>

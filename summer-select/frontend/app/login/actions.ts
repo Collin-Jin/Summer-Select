@@ -82,9 +82,20 @@ export async function handleSignUp(formData: FormData) {
     return { error: error.message };
   }
 
+  // Email confirmation is required — session is null until the user clicks the link.
+  if (!data.session) {
+    return { success: "verify_email" as const, email };
+  }
+
   if (data.user) {
     await writeSessionId(supabase, data.user.id);
   }
 
   redirect("/dashboard");
+}
+
+export async function handleResendVerification(email: string) {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.auth.resend({ type: "signup", email });
+  return error ? { error: error.message } : { success: true };
 }
