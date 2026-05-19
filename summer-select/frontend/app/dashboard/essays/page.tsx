@@ -6,11 +6,14 @@ export const metadata: Metadata = {
   title: "Example Essays",
 };
 
-/**
- * Example Essays — Server Component.
- * Fetches published essays from Supabase and passes them to the
- * interactive accordion client component.
- */
+export type ProgramDescription = {
+  slug: string;
+  name_en: string;
+  name_zh: string | null;
+  collin_rationale_en: string | null;
+  collin_rationale_zh: string | null;
+};
+
 export default async function EssaysPage() {
   const supabase = await supabaseServer();
 
@@ -31,5 +34,17 @@ export default async function EssaysPage() {
     );
   }
 
-  return <EssaysClientView essays={essays} />;
+  const uniqueSlugs = [...new Set(essays.map((e) => e.program_slug))];
+
+  const { data: programs } = await supabase
+    .from("summer_programs")
+    .select("slug, name_en, name_zh, collin_rationale_en, collin_rationale_zh")
+    .in("slug", uniqueSlugs);
+
+  const programDescriptions: Record<string, ProgramDescription> = {};
+  for (const p of programs ?? []) {
+    programDescriptions[p.slug] = p as ProgramDescription;
+  }
+
+  return <EssaysClientView essays={essays} programDescriptions={programDescriptions} />;
 }

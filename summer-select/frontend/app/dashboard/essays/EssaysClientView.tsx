@@ -7,33 +7,72 @@ import { Card } from "@/components/ui/Card";
 import { ProtectedContent } from "@/components/ui/ProtectedContent";
 import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
-import { clsx } from "clsx";
 import type { ExampleEssay } from "@/lib/database.types";
+import type { ProgramDescription } from "./page";
 
-interface EssayGroup {
-  programName: string;
-  programSlug: string;
+/** Strip "[Example N]" or "[Track N: ...]" suffixes to get the canonical prompt text. */
+function basePrompt(prompt: string): string {
+  return prompt
+    .replace(/\s*\[Example\s+\d+\]\s*$/i, "")
+    .replace(/\s*\[Track\s+\d+:[^\]]*\]\s*$/i, "")
+    .trim();
+}
+
+interface PromptGroup {
+  base: string;
+  base_zh: string | null;
   essays: ExampleEssay[];
 }
 
-function groupEssays(essays: ExampleEssay[]): EssayGroup[] {
-  const map = new Map<string, EssayGroup>();
+interface ProgramGroup {
+  programSlug: string;
+  programName: string;
+  promptGroups: PromptGroup[];
+}
+
+function buildProgramGroups(essays: ExampleEssay[]): ProgramGroup[] {
+  const programMap = new Map<string, { name: string; prompts: Map<string, PromptGroup> }>();
+
   for (const essay of essays) {
-    if (!map.has(essay.program_slug)) {
-      map.set(essay.program_slug, {
-        programName: essay.program_name,
-        programSlug: essay.program_slug,
+    if (!programMap.has(essay.program_slug)) {
+      programMap.set(essay.program_slug, {
+        name: essay.program_name,
+        prompts: new Map(),
+      });
+    }
+    const prog = programMap.get(essay.program_slug)!;
+    const base = basePrompt(essay.prompt);
+    if (!prog.prompts.has(base)) {
+      prog.prompts.set(base, {
+        base,
+        base_zh: essay.prompt_zh ? basePrompt(essay.prompt_zh) : null,
         essays: [],
       });
     }
-    map.get(essay.program_slug)!.essays.push(essay);
+    prog.prompts.get(base)!.essays.push(essay);
   }
-  return Array.from(map.values());
+
+  return Array.from(programMap.entries()).map(([slug, { name, prompts }]) => ({
+    programSlug: slug,
+    programName: name,
+    promptGroups: Array.from(prompts.values()),
+  }));
 }
 
-export function EssaysClientView({ essays }: { essays: ExampleEssay[] }) {
+export function EssaysClientView({
+  essays,
+  programDescriptions,
+}: {
+  essays: ExampleEssay[];
+  programDescriptions: Record<string, ProgramDescription>;
+}) {
   const { lang } = useLanguage();
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+
+  const groups = buildProgramGroups(essays);
+  const [activeProgramSlug, setActiveProgramSlug] = useState<string>(
+    groups[0]?.programSlug ?? ""
+  );
 
   const toggle = (id: string) => {
     setOpenIds((prev) => {
@@ -44,13 +83,20 @@ export function EssaysClientView({ essays }: { essays: ExampleEssay[] }) {
     });
   };
 
-  const groups = groupEssays(essays);
-  const totalEssays = essays.length;
+  const activeGroup = groups.find((g) => g.programSlug === activeProgramSlug) ?? groups[0];
+  const desc = activeGroup ? programDescriptions[activeGroup.programSlug] : null;
+
+  if (!activeGroup) return null;
+
+  const totalEssays = activeGroup.promptGroups.reduce(
+    (s, pg) => s + pg.essays.length,
+    0
+  );
 
   return (
     <div className="max-w-4xl mx-auto">
       {/* Page header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center gap-3 mb-3">
           <div
             className="h-10 w-10 rounded-xl flex items-center justify-center"
@@ -83,140 +129,190 @@ export function EssaysClientView({ essays }: { essays: ExampleEssay[] }) {
         </p>
       </div>
 
-      {/* Essay groups */}
-      <div className="space-y-8">
+      {/* Program tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
         {groups.map((group) => (
-          <section key={group.programSlug}>
-            {/* Program section header */}
-            <div
-              className="flex items-center justify-between mb-4 px-4 py-3 rounded-xl"
-              style={{ background: "var(--color-brand-50)" }}
-            >
-              <h2 className="text-base font-bold" style={{ color: "var(--color-brand-600)" }}>
-                {group.programName}
-              </h2>
-              <Link
-                href={`/dashboard/program/${group.programSlug}`}
-                className="flex items-center gap-1 text-xs font-medium transition-colors"
-                style={{ color: "var(--color-brand-500)" }}
-              >
-                {lang === "zh" ? "查看项目" : "View program"}
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            </div>
-
-            <div className="space-y-3">
-              {group.essays.map((essay) => {
-                const isOpen = openIds.has(essay.id);
-                const prompt = lang === "zh" && essay.prompt_zh ? essay.prompt_zh : essay.prompt;
-                return (
-                  <Card key={essay.id} outlined className="overflow-hidden">
-                    {/* Accordion trigger */}
-                    <button
-                      onClick={() => toggle(essay.id)}
-                      className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          {essay.outcome && (
-                            <Badge variant="success" size="sm">
-                              {essay.outcome}
-                            </Badge>
-                          )}
-                          {essay.year && (
-                            <Badge variant="default" size="sm">
-                              {essay.year}
-                            </Badge>
-                          )}
-                          {essay.word_count && (
-                            <Badge variant="outline" size="sm">
-                              ~{essay.word_count}{" "}
-                              {lang === "zh" ? "词" : "words"}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm font-medium text-slate-700 leading-snug mt-2">
-                          {prompt}
-                        </p>
-                      </div>
-                      {isOpen ? (
-                        <ChevronUp className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
-                      )}
-                    </button>
-
-                    {/* Expanded content */}
-                    {isOpen && (
-                      <div className="px-5 pb-6 border-t border-slate-100">
-                        {/* Prompt */}
-                        <div
-                          className="mt-4 mb-5 p-4 rounded-xl"
-                          style={{ background: "var(--color-brand-50)" }}
-                        >
-                          <p
-                            className="text-xs font-semibold uppercase tracking-wider mb-1.5"
-                            style={{ color: "var(--color-brand-500)" }}
-                          >
-                            {lang === "zh" ? "题目" : "Prompt"}
-                          </p>
-                          <p
-                            className="text-sm leading-relaxed"
-                            style={{ color: "var(--color-brand-700, #3a3d6e)" }}
-                          >
-                            {prompt}
-                          </p>
-                        </div>
-
-                        {/* Language indicator */}
-                        <div className="flex gap-1 mb-4">
-                          {(["en", "zh"] as const).map((l) => (
-                            <span
-                              key={l}
-                              className={clsx(
-                                "px-3 py-1 text-xs rounded-lg font-medium",
-                                lang === l
-                                  ? "text-white"
-                                  : "bg-slate-100 text-slate-500"
-                              )}
-                              style={
-                                lang === l
-                                  ? { background: "var(--color-brand-500)" }
-                                  : {}
-                              }
-                            >
-                              {l === "en" ? "EN" : "中文"}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Essay body — copy protected */}
-                        <ProtectedContent>
-                          <div className="prose prose-sm prose-slate max-w-none">
-                            {(lang === "zh" && essay.essay_zh
-                              ? essay.essay_zh
-                              : essay.essay
-                            )
-                              .split("\n\n")
-                              .map((para, i) => (
-                                <p
-                                  key={i}
-                                  className="text-sm text-slate-700 leading-relaxed mb-3 last:mb-0"
-                                >
-                                  {para}
-                                </p>
-                              ))}
-                          </div>
-                        </ProtectedContent>
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
-          </section>
+          <button
+            key={group.programSlug}
+            onClick={() => {
+              setActiveProgramSlug(group.programSlug);
+              setOpenIds(new Set());
+            }}
+            className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap"
+            style={
+              group.programSlug === activeProgramSlug
+                ? {
+                    background: "var(--color-brand-500)",
+                    color: "#fff",
+                    boxShadow: "0 2px 8px rgba(91,95,151,0.25)",
+                  }
+                : {
+                    background: "var(--color-brand-50)",
+                    color: "var(--color-brand-600)",
+                    border: "1px solid var(--color-brand-100)",
+                  }
+            }
+          >
+            {group.programName}
+          </button>
         ))}
       </div>
+
+      {/* Active program content */}
+      <section>
+        {/* Program header row */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold" style={{ color: "var(--color-brand-600)" }}>
+            {desc
+              ? lang === "zh" && desc.name_zh
+                ? desc.name_zh
+                : desc.name_en
+              : activeGroup.programName}
+          </h2>
+          <Link
+            href={`/dashboard/program/${activeGroup.programSlug}`}
+            className="flex items-center gap-1 text-xs font-medium transition-colors"
+            style={{ color: "var(--color-brand-500)" }}
+          >
+            {lang === "zh" ? "查看项目" : "View program"}
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        </div>
+
+        {/* Program description */}
+        {desc && (desc.collin_rationale_en || desc.collin_rationale_zh) && (
+          <div
+            className="mb-6 p-4 rounded-xl border"
+            style={{ background: "var(--color-brand-50)", borderColor: "var(--color-brand-100)" }}
+          >
+            <p
+              className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+              style={{ color: "var(--color-brand-500)" }}
+            >
+              {lang === "zh" ? "项目简介" : "About this Program"}
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: "var(--color-brand-700, #3a3d6e)" }}>
+              {lang === "zh" && desc.collin_rationale_zh
+                ? desc.collin_rationale_zh
+                : desc.collin_rationale_en}
+            </p>
+          </div>
+        )}
+
+        {/* Prompts with grouped essays */}
+        <div className="space-y-8">
+          {activeGroup.promptGroups.map((promptGroup, promptIdx) => (
+            <div key={promptGroup.base}>
+              {/* Prompt header */}
+              <div
+                className="mb-3 px-4 py-3 rounded-xl border"
+                style={{ background: "#F8F7FD", borderColor: "var(--color-brand-100)" }}
+              >
+                <p
+                  className="text-xs font-semibold uppercase tracking-wider mb-1"
+                  style={{ color: "var(--color-brand-500)" }}
+                >
+                  {lang === "zh" ? `题目 ${promptIdx + 1}` : `Prompt ${promptIdx + 1}`}
+                </p>
+                <p className="text-sm font-medium leading-snug" style={{ color: "var(--color-brand-700, #3a3d6e)" }}>
+                  {lang === "zh" && promptGroup.base_zh
+                    ? promptGroup.base_zh
+                    : promptGroup.base}
+                </p>
+              </div>
+
+              {/* Essays under this prompt */}
+              <div className="space-y-3 pl-2">
+                {promptGroup.essays.map((essay, essayIdx) => {
+                  const isOpen = openIds.has(essay.id);
+                  return (
+                    <Card key={essay.id} outlined className="overflow-hidden">
+                      {/* Accordion trigger */}
+                      <button
+                        onClick={() => toggle(essay.id)}
+                        className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className="text-xs font-semibold"
+                              style={{ color: "var(--color-brand-400)" }}
+                            >
+                              {lang === "zh" ? `示例 ${essayIdx + 1}` : `Example ${essayIdx + 1}`}
+                            </span>
+                            {essay.outcome && (
+                              <Badge variant="success" size="sm">
+                                {essay.outcome}
+                              </Badge>
+                            )}
+                            {essay.year && (
+                              <Badge variant="default" size="sm">
+                                {essay.year}
+                              </Badge>
+                            )}
+                            {essay.word_count && (
+                              <Badge variant="outline" size="sm">
+                                ~{essay.word_count}{" "}
+                                {lang === "zh" ? "词" : "words"}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        {isOpen ? (
+                          <ChevronUp className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                        )}
+                      </button>
+
+                      {/* Expanded essay body */}
+                      {isOpen && (
+                        <div className="px-5 pb-6 border-t border-slate-100">
+                          {/* Language indicator */}
+                          <div className="flex gap-1 my-4">
+                            {(["en", "zh"] as const).map((l) => (
+                              <span
+                                key={l}
+                                className="px-3 py-1 text-xs rounded-lg font-medium"
+                                style={
+                                  lang === l
+                                    ? { background: "var(--color-brand-500)", color: "#fff" }
+                                    : { background: "#f1f5f9", color: "#94a3b8" }
+                                }
+                              >
+                                {l === "en" ? "EN" : "中文"}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* Essay body — copy protected */}
+                          <ProtectedContent>
+                            <div className="prose prose-sm prose-slate max-w-none">
+                              {(lang === "zh" && essay.essay_zh
+                                ? essay.essay_zh
+                                : essay.essay
+                              )
+                                .split("\n\n")
+                                .map((para, i) => (
+                                  <p
+                                    key={i}
+                                    className="text-sm text-slate-700 leading-relaxed mb-3 last:mb-0"
+                                  >
+                                    {para}
+                                  </p>
+                                ))}
+                            </div>
+                          </ProtectedContent>
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
