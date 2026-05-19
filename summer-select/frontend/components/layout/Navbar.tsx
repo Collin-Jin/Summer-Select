@@ -105,7 +105,11 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
           <div className="hidden md:flex items-center gap-3">
             {/* Language toggle */}
             <button
-              onClick={() => setLang(lang === "en" ? "zh" : "en")}
+              onClick={() => {
+                const next = lang === "en" ? "zh" : "en";
+                setLang(next);
+                router.refresh();
+              }}
               className="px-3 py-1.5 text-sm font-semibold rounded-lg transition-all"
               style={{
                 background: "rgba(255,255,255,0.12)",
@@ -200,7 +204,11 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
               style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}
             >
               <button
-                onClick={() => setLang(lang === "en" ? "zh" : "en")}
+                onClick={() => {
+                  const next = lang === "en" ? "zh" : "en";
+                  setLang(next);
+                  router.refresh();
+                }}
                 className="px-3 py-1.5 text-sm font-semibold rounded-lg"
                 style={{
                   background: "rgba(255,255,255,0.12)",
