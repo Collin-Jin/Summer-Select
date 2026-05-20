@@ -118,22 +118,22 @@ export function ProgramCard({
             </Badge>
           )}
           {format && (
-            <Badge variant="outline" size="sm">
+            <Badge variant="format" size="sm">
               {format}
             </Badge>
           )}
           {program.is_rolling_admission && (
-            <Badge variant="info" size="sm">
+            <Badge variant="coral" size="sm">
               {lang === "zh" ? "滚动录取" : "Rolling"}
             </Badge>
           )}
           {program.financial_aid_available && (
-            <Badge variant="success" size="sm">
+            <Badge variant="gold" size="sm">
               {lang === "zh" ? "奖学金" : "Aid"}
             </Badge>
           )}
           {program.is_paid_stipend && (
-            <Badge variant="purple" size="sm">
+            <Badge variant="gold" size="sm">
               {lang === "zh" ? "有补贴" : "Stipend"}
             </Badge>
           )}
@@ -169,7 +169,7 @@ export function ProgramCard({
       </Link>
 
       {/* Footer: deadline + cost */}
-      <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between" style={{ background: "var(--color-brand-50)" }}>
         <div>
           {deadlineInfo ? (
             <div className="flex items-center gap-1.5">
