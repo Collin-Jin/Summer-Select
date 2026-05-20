@@ -282,8 +282,8 @@ export default async function ProgramDetailPage({ params }: Props) {
       <div
         className="rounded-2xl p-6 mb-6"
         style={{
-          background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 60%, #6d28d9 100%)",
-          boxShadow: "0 8px 32px rgba(79,70,229,0.35)",
+          background: "linear-gradient(135deg, #5B5F97 0%, #3a3d6e 100%)",
+          boxShadow: "0 8px 32px rgba(91,95,151,0.35)",
         }}
       >
         {/* Header row */}
@@ -291,7 +291,7 @@ export default async function ProgramDetailPage({ params }: Props) {
           <div>
             <p
               className="text-xs font-bold uppercase tracking-widest mb-1"
-              style={{ color: "rgba(199,210,254,0.9)", letterSpacing: "0.18em" }}
+              style={{ color: "#FFC145", letterSpacing: "0.18em" }}
             >
               {lang === "zh" ? "Collin 推荐指数" : "Collin Recommendation Index"}
             </p>
@@ -302,7 +302,7 @@ export default async function ProgramDetailPage({ params }: Props) {
           {difficultyLevel && (
             <span
               className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider"
-              style={{ background: "rgba(255,255,255,0.15)", color: "#e0e7ff" }}
+              style={{ background: "rgba(255,255,255,0.15)", color: "#FFFFFB" }}
             >
               {difficultyLevel}
             </span>
@@ -325,11 +325,11 @@ export default async function ProgramDetailPage({ params }: Props) {
               <div>
                 <p
                   className="text-xs font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color: "rgba(199,210,254,0.8)" }}
+                  style={{ color: "rgba(184,184,209,0.9)" }}
                 >
                   {lang === "zh" ? "Collin 的评价" : "Collin's Analysis"}
                 </p>
-                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.9)" }}>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.92)" }}>
                   {rationale}
                 </p>
               </div>
@@ -337,15 +337,15 @@ export default async function ProgramDetailPage({ params }: Props) {
             {strategy && (
               <div
                 className="pt-4"
-                style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}
+                style={{ borderTop: "1px solid rgba(184,184,209,0.25)" }}
               >
                 <p
                   className="text-xs font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color: "rgba(199,210,254,0.8)" }}
+                  style={{ color: "rgba(184,184,209,0.9)" }}
                 >
                   {lang === "zh" ? "申请策略" : "Application Strategy"}
                 </p>
-                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.9)" }}>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.92)" }}>
                   {strategy}
                 </p>
               </div>

@@ -86,7 +86,7 @@ export function CollinIndexBadge({
             cy="50"
             r="40"
             fill="none"
-            stroke="#e2e8f0"
+            stroke="rgba(184,184,209,0.3)"
             strokeWidth="10"
           />
           {/* Progress */}
@@ -105,33 +105,17 @@ export function CollinIndexBadge({
         </svg>
         {/* Score label */}
         <div className="absolute flex flex-col items-center">
-          <span
-            className={clsx(
-              "text-3xl font-bold",
-              tier.color === "emerald" && "text-emerald-600",
-              tier.color === "blue" && "text-blue-600",
-              tier.color === "amber" && "text-amber-600",
-              tier.color === "rose" && "text-rose-600"
-            )}
-          >
+          <span className="text-3xl font-bold text-white">
             {score}
           </span>
-          <span className="text-xs text-slate-400 font-medium">/10</span>
+          <span className="text-xs font-medium" style={{ color: "rgba(184,184,209,0.8)" }}>/10</span>
         </div>
       </div>
       <div className="text-center">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <p style={{ color: "rgba(184,184,209,0.85)" }} className="text-xs font-semibold uppercase tracking-wider">
           Collin Index
         </p>
-        <p
-          className={clsx(
-            "text-sm font-semibold mt-0.5",
-            tier.color === "emerald" && "text-emerald-600",
-            tier.color === "blue" && "text-blue-600",
-            tier.color === "amber" && "text-amber-600",
-            tier.color === "rose" && "text-rose-600"
-          )}
-        >
+        <p className="text-sm font-semibold mt-0.5 text-white">
           {tier.label}
         </p>
       </div>
