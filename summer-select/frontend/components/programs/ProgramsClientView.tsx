@@ -5,7 +5,7 @@ import { ProgramCard } from "./ProgramCard";
 import { FilterPanel, ActiveFilterChips, DEFAULT_FILTERS } from "./FilterPanel";
 import type { ProgramFilters } from "./FilterPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Spinner } from "@/components/ui/Spinner";
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { fetchFavorites, addFavorite, removeFavorite } from "@/lib/favorites";
 import { useLanguage } from "@/context/LanguageContext";
 import type { SummerProgram } from "@/lib/database.types";
@@ -152,7 +152,10 @@ export function ProgramsClientView({
       <div className="flex-1 min-w-0">
         {/* Toolbar: mobile filter toggle + result count */}
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-2xl font-bold text-slate-800">
+          <h1
+            className="text-2xl font-bold text-slate-800"
+            style={{ fontFamily: "var(--font-syne, sans-serif)" }}
+          >
             {lang === "zh" ? "项目库" : "Program Directory"}
           </h1>
           <button
@@ -183,8 +186,10 @@ export function ProgramsClientView({
 
         {/* Results */}
         {favoritesLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Spinner size="lg" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
         ) : sorted.length === 0 ? (
           <EmptyState

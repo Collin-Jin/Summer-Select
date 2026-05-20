@@ -57,7 +57,7 @@ export function ProgramCard({
   const location = [city, program.location_state].filter(Boolean).join(", ");
 
   return (
-    <Card hoverable className="group overflow-hidden flex flex-col">
+    <Card hoverable className="group overflow-hidden flex flex-col animate-fade-in-up">
       <Link
         href={`/dashboard/program/${program.slug}`}
         className="flex flex-col flex-1 p-5"
@@ -77,13 +77,16 @@ export function ProgramCard({
                 />
               </div>
             ) : (
-              <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-indigo-50 flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-indigo-400" />
+              <div
+                className="h-10 w-10 flex-shrink-0 rounded-lg flex items-center justify-center"
+                style={{ background: "var(--color-brand-50)" }}
+              >
+                <GraduationCap className="h-5 w-5" style={{ color: "var(--color-brand-500)" }} />
               </div>
             )}
 
             <div className="min-w-0">
-              <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 group-hover:text-indigo-700 transition-colors">
+              <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 transition-colors duration-150 group-hover:[color:var(--color-brand-600)]">
                 {name}
               </h3>
               {institution && (
