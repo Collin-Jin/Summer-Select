@@ -13,7 +13,11 @@ type BadgeVariant =
   | "info"
   | "purple"
   | "amber"
-  | "outline";
+  | "outline"
+  | "format"
+  | "gold"
+  | "rose"
+  | "coral";
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -23,14 +27,23 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-slate-100 text-slate-700",
-  success: "bg-emerald-100 text-emerald-700",
-  warning: "[background:#FFF8EC] [color:#92600A]",
-  danger: "bg-red-100 text-red-700",
-  info: "[background:var(--color-brand-50)] [color:var(--color-brand-600)]",
-  purple: "[background:#EEEEF7] [color:var(--color-brand-600)]",
-  amber: "[background:#FFF3D6] [color:#7A5000]",
-  outline: "bg-transparent border border-slate-300 text-slate-600",
+  default:  "bg-slate-100 text-slate-700",
+  success:  "bg-emerald-100 text-emerald-700",
+  warning:  "[background:#FFF8EC] [color:#92600A]",
+  danger:   "bg-red-100 text-red-700",
+  info:     "[background:var(--color-brand-50)] [color:var(--color-brand-600)]",
+  purple:   "[background:#EEEEF7] [color:var(--color-brand-600)]",
+  amber:    "[background:#FFF3D6] [color:#7A5000]",
+  outline:  "bg-transparent border border-slate-300 text-slate-600",
+  // ── Brand-palette-mapped variants ─────────────────────────────────────────
+  // #B8B8D1 palette — for program format labels (In-Person, Virtual, etc.)
+  format:   "[background:#E5E5F0] [color:#3a3d6e]",
+  // #FFC145 palette — for financial / money labels (Aid, Stipend)
+  gold:     "[background:#FFF0C2] [color:#7A4700]",
+  // #FFB5B4 palette — for international / global labels
+  rose:     "[background:#FFE4E3] [color:#881919]",
+  // #FF6B6C palette — for rolling / active / time-sensitive labels
+  coral:    "[background:#FFE0DF] [color:#B91818]",
 };
 
 const sizeClasses = {
@@ -79,7 +92,7 @@ export function deadlineTierVariant(
     case "closed":
       return "danger";
     case "urgent":
-      return "danger";
+      return "coral";
     case "soon":
       return "warning";
     case "open":
@@ -89,17 +102,18 @@ export function deadlineTierVariant(
 
 /**
  * Returns the correct Badge variant for a program category.
- * A consistent, deterministic mapping based on the first character.
+ * Maps across all six brand palette colors for visual variety.
  */
 export function categoryVariant(category: string | null): BadgeVariant {
   if (!category) return "default";
   const c = category.toLowerCase();
-  if (c.includes("bio") || c.includes("life")) return "success";
-  if (c.includes("stem") || c.includes("sci")) return "info";
-  if (c.includes("med") || c.includes("health")) return "purple";
-  if (c.includes("env") || c.includes("earth")) return "success";
-  if (c.includes("eng") || c.includes("tech")) return "amber";
-  if (c.includes("social") || c.includes("human")) return "warning";
-  if (c.includes("math") || c.includes("data")) return "info";
-  return "default";
+  if (c.includes("bio") || c.includes("life")) return "success";   // emerald — nature/life sciences
+  if (c.includes("stem") || c.includes("sci")) return "info";      // brand purple — STEM
+  if (c.includes("med") || c.includes("health")) return "rose";    // rose — medical/health
+  if (c.includes("env") || c.includes("earth")) return "success";  // emerald — environment
+  if (c.includes("eng") || c.includes("tech")) return "gold";      // gold — engineering/technology
+  if (c.includes("social") || c.includes("human")) return "coral"; // coral — humanities
+  if (c.includes("math") || c.includes("data")) return "info";     // brand purple — math/data
+  if (c.includes("art") || c.includes("writ")) return "rose";      // rose — arts/writing
+  return "format";                                                   // periwinkle — fallback
 }
