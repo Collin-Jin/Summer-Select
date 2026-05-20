@@ -80,20 +80,18 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
                   key={href}
                   href={href}
                   className={clsx(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                    "relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
                     isActive
-                      ? "text-white"
+                      ? "text-white bg-white/15"
                       : "text-white/70 hover:text-white hover:bg-white/10"
                   )}
-                  style={
-                    isActive
-                      ? {
-                          background: "rgba(255,255,255,0.18)",
-                          boxShadow: "0 0 0 1px rgba(255,255,255,0.15)",
-                        }
-                      : {}
-                  }
                 >
+                  {isActive && (
+                    <span
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-5 rounded-full"
+                      style={{ background: "var(--color-brand-accent)" }}
+                    />
+                  )}
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
                 </Link>
@@ -185,14 +183,12 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
                   href={href}
                   onClick={() => setMobileOpen(false)}
                   className={clsx(
-                    "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    isActive ? "text-white" : "text-white/70"
-                  )}
-                  style={
+                    "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
                     isActive
-                      ? { background: "rgba(255,255,255,0.15)" }
-                      : {}
-                  }
+                      ? "text-white bg-white/15"
+                      : "text-white/70 hover:text-white hover:bg-white/10"
+                  )}
+                  style={isActive ? { borderLeft: "3px solid var(--color-brand-accent)" } : { borderLeft: "3px solid transparent" }}
                 >
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
