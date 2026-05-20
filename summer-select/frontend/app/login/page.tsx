@@ -3,13 +3,19 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { clsx } from "clsx";
-import { handleSignIn, handleSignUp, handleResendVerification } from "./actions";
+import {
+  handleSignIn,
+  handleSignUp,
+  handleResendVerification,
+  handleForgotPassword,
+} from "./actions";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Mail, ArrowLeft, RefreshCw } from "lucide-react";
+import { Mail, ArrowLeft, RefreshCw, KeyRound, LogIn } from "lucide-react";
 
 type Tab = "signin" | "signup";
 type SignUpState = "idle" | { stage: "verify_email"; email: string };
+type CardView = "auth" | "forgot_password" | "forgot_password_sent";
 
 function SubmitButton({
   label,
@@ -53,15 +59,70 @@ function DuplicateSessionAlert() {
 }
 
 /**
+ * Callout shown when the user tries to create an account with an email that
+ * already exists. Provides a one-click shortcut to switch to Sign In.
+ */
+function AlreadyRegisteredCallout({
+  email,
+  onSignInClick,
+}: {
+  email: string;
+  onSignInClick: () => void;
+}) {
+  return (
+    <div
+      className="mb-5 rounded-xl border overflow-hidden"
+      style={{ borderColor: "var(--color-brand-100)" }}
+    >
+      <div
+        className="px-4 py-3"
+        style={{ background: "var(--color-brand-50)" }}
+      >
+        <p className="text-sm font-semibold" style={{ color: "var(--color-brand-700)" }}>
+          This email already has an account.
+        </p>
+        <p className="text-xs mt-0.5" style={{ color: "var(--color-brand-600)" }}>
+          {email}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onSignInClick}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors hover:opacity-90"
+        style={{
+          background: "var(--color-brand-500)",
+          color: "#FFFFFB",
+        }}
+      >
+        <LogIn className="h-4 w-4" />
+        Sign in instead →
+      </button>
+    </div>
+  );
+}
+
+/**
  * Authentication page with tab-switched Sign In / Sign Up forms.
  * Redesigned with Summer Select brand colors.
  */
 export default function LoginPage() {
   const [tab, setTab] = useState<Tab>("signin");
   const [error, setError] = useState<string | null>(null);
+  const [duplicateEmail, setDuplicateEmail] = useState<string | null>(null);
   const [signUpState, setSignUpState] = useState<SignUpState>("idle");
   const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [resendError, setResendError] = useState<string | null>(null);
+  const [cardView, setCardView] = useState<CardView>("auth");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotStatus, setForgotStatus] = useState<"idle" | "sending" | "error">("idle");
+  const [forgotError, setForgotError] = useState<string | null>(null);
+
+  function switchToSignIn(prefillEmail?: string) {
+    setTab("signin");
+    setError(null);
+    setDuplicateEmail(null);
+    if (prefillEmail) setForgotEmail(prefillEmail);
+  }
 
   return (
     <div
@@ -105,8 +166,8 @@ export default function LoginPage() {
             boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
           }}
         >
+          {/* ── Email verification panel ──────────────────────────────────── */}
           {signUpState !== "idle" ? (
-            /* ── Email verification panel ─────────────────────────────────── */
             <div className="p-8">
               <div className="text-center mb-6">
                 <div
@@ -135,7 +196,6 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              {/* Resend feedback */}
               {resendStatus === "sent" && (
                 <div className="mb-4 px-4 py-3 rounded-xl border text-sm text-center"
                   style={{ background: "#F0FDF4", borderColor: "#BBF7D0", color: "#166534" }}>
@@ -187,9 +247,147 @@ export default function LoginPage() {
                 Back to Sign In
               </button>
             </div>
+
+          /* ── Forgot password panel ────────────────────────────────────── */
+          ) : cardView === "forgot_password" ? (
+            <div className="p-8">
+              <div className="text-center mb-6">
+                <div
+                  className="inline-flex items-center justify-center h-14 w-14 rounded-2xl mb-4"
+                  style={{ background: "var(--color-brand-50)" }}
+                >
+                  <KeyRound className="h-7 w-7" style={{ color: "var(--color-brand-500)" }} />
+                </div>
+                <h2 className="text-xl font-bold mb-1" style={{ color: "var(--color-brand-700)" }}>
+                  Reset your password
+                </h2>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  Enter your email and we&apos;ll send a reset link.
+                </p>
+              </div>
+
+              {forgotStatus === "error" && forgotError && (
+                <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                  {forgotError}
+                </div>
+              )}
+
+              <form
+                className="space-y-4"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setForgotStatus("sending");
+                  setForgotError(null);
+                  const result = await handleForgotPassword(forgotEmail);
+                  if ("error" in result) {
+                    setForgotStatus("error");
+                    setForgotError(result.error ?? null);
+                  } else {
+                    setCardView("forgot_password_sent");
+                  }
+                }}
+              >
+                <div>
+                  <label
+                    htmlFor="forgot-email"
+                    className="block text-sm font-medium mb-1.5"
+                    style={{ color: "var(--color-brand-700)" }}
+                  >
+                    Email address
+                  </label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    required
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="w-full px-4 py-2.5 text-sm rounded-xl bg-white placeholder:text-slate-400 transition focus:outline-none"
+                    style={{
+                      border: "1.5px solid var(--color-brand-100)",
+                      color: "var(--color-brand-700)",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "var(--color-brand-500)";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,95,151,0.12)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "var(--color-brand-100)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                    placeholder="you@example.com"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={forgotStatus === "sending"}
+                  className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{
+                    background: "var(--color-brand-500)",
+                    letterSpacing: "0.04em",
+                    boxShadow: "0 2px 12px rgba(91,95,151,0.35)",
+                  }}
+                >
+                  {forgotStatus === "sending" ? "Sending…" : "Send Reset Link"}
+                </button>
+              </form>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCardView("auth");
+                  setForgotStatus("idle");
+                  setForgotError(null);
+                }}
+                className="w-full flex items-center justify-center gap-1.5 mt-4 text-sm text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Sign In
+              </button>
+            </div>
+
+          /* ── Forgot password sent confirmation ────────────────────────── */
+          ) : cardView === "forgot_password_sent" ? (
+            <div className="p-8">
+              <div className="text-center mb-6">
+                <div
+                  className="inline-flex items-center justify-center h-14 w-14 rounded-2xl mb-4"
+                  style={{ background: "var(--color-brand-50)" }}
+                >
+                  <Mail className="h-7 w-7" style={{ color: "var(--color-brand-500)" }} />
+                </div>
+                <h2 className="text-xl font-bold mb-2" style={{ color: "var(--color-brand-700)" }}>
+                  Check your inbox
+                </h2>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  If an account exists for
+                </p>
+                <p className="text-sm font-semibold mt-1 break-all" style={{ color: "var(--color-brand-600)" }}>
+                  {forgotEmail}
+                </p>
+                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                  you&apos;ll receive a password reset link shortly. Check your spam folder if you don&apos;t see it.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCardView("auth");
+                  setTab("signin");
+                  setForgotStatus("idle");
+                  setForgotError(null);
+                }}
+                className="w-full flex items-center justify-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Sign In
+              </button>
+            </div>
+
+          /* ── Sign In / Sign Up tabs ───────────────────────────────────── */
           ) : (
             <>
-              {/* ── Tabs ──────────────────────────────────────────────────── */}
               <div className="flex" style={{ borderBottom: "1px solid #EEEEF7" }}>
                 {(["signin", "signup"] as Tab[]).map((t) => (
                   <button
@@ -197,6 +395,7 @@ export default function LoginPage() {
                     onClick={() => {
                       setTab(t);
                       setError(null);
+                      setDuplicateEmail(null);
                     }}
                     className={clsx(
                       "flex-1 py-3.5 text-sm font-semibold transition-all focus-visible:outline-none"
@@ -216,13 +415,21 @@ export default function LoginPage() {
                 ))}
               </div>
 
-              {/* ── Form ──────────────────────────────────────────────────── */}
               <div className="p-8">
                 <Suspense>
                   <DuplicateSessionAlert />
                 </Suspense>
 
-                {error && (
+                {/* Duplicate-email callout */}
+                {duplicateEmail && (
+                  <AlreadyRegisteredCallout
+                    email={duplicateEmail}
+                    onSignInClick={() => switchToSignIn(duplicateEmail)}
+                  />
+                )}
+
+                {/* Generic error */}
+                {error && !duplicateEmail && (
                   <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
                     <p className="text-sm text-red-700">{error}</p>
                   </div>
@@ -232,13 +439,18 @@ export default function LoginPage() {
                   className="space-y-5"
                   action={async (formData) => {
                     setError(null);
+                    setDuplicateEmail(null);
                     if (tab === "signin") {
                       const result = await handleSignIn(formData);
                       if (result?.error) setError(result.error);
                     } else {
                       const result = await handleSignUp(formData);
-                      if (result?.error) {
-                        setError(result.error);
+                      if (result && "error" in result) {
+                        if (result.error === "email_already_registered") {
+                          setDuplicateEmail((result as { error: "email_already_registered"; email: string }).email);
+                        } else {
+                          setError(result.error as string);
+                        }
                       } else if (result?.success === "verify_email") {
                         setSignUpState({ stage: "verify_email", email: result.email });
                       }
@@ -277,13 +489,25 @@ export default function LoginPage() {
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="password"
-                      className="block text-sm font-medium mb-1.5"
-                      style={{ color: "var(--color-brand-700)" }}
-                    >
-                      Password
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label
+                        htmlFor="password"
+                        className="block text-sm font-medium"
+                        style={{ color: "var(--color-brand-700)" }}
+                      >
+                        Password
+                      </label>
+                      {tab === "signin" && (
+                        <button
+                          type="button"
+                          onClick={() => setCardView("forgot_password")}
+                          className="text-xs font-medium hover:underline underline-offset-2 transition-colors"
+                          style={{ color: "var(--color-brand-500)" }}
+                        >
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
                     <input
                       id="password"
                       name="password"
@@ -331,6 +555,7 @@ export default function LoginPage() {
                         onClick={() => {
                           setTab("signup");
                           setError(null);
+                          setDuplicateEmail(null);
                         }}
                         className="font-semibold underline-offset-2 hover:underline"
                         style={{ color: "var(--color-brand-500)" }}
@@ -346,6 +571,7 @@ export default function LoginPage() {
                         onClick={() => {
                           setTab("signin");
                           setError(null);
+                          setDuplicateEmail(null);
                         }}
                         className="font-semibold underline-offset-2 hover:underline"
                         style={{ color: "var(--color-brand-500)" }}

@@ -61,8 +61,8 @@ export async function handleSignIn(formData: FormData) {
 
 export async function handleSignUp(formData: FormData) {
   const { email, password } = getAuthFields(formData);
-  if (!email || !password) return { error: "Email and password are required." };
-  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (!email || !password) return { error: "Email and password are required." as const };
+  if (password.length < 8) return { error: "Password must be at least 8 characters." as const };
 
   const supabase = await supabaseServer();
 
@@ -73,13 +73,19 @@ export async function handleSignUp(formData: FormData) {
 
   if (error) {
     const msg = error.message.toLowerCase();
-    if (msg.includes("already") && msg.includes("registered")) {
-      return { error: "That email is already registered. Please sign in instead." };
+    if (
+      (msg.includes("already") && msg.includes("registered")) ||
+      msg.includes("duplicate")
+    ) {
+      return { error: "email_already_registered" as const, email };
     }
-    if (msg.includes("duplicate")) {
-      return { error: "That email is already registered. Please sign in instead." };
-    }
-    return { error: error.message };
+    return { error: error.message as string };
+  }
+
+  // Supabase silently "succeeds" for existing confirmed accounts and returns
+  // an empty identities array rather than an error when email confirmations are on.
+  if (!data.session && data.user?.identities?.length === 0) {
+    return { error: "email_already_registered" as const, email };
   }
 
   // Email confirmation is required — session is null until the user clicks the link.
@@ -92,6 +98,21 @@ export async function handleSignUp(formData: FormData) {
   }
 
   redirect("/dashboard");
+}
+
+export async function handleForgotPassword(email: string) {
+  if (!email?.trim()) return { error: "Email is required." };
+
+  const supabase = await supabaseServer();
+  const origin =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  });
+
+  return error ? { error: error.message } : { success: true };
 }
 
 export async function handleResendVerification(email: string) {
