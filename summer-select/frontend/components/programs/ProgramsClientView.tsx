@@ -152,14 +152,21 @@ export function ProgramsClientView({
       <div className="flex-1 min-w-0">
         {/* Toolbar: mobile filter toggle + result count */}
         <div className="flex items-center justify-between mb-5">
-          <h1
-            className="text-2xl font-bold text-slate-800"
-            style={{ fontFamily: "var(--font-syne, sans-serif)" }}
-          >
-            {lang === "zh" ? "项目库" : "Program Directory"}
-          </h1>
+          <div>
+            <h1
+              className="text-2xl font-bold text-slate-800 leading-normal overflow-visible"
+              style={{ fontFamily: "var(--font-syne, sans-serif)" }}
+            >
+              {lang === "zh" ? "项目库" : "Program Directory"}
+            </h1>
+            <div
+              className="mt-1 h-0.5 w-12 rounded-full"
+              style={{ background: "var(--color-brand-accent)" }}
+            />
+          </div>
           <button
-            className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50"
+            className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm border rounded-lg transition-colors duration-150"
+            style={{ borderColor: "var(--color-brand-100)", color: "var(--color-brand-600)" }}
             onClick={() => setMobileFiltersOpen((o) => !o)}
           >
             <LayoutGrid className="h-4 w-4" />
