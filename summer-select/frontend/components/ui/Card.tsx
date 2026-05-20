@@ -28,7 +28,7 @@ export function Card({ className, children, hoverable, outlined }: CardProps) {
             ? "border border-slate-200"
             : "shadow-sm border border-slate-100",
           hoverable &&
-            "transition-shadow duration-200 hover:shadow-md hover:border-slate-200 cursor-pointer",
+            "transition-all duration-200 hover:shadow-md hover:border-slate-200 hover:-translate-y-0.5 cursor-pointer",
           className
         )
       )}

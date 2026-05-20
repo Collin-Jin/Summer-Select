@@ -52,9 +52,10 @@ export function Button({
       disabled={disabled || loading}
       className={twMerge(
         clsx(
-          "inline-flex items-center justify-center font-medium transition-colors",
+          "inline-flex items-center justify-center font-medium transition-all duration-150",
+          "hover:scale-[1.02] active:scale-[0.97]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-          "disabled:opacity-50 disabled:cursor-not-allowed",
+          "disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100",
           variantClasses[variant],
           sizeClasses[size],
           className
