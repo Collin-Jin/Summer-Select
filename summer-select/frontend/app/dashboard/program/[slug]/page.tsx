@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { getProgramBySlug } from "@/lib/programs";
 import { cookies } from "next/headers";
 import type { Lang, SummerProgram } from "@/lib/database.types";
-import { Badge, categoryVariant } from "@/components/ui/Badge";
+import { Badge, categoryVariant, deadlineTierVariant } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { CollinIndexBadge } from "@/components/programs/CollinIndexBadge";
 import { ProgramDetailFavoriteButton } from "./ProgramDetailFavoriteButton";
@@ -170,7 +170,7 @@ export default async function ProgramDetailPage({ params }: Props) {
       </Link>
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <Card className="p-6 mb-6 animate-fade-in-up delay-75">
+      <Card className="p-6 mb-6 animate-fade-in-up delay-75 border-t-[3px] [border-top-color:var(--color-brand-500)]">
         <div className="flex items-start gap-5 flex-wrap">
           {/* Logo */}
           {program.logo_url ? (
@@ -233,7 +233,7 @@ export default async function ProgramDetailPage({ params }: Props) {
               {category && (
                 <Badge variant={categoryVariant(category)}>{category}</Badge>
               )}
-              {format && <Badge variant="outline">{format}</Badge>}
+              {format && <Badge variant="format">{format}</Badge>}
               {program.duration_weeks && (
                 <Badge variant="default">
                   <Clock className="h-3 w-3 mr-1" />
@@ -244,38 +244,28 @@ export default async function ProgramDetailPage({ params }: Props) {
                 </Badge>
               )}
               {deadlineInfo && (
-                <Badge
-                  variant={
-                    deadlineInfo.tier === "closed"
-                      ? "danger"
-                      : deadlineInfo.tier === "urgent"
-                      ? "danger"
-                      : deadlineInfo.tier === "soon"
-                      ? "warning"
-                      : "success"
-                  }
-                >
+                <Badge variant={deadlineTierVariant(deadlineInfo.tier)}>
                   <Calendar className="h-3 w-3 mr-1" />
                   {deadlineInfo.label}
                 </Badge>
               )}
               {program.is_rolling_admission && (
-                <Badge variant="info">
+                <Badge variant="coral">
                   {lang === "zh" ? "滚动录取" : "Rolling Admission"}
                 </Badge>
               )}
               {program.financial_aid_available && (
-                <Badge variant="success">
+                <Badge variant="gold">
                   {lang === "zh" ? "提供奖学金" : "Financial Aid"}
                 </Badge>
               )}
               {program.is_paid_stipend && (
-                <Badge variant="purple">
+                <Badge variant="gold">
                   {lang === "zh" ? "提供补贴" : "Paid Stipend"}
                 </Badge>
               )}
               {program.international_eligible && (
-                <Badge variant="info">
+                <Badge variant="rose">
                   <Globe className="h-3 w-3 mr-1" />
                   {lang === "zh" ? "国际生可申请" : "International OK"}
                 </Badge>
@@ -372,7 +362,7 @@ export default async function ProgramDetailPage({ params }: Props) {
         {/* LEFT column: Admissions Timeline + Financials */}
         <div className="flex flex-col gap-6 animate-fade-in-up delay-200">
           {/* Admissions Timeline */}
-          <Card className="p-6">
+          <Card className="p-6 border-l-[3px] [border-left-color:var(--color-brand-accent)]">
             <SectionHeader title={lang === "zh" ? "申请时间线" : "Admissions Timeline"} />
             <DetailRow icon={Calendar} label={lang === "zh" ? "申请开放" : "Application Opens"} value={formatProgramDate(program.application_open_date)} />
             <DetailRow
@@ -412,7 +402,7 @@ export default async function ProgramDetailPage({ params }: Props) {
           </Card>
 
           {/* Financials */}
-          <Card className="p-6">
+          <Card className="p-6 border-l-[3px] [border-left-color:var(--color-brand-500)]">
             <SectionHeader title={lang === "zh" ? "费用与奖学金" : "Financials"} />
             <DetailRow
               icon={DollarSign}
@@ -446,7 +436,7 @@ export default async function ProgramDetailPage({ params }: Props) {
         {/* RIGHT column: Requirements & Selectivity + Disciplines */}
         <div className="flex flex-col gap-6 animate-fade-in-up delay-300">
           {/* Requirements */}
-          <Card className="p-6">
+          <Card className="p-6 border-l-[3px] [border-left-color:var(--color-brand-coral)]">
             <SectionHeader title={lang === "zh" ? "申请条件" : "Requirements & Selectivity"} />
             <DetailRow
               icon={Users}
@@ -516,7 +506,7 @@ export default async function ProgramDetailPage({ params }: Props) {
 
           {/* Disciplines */}
           {disciplines && disciplines.length > 0 && (
-            <Card className="p-6">
+            <Card className="p-6 border-l-[3px] [border-left-color:var(--color-brand-rose)]">
               <SectionHeader title={lang === "zh" ? "研究方向" : "Offered Disciplines"} />
               <div className="flex flex-wrap gap-2">
                 {disciplines.map((d) => (
