@@ -77,7 +77,10 @@ function DetailRow({
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+    <h2
+      className="text-xs font-bold uppercase tracking-widest mb-4"
+      style={{ fontFamily: "var(--font-syne, sans-serif)", color: "var(--color-brand-500)", letterSpacing: "0.14em" }}
+    >
       {title}
     </h2>
   );
@@ -160,14 +163,14 @@ export default async function ProgramDetailPage({ params }: Props) {
       {/* Back nav */}
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 mb-6 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:[color:var(--color-brand-500)] mb-6 transition-colors duration-150 animate-fade-in"
       >
         <ArrowLeft className="h-4 w-4" />
         {lang === "zh" ? "返回项目库" : "Back to directory"}
       </Link>
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <Card className="p-6 mb-6">
+      <Card className="p-6 mb-6 animate-fade-in-up delay-75">
         <div className="flex items-start gap-5 flex-wrap">
           {/* Logo */}
           {program.logo_url ? (
@@ -181,8 +184,11 @@ export default async function ProgramDetailPage({ params }: Props) {
               />
             </div>
           ) : (
-            <div className="h-16 w-16 flex-shrink-0 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100">
-              <span className="text-2xl font-bold text-indigo-400">
+            <div
+              className="h-16 w-16 flex-shrink-0 rounded-xl flex items-center justify-center border"
+              style={{ background: "var(--color-brand-50)", borderColor: "var(--color-brand-100)" }}
+            >
+              <span className="text-2xl font-bold" style={{ color: "var(--color-brand-500)" }}>
                 {name.charAt(0)}
               </span>
             </div>
@@ -212,7 +218,8 @@ export default async function ProgramDetailPage({ params }: Props) {
                     href={program.program_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                    className="flex items-center gap-1.5 px-4 py-2 text-white text-sm font-semibold rounded-xl transition-all duration-150 hover:scale-[1.03] active:scale-[0.97]"
+                    style={{ background: "var(--color-brand-500)" }}
                   >
                     <ExternalLink className="h-4 w-4" />
                     {lang === "zh" ? "官网" : "Apply"}
@@ -280,7 +287,7 @@ export default async function ProgramDetailPage({ params }: Props) {
 
       {/* ── Collin Recommendation Card (hero section) ───────────────────────── */}
       <div
-        className="rounded-2xl p-6 mb-6"
+        className="rounded-2xl p-6 mb-6 animate-fade-in-up delay-150"
         style={{
           background: "linear-gradient(135deg, #5B5F97 0%, #3a3d6e 100%)",
           boxShadow: "0 8px 32px rgba(91,95,151,0.35)",
@@ -360,160 +367,167 @@ export default async function ProgramDetailPage({ params }: Props) {
       </div>
 
       {/* ── Data grid ───────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Admissions Timeline */}
-        <Card className="p-6">
-          <SectionHeader title={lang === "zh" ? "申请时间线" : "Admissions Timeline"} />
-          <DetailRow icon={Calendar} label={lang === "zh" ? "申请开放" : "Application Opens"} value={formatProgramDate(program.application_open_date)} />
-          <DetailRow
-            icon={AlertCircle}
-            label={lang === "zh" ? "优先截止" : "Priority Deadline"}
-            value={
-              program.priority_deadline
-                ? formatProgramDate(program.priority_deadline)
-                : "—"
-            }
-          />
-          <DetailRow
-            icon={Calendar}
-            label={lang === "zh" ? "最终截止" : "Regular Deadline"}
-            value={
-              program.regular_deadline
-                ? formatProgramDate(program.regular_deadline)
-                : "—"
-            }
-          />
-          <DetailRow
-            icon={Clock}
-            label={lang === "zh" ? "项目日期" : "Program Dates"}
-            value={formatDateRange(program.program_start_date, program.program_end_date)}
-          />
-          <DetailRow
-            icon={CheckCircle2}
-            label={lang === "zh" ? "滚动录取" : "Rolling Admission"}
-            value={
-              <BooleanIndicator
-                value={program.is_rolling_admission}
-                trueLabel={lang === "zh" ? "是" : "Yes"}
-                falseLabel={lang === "zh" ? "否" : "No"}
-              />
-            }
-          />
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
-        {/* Financials */}
-        <Card className="p-6">
-          <SectionHeader title={lang === "zh" ? "费用与奖学金" : "Financials"} />
-          <DetailRow
-            icon={DollarSign}
-            label={lang === "zh" ? "项目学费" : "Tuition"}
-            value={formatCost(program.tuition_cost)}
-          />
-          <DetailRow
-            icon={DollarSign}
-            label={lang === "zh" ? "申请费" : "Application Fee"}
-            value={formatAppFee(program.application_fee)}
-          />
-          <DetailRow
-            icon={CheckCircle2}
-            label={lang === "zh" ? "奖学金/助学金" : "Financial Aid"}
-            value={
-              <BooleanIndicator
-                value={program.financial_aid_available}
-                trueLabel={lang === "zh" ? "可申请" : "Available"}
-                falseLabel={lang === "zh" ? "不提供" : "Not available"}
-              />
-            }
-          />
-          <DetailRow
-            icon={DollarSign}
-            label={lang === "zh" ? "参与补贴" : "Student Stipend"}
-            value={formatStipend(program.is_paid_stipend, program.stipend_amount)}
-          />
-        </Card>
-
-        {/* Requirements */}
-        <Card className="p-6">
-          <SectionHeader title={lang === "zh" ? "申请条件" : "Requirements & Selectivity"} />
-          <DetailRow
-            icon={Users}
-            label={lang === "zh" ? "适用年级" : "Eligible Grades"}
-            value={formatEligibleGrades(program.eligible_grades)}
-          />
-          <DetailRow
-            icon={Globe}
-            label={lang === "zh" ? "国际生" : "International Students"}
-            value={
-              <BooleanIndicator
-                value={program.international_eligible}
-                trueLabel={lang === "zh" ? "可申请" : "Eligible"}
-                falseLabel={lang === "zh" ? "不可申请" : "Not eligible"}
-              />
-            }
-          />
-          <DetailRow
-            icon={BookOpen}
-            label={lang === "zh" ? "最低GPA" : "Minimum GPA"}
-            value={formatGpa(program.minimum_gpa)}
-          />
-          <DetailRow
-            icon={Users}
-            label={lang === "zh" ? "录取率" : "Acceptance Rate"}
-            value={
-              program.acceptance_rate !== null && program.acceptance_rate !== undefined
-                ? formatAcceptanceRate(program.acceptance_rate)
-                : "—"
-            }
-          />
-          <DetailRow
-            icon={BookOpen}
-            label={lang === "zh" ? "需要文书" : "Essay Required"}
-            value={
-              <BooleanIndicator
-                value={program.requires_essay}
-                trueLabel={lang === "zh" ? "需要" : "Yes"}
-                falseLabel={lang === "zh" ? "不需要" : "No"}
-              />
-            }
-          />
-          <DetailRow
-            icon={Users}
-            label={lang === "zh" ? "需要面试" : "Interview Required"}
-            value={
-              <BooleanIndicator
-                value={program.has_interview}
-                trueLabel={lang === "zh" ? "需要" : "Yes"}
-                falseLabel={lang === "zh" ? "不需要" : "No"}
-              />
-            }
-          />
-
-          {/* Essay prompts */}
-          {essaysText && (
-            <div className="mt-4 pt-4 border-t border-slate-50">
-              <p className="text-xs font-medium text-slate-500 mb-2">
-                {lang === "zh" ? "文书题目" : "Essay Prompts"}
-              </p>
-              <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-                {essaysText}
-              </p>
-            </div>
-          )}
-        </Card>
-
-        {/* Disciplines */}
-        {disciplines && disciplines.length > 0 && (
+        {/* LEFT column: Admissions Timeline + Financials */}
+        <div className="flex flex-col gap-6 animate-fade-in-up delay-200">
+          {/* Admissions Timeline */}
           <Card className="p-6">
-            <SectionHeader title={lang === "zh" ? "研究方向" : "Offered Disciplines"} />
-            <div className="flex flex-wrap gap-2">
-              {disciplines.map((d) => (
-                <Badge key={d} variant="default" size="md">
-                  {d}
-                </Badge>
-              ))}
-            </div>
+            <SectionHeader title={lang === "zh" ? "申请时间线" : "Admissions Timeline"} />
+            <DetailRow icon={Calendar} label={lang === "zh" ? "申请开放" : "Application Opens"} value={formatProgramDate(program.application_open_date)} />
+            <DetailRow
+              icon={AlertCircle}
+              label={lang === "zh" ? "优先截止" : "Priority Deadline"}
+              value={
+                program.priority_deadline
+                  ? formatProgramDate(program.priority_deadline)
+                  : "—"
+              }
+            />
+            <DetailRow
+              icon={Calendar}
+              label={lang === "zh" ? "最终截止" : "Regular Deadline"}
+              value={
+                program.regular_deadline
+                  ? formatProgramDate(program.regular_deadline)
+                  : "—"
+              }
+            />
+            <DetailRow
+              icon={Clock}
+              label={lang === "zh" ? "项目日期" : "Program Dates"}
+              value={formatDateRange(program.program_start_date, program.program_end_date)}
+            />
+            <DetailRow
+              icon={CheckCircle2}
+              label={lang === "zh" ? "滚动录取" : "Rolling Admission"}
+              value={
+                <BooleanIndicator
+                  value={program.is_rolling_admission}
+                  trueLabel={lang === "zh" ? "是" : "Yes"}
+                  falseLabel={lang === "zh" ? "否" : "No"}
+                />
+              }
+            />
           </Card>
-        )}
+
+          {/* Financials */}
+          <Card className="p-6">
+            <SectionHeader title={lang === "zh" ? "费用与奖学金" : "Financials"} />
+            <DetailRow
+              icon={DollarSign}
+              label={lang === "zh" ? "项目学费" : "Tuition"}
+              value={formatCost(program.tuition_cost)}
+            />
+            <DetailRow
+              icon={DollarSign}
+              label={lang === "zh" ? "申请费" : "Application Fee"}
+              value={formatAppFee(program.application_fee)}
+            />
+            <DetailRow
+              icon={CheckCircle2}
+              label={lang === "zh" ? "奖学金/助学金" : "Financial Aid"}
+              value={
+                <BooleanIndicator
+                  value={program.financial_aid_available}
+                  trueLabel={lang === "zh" ? "可申请" : "Available"}
+                  falseLabel={lang === "zh" ? "不提供" : "Not available"}
+                />
+              }
+            />
+            <DetailRow
+              icon={DollarSign}
+              label={lang === "zh" ? "参与补贴" : "Student Stipend"}
+              value={formatStipend(program.is_paid_stipend, program.stipend_amount)}
+            />
+          </Card>
+        </div>
+
+        {/* RIGHT column: Requirements & Selectivity + Disciplines */}
+        <div className="flex flex-col gap-6 animate-fade-in-up delay-300">
+          {/* Requirements */}
+          <Card className="p-6">
+            <SectionHeader title={lang === "zh" ? "申请条件" : "Requirements & Selectivity"} />
+            <DetailRow
+              icon={Users}
+              label={lang === "zh" ? "适用年级" : "Eligible Grades"}
+              value={formatEligibleGrades(program.eligible_grades)}
+            />
+            <DetailRow
+              icon={Globe}
+              label={lang === "zh" ? "国际生" : "International Students"}
+              value={
+                <BooleanIndicator
+                  value={program.international_eligible}
+                  trueLabel={lang === "zh" ? "可申请" : "Eligible"}
+                  falseLabel={lang === "zh" ? "不可申请" : "Not eligible"}
+                />
+              }
+            />
+            <DetailRow
+              icon={BookOpen}
+              label={lang === "zh" ? "最低GPA" : "Minimum GPA"}
+              value={formatGpa(program.minimum_gpa)}
+            />
+            <DetailRow
+              icon={Users}
+              label={lang === "zh" ? "录取率" : "Acceptance Rate"}
+              value={
+                program.acceptance_rate !== null && program.acceptance_rate !== undefined
+                  ? formatAcceptanceRate(program.acceptance_rate)
+                  : "—"
+              }
+            />
+            <DetailRow
+              icon={BookOpen}
+              label={lang === "zh" ? "需要文书" : "Essay Required"}
+              value={
+                <BooleanIndicator
+                  value={program.requires_essay}
+                  trueLabel={lang === "zh" ? "需要" : "Yes"}
+                  falseLabel={lang === "zh" ? "不需要" : "No"}
+                />
+              }
+            />
+            <DetailRow
+              icon={Users}
+              label={lang === "zh" ? "需要面试" : "Interview Required"}
+              value={
+                <BooleanIndicator
+                  value={program.has_interview}
+                  trueLabel={lang === "zh" ? "需要" : "Yes"}
+                  falseLabel={lang === "zh" ? "不需要" : "No"}
+                />
+              }
+            />
+
+            {/* Essay prompts */}
+            {essaysText && (
+              <div className="mt-4 pt-4 border-t border-slate-50">
+                <p className="text-xs font-medium text-slate-600 mb-2">
+                  {lang === "zh" ? "文书题目" : "Essay Prompts"}
+                </p>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                  {essaysText}
+                </p>
+              </div>
+            )}
+          </Card>
+
+          {/* Disciplines */}
+          {disciplines && disciplines.length > 0 && (
+            <Card className="p-6">
+              <SectionHeader title={lang === "zh" ? "研究方向" : "Offered Disciplines"} />
+              <div className="flex flex-wrap gap-2">
+                {disciplines.map((d) => (
+                  <Badge key={d} variant="default" size="md">
+                    {d}
+                  </Badge>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );
