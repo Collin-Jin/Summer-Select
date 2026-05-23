@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 
 interface CardProps {
   className?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
   /** When true, adds a hover shadow transition for interactive cards. */
   hoverable?: boolean;
@@ -18,9 +19,10 @@ interface CardProps {
  *   <p>Program content</p>
  * </Card>
  */
-export function Card({ className, children, hoverable, outlined }: CardProps) {
+export function Card({ className, style, children, hoverable, outlined }: CardProps) {
   return (
     <div
+      style={style}
       className={twMerge(
         clsx(
           "bg-white rounded-xl",

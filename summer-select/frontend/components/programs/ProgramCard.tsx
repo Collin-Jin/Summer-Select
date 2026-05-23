@@ -20,16 +20,6 @@ interface ProgramCardProps {
 
 /**
  * Card component displaying a program summary in the dashboard grid and My List page.
- *
- * Displays:
- * - Program name (bilingual), host institution, location
- * - Category badge, format, duration
- * - Deadline urgency badge
- * - Tuition cost
- * - Collin Index score
- * - Favorite toggle button
- *
- * Clicking the card navigates to `/dashboard/program/[slug]`.
  */
 export function ProgramCard({
   program,
@@ -57,31 +47,35 @@ export function ProgramCard({
   const location = [city, program.location_state].filter(Boolean).join(", ");
 
   return (
-    <Card hoverable className="group overflow-hidden flex flex-col animate-fade-in-up">
+    <Card
+      hoverable
+      className="group overflow-hidden flex flex-col animate-fade-in-up"
+      style={{ borderLeft: "3px solid var(--color-brand-500)" }}
+    >
       <Link
         href={`/dashboard/program/${program.slug}`}
-        className="flex flex-col flex-1 p-5"
+        className="flex flex-col flex-1 p-6"
       >
         {/* Header row */}
-        <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3 min-w-0">
             {/* Logo or fallback icon */}
             {program.logo_url ? (
-              <div className="relative h-10 w-10 flex-shrink-0 rounded-lg overflow-hidden border border-slate-100">
+              <div className="relative h-12 w-12 flex-shrink-0 rounded-xl overflow-hidden border border-slate-100">
                 <Image
                   src={program.logo_url}
                   alt={`${name} logo`}
                   fill
                   className="object-contain"
-                  sizes="40px"
+                  sizes="48px"
                 />
               </div>
             ) : (
               <div
-                className="h-10 w-10 flex-shrink-0 rounded-lg flex items-center justify-center"
+                className="h-12 w-12 flex-shrink-0 rounded-xl flex items-center justify-center"
                 style={{ background: "var(--color-brand-50)" }}
               >
-                <GraduationCap className="h-5 w-5" style={{ color: "var(--color-brand-500)" }} />
+                <GraduationCap className="h-6 w-6" style={{ color: "var(--color-brand-500)" }} />
               </div>
             )}
 
@@ -90,15 +84,15 @@ export function ProgramCard({
                 {name}
               </h3>
               {institution && (
-                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                <p className="text-xs text-slate-500 mt-1 truncate">
                   {institution}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Favorite + Collin index */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Collin index + Favorite stacked */}
+          <div className="flex flex-col items-center gap-2 flex-shrink-0">
             <CollinIndexBadge score={program.collin_rec_index} variant="compact" />
             <FavoriteButton
               programId={program.lid}
@@ -110,8 +104,8 @@ export function ProgramCard({
           </div>
         </div>
 
-        {/* Meta row */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
+        {/* Badge row */}
+        <div className="flex flex-wrap gap-2 mb-4">
           {category && (
             <Badge variant={categoryVariant(category)} size="sm">
               {category}
@@ -140,7 +134,10 @@ export function ProgramCard({
         </div>
 
         {/* Details row */}
-        <div className="flex flex-col gap-1 text-xs text-slate-500 mt-auto pt-3 border-t border-slate-50">
+        <div
+          className="flex flex-col gap-1.5 text-xs text-slate-500 mt-auto pt-4 border-t"
+          style={{ borderColor: "var(--color-brand-100)" }}
+        >
           {location && (
             <div className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
@@ -169,7 +166,10 @@ export function ProgramCard({
       </Link>
 
       {/* Footer: deadline + cost */}
-      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between" style={{ background: "var(--color-brand-50)" }}>
+      <div
+        className="px-6 py-4 border-t flex items-center justify-between"
+        style={{ background: "var(--color-brand-50)", borderColor: "var(--color-brand-100)" }}
+      >
         <div>
           {deadlineInfo ? (
             <div className="flex items-center gap-1.5">
@@ -188,7 +188,7 @@ export function ProgramCard({
         </div>
         <div className="text-right">
           {program.tuition_cost !== null && program.tuition_cost !== undefined ? (
-            <span className="text-xs font-semibold text-slate-700">
+            <span className="text-sm font-bold" style={{ color: "var(--color-brand-600)" }}>
               {formatCost(program.tuition_cost)}
             </span>
           ) : (
