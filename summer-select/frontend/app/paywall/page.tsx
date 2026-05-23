@@ -374,7 +374,7 @@ export default function PaywallPage() {
           {lang === "en" ? (
             <>
               Unlock Your Dream{" "}
-              <span style={{ color: "var(--color-brand-500)" }}>Summer Research Program</span>{" "}
+              <span style={{ color: "var(--color-brand-500)" }}>Summer Program</span>{" "}
               <span style={{ color: "var(--color-brand-accent)" }}>with SUMMER SELECT</span>
             </>
           ) : (
