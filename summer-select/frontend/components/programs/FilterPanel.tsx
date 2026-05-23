@@ -4,6 +4,7 @@ import { X, SlidersHorizontal } from "lucide-react";
 import { clsx } from "clsx";
 import { Badge } from "@/components/ui/Badge";
 import { useLanguage } from "@/context/LanguageContext";
+import type { FormatOption, CategoryOption } from "@/lib/programs";
 
 export interface ProgramFilters {
   search: string;
@@ -30,8 +31,8 @@ export const DEFAULT_FILTERS: ProgramFilters = {
 interface FilterPanelProps {
   filters: ProgramFilters;
   onChange: (filters: ProgramFilters) => void;
-  categories: string[];
-  formats: string[];
+  categories: CategoryOption[];
+  formats: FormatOption[];
   totalCount: number;
   filteredCount: number;
 }
@@ -119,8 +120,8 @@ export function FilterPanel({
           >
             <option value="">{lang === "zh" ? "全部类别" : "All categories"}</option>
             {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
+              <option key={c.en} value={c.en}>
+                {lang === "zh" ? (c.zh ?? c.en) : c.en}
               </option>
             ))}
           </select>
@@ -136,16 +137,16 @@ export function FilterPanel({
           <div className="flex flex-wrap gap-2">
             {formats.map((f) => (
               <button
-                key={f}
-                onClick={() => set("format", filters.format === f ? "" : f)}
+                key={f.en}
+                onClick={() => set("format", filters.format === f.en ? "" : f.en)}
                 className={clsx(
                   "px-3 py-1 text-xs rounded-full border font-medium transition-colors",
-                  filters.format === f
+                  filters.format === f.en
                     ? "bg-indigo-600 text-white border-indigo-600"
                     : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"
                 )}
               >
-                {f}
+                {lang === "zh" ? (f.zh ?? f.en) : f.en}
               </button>
             ))}
           </div>
@@ -227,18 +228,26 @@ export function FilterPanel({
 export function ActiveFilterChips({
   filters,
   onChange,
+  formats,
+  categories,
 }: {
   filters: ProgramFilters;
   onChange: (f: ProgramFilters) => void;
+  formats: FormatOption[];
+  categories: CategoryOption[];
 }) {
   const { lang } = useLanguage();
   const chips: { label: string; onRemove: () => void }[] = [];
 
   if (filters.category) {
-    chips.push({ label: filters.category, onRemove: () => onChange({ ...filters, category: "" }) });
+    const cat = categories.find((c) => c.en === filters.category);
+    const label = lang === "zh" ? (cat?.zh ?? filters.category) : filters.category;
+    chips.push({ label, onRemove: () => onChange({ ...filters, category: "" }) });
   }
   if (filters.format) {
-    chips.push({ label: filters.format, onRemove: () => onChange({ ...filters, format: "" }) });
+    const fmt = formats.find((f) => f.en === filters.format);
+    const label = lang === "zh" ? (fmt?.zh ?? filters.format) : filters.format;
+    chips.push({ label, onRemove: () => onChange({ ...filters, format: "" }) });
   }
   if (filters.grade) {
     chips.push({

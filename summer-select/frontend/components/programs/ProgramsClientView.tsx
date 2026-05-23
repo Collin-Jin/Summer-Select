@@ -9,12 +9,13 @@ import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { fetchFavorites, addFavorite, removeFavorite } from "@/lib/favorites";
 import { useLanguage } from "@/context/LanguageContext";
 import type { SummerProgram } from "@/lib/database.types";
+import type { FormatOption, CategoryOption } from "@/lib/programs";
 import { Search, LayoutGrid } from "lucide-react";
 
 interface ProgramsClientViewProps {
   programs: SummerProgram[];
-  categories: string[];
-  formats: string[];
+  categories: CategoryOption[];
+  formats: FormatOption[];
 }
 
 /**
@@ -189,7 +190,12 @@ export function ProgramsClientView({
         )}
 
         {/* Active filter chips */}
-        <ActiveFilterChips filters={filters} onChange={setFilters} />
+        <ActiveFilterChips
+          filters={filters}
+          onChange={setFilters}
+          formats={formats}
+          categories={categories}
+        />
 
         {/* Results */}
         {favoritesLoading ? (
