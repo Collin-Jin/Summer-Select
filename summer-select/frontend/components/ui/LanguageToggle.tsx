@@ -55,7 +55,7 @@ export function LanguageToggle() {
       {/* EN option */}
       <button
         onClick={() => switchTo("en")}
-        className="relative z-10 flex-1 px-3 py-1.5 text-xs font-bold rounded-full"
+        className="relative z-10 flex-1 px-2 py-1 text-xs font-bold rounded-full"
         style={{
           color: !isZh ? "var(--color-brand-600)" : "rgba(255,255,255,0.5)",
           transition: "color 200ms ease",
@@ -66,17 +66,17 @@ export function LanguageToggle() {
         EN
       </button>
 
-      {/* 中文 option */}
+      {/* 中 option */}
       <button
         onClick={() => switchTo("zh")}
-        className="relative z-10 flex-1 px-3 py-1.5 text-xs font-bold rounded-full"
+        className="relative z-10 flex-1 px-2 py-1 text-xs font-bold rounded-full"
         style={{
           color: isZh ? "var(--color-brand-700)" : "rgba(255,255,255,0.5)",
           transition: "color 200ms ease",
         }}
         aria-pressed={isZh}
       >
-        中文
+        中
       </button>
     </div>
   );
