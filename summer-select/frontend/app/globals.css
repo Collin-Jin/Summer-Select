@@ -33,6 +33,16 @@ body {
   font-family: var(--font-geist-sans, system-ui, -apple-system, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* ── Re-enable selection inside form fields ───────────────────────────────── */
+input, textarea, [contenteditable] {
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
 
 /* ── Focus ring utility ───────────────────────────────────────────────────── */
