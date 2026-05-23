@@ -23,7 +23,7 @@ function useReveal(threshold = 0.12) {
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setVisible(true); io.disconnect(); } },
-      { threshold }
+      { threshold, rootMargin: "0px 0px -80px 0px" }
     );
     io.observe(el);
     return () => io.disconnect();
@@ -108,6 +108,8 @@ const copy = {
   stat1Body:     { en: "Including a 9th grader with zero prior research experience!", zh: "包括一位零研究经验的 9 年级学生！" },
   stat2Title:    { en: "Elite Program Admissions", zh: "顶尖项目录取" },
   stat2Body:     { en: "UCSB SRA, UCSC SIP, UChicago RIBS, The Summer Science Program, and Pioneer Academics.", zh: "UCSB SRA、UCSC SIP、UChicago RIBS、暑期科学项目及 Pioneer Academics。" },
+  stat3Title:    { en: "Students Mentored", zh: "辅导学生人数" },
+  stat3Body:     { en: "And counting — across all grade levels and research backgrounds.", zh: "持续增长中——涵盖所有年级与科研背景的学生。" },
   statsClosing:  {
     en: "I achieved this while overloading my college schedule. But there are only so many hours in the day—I want to help more ambitious students navigate this competitive landscape. That's why I built SUMMER SELECT.",
     zh: "这一切都是在我本科课业繁重的情况下完成的。但一天的时间毕竟有限——我希望帮助更多有志向的学生在竞争激烈的赛道上找到方向。这就是我打造 SUMMER SELECT 的初衷。",
@@ -221,9 +223,10 @@ export default function PaywallPage() {
   const valueGrid = useReveal(0.06);
   const adCta     = useReveal(0.12);
 
-  // Count-up values (fire when stats section is visible)
-  const count1 = useCountUp(6, 1400, stats.visible);
-  const count2 = useCountUp(5, 1600, stats.visible);
+  // Count-up values (fire only when stats section scrolls into view)
+  const count1 = useCountUp(6,  1400, stats.visible);
+  const count2 = useCountUp(5,  1600, stats.visible);
+  const count3 = useCountUp(50, 2000, stats.visible);
 
   return (
     <div className="min-h-screen" style={{ background: "#FFFFFB", fontFamily: "var(--font-sans, system-ui)" }}>
@@ -313,7 +316,7 @@ export default function PaywallPage() {
 
         {/* Headline */}
         <h1
-          className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight max-w-3xl"
+          className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight max-w-4xl text-balance"
           style={{
             color: "var(--color-brand-700)",
             fontFamily: "var(--font-syne, sans-serif)",
@@ -322,13 +325,19 @@ export default function PaywallPage() {
             transition: "opacity 0.7s ease 0.05s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.05s",
           }}
         >
-          {t(copy.heroH1a)}{" "}
-          <span style={{ color: "var(--color-brand-500)" }}>{t(copy.heroH1b)}</span>{" "}
-          <span className="relative inline-block" style={{ color: "var(--color-brand-accent)" }}>
-            {t(copy.heroH1c)}
-            <span className="absolute -bottom-1 left-0 right-0 h-[3px] rounded-full"
-              style={{ background: "var(--color-brand-accent)", opacity: 0.35 }} />
-          </span>
+          {lang === "en" ? (
+            <>
+              Unlock Your Dream{" "}
+              <span style={{ color: "var(--color-brand-500)" }}>Summer Research Program</span>{" "}
+              <span style={{ color: "var(--color-brand-accent)" }}>with SUMMER SELECT</span>
+            </>
+          ) : (
+            <>
+              解锁你的梦想{" "}
+              <span style={{ color: "var(--color-brand-500)" }}>暑期科研项目</span>{" "}
+              <span style={{ color: "var(--color-brand-accent)" }}>· SUMMER SELECT</span>
+            </>
+          )}
         </h1>
 
         {/* Subhead */}
@@ -436,7 +445,7 @@ export default function PaywallPage() {
           </div>
 
           {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
             {/* Stat 1 */}
             <div
               className="rounded-2xl p-7"
@@ -494,6 +503,36 @@ export default function PaywallPage() {
               </p>
               <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.58)" }}>
                 {t(copy.stat2Body)}
+              </p>
+            </div>
+
+            {/* Stat 3 */}
+            <div
+              className="rounded-2xl p-7"
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                opacity: stats.visible ? 1 : 0,
+                transform: stats.visible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.92)",
+                transition: "opacity 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.4s, transform 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.4s",
+              }}
+            >
+              <div
+                className="font-black leading-none mb-3"
+                style={{
+                  fontSize: "clamp(3rem,8vw,4.5rem)",
+                  color: "#FF6B6C",
+                  fontFamily: "var(--font-syne, sans-serif)",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {count3}+
+              </div>
+              <p className="text-white font-semibold text-base leading-snug mb-1.5">
+                {t(copy.stat3Title)}
+              </p>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.58)" }}>
+                {t(copy.stat3Body)}
               </p>
             </div>
           </div>
@@ -675,11 +714,11 @@ export default function PaywallPage() {
                 <MessageCircle className="h-4 w-4" style={{ color: "rgba(255,255,255,0.65)" }} />
                 <div className="text-left">
                   <p className="text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>{t(copy.wechatLabel)}</p>
-                  <p className="font-semibold text-sm text-white">@summerselect</p>
+                  <p className="font-semibold text-sm text-white">collinxuezhang</p>
                 </div>
               </div>
               <a
-                href="https://instagram.com/summerselectofficial"
+                href="https://instagram.com/collin.jin"
                 target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 transition-colors"
                 style={{ background: "rgba(255,255,255,0.1)" }}
@@ -689,7 +728,7 @@ export default function PaywallPage() {
                 <ExternalLink className="h-4 w-4" style={{ color: "rgba(255,255,255,0.65)" }} />
                 <div className="text-left">
                   <p className="text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>Instagram</p>
-                  <p className="font-semibold text-sm text-white">@summerselectofficial</p>
+                  <p className="font-semibold text-sm text-white">@collin.jin</p>
                 </div>
               </a>
             </div>
