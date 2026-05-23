@@ -17,14 +17,14 @@ export type ProgramDescription = {
 export default async function EssaysPage() {
   const supabase = await supabaseServer();
 
-  const { data: essays, error } = await supabase
-    .from("example_essays")
-    .select("*")
+  const { data: prompts, error } = await supabase
+    .from("summer_program_prompts")
+    .select("*, program_example_essays(*)")
     .eq("is_published", true)
-    .order("program_slug", { ascending: true })
-    .order("sort_order", { ascending: true });
+    .order("program_order", { ascending: true })
+    .order("order", { ascending: true });
 
-  if (error || !essays) {
+  if (error || !prompts) {
     return (
       <div className="max-w-4xl mx-auto py-12 text-center">
         <p className="text-slate-500">
@@ -34,7 +34,15 @@ export default async function EssaysPage() {
     );
   }
 
-  const uniqueSlugs = [...new Set(essays.map((e) => e.program_slug))];
+  // Filter to only prompts that have at least one published essay
+  const publishedPrompts = prompts.map((p) => ({
+    ...p,
+    program_example_essays: (p.program_example_essays as { is_published: boolean | null }[]).filter(
+      (e) => e.is_published !== false
+    ),
+  })).filter((p) => p.program_example_essays.length > 0);
+
+  const uniqueSlugs = [...new Set(publishedPrompts.map((p) => p.program_slug))];
 
   const { data: programs } = await supabase
     .from("summer_programs")
@@ -46,5 +54,5 @@ export default async function EssaysPage() {
     programDescriptions[p.slug] = p as ProgramDescription;
   }
 
-  return <EssaysClientView essays={essays} programDescriptions={programDescriptions} />;
+  return <EssaysClientView prompts={publishedPrompts} programDescriptions={programDescriptions} />;
 }

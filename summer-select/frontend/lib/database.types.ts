@@ -203,6 +203,90 @@ export interface Database {
       };
 
       /**
+       * Normalized essay prompts — one row per unique prompt per program.
+       * Linked to program_example_essays via FK.
+       * RLS restricts SELECT to paid users.
+       */
+      summer_program_prompts: {
+        Row: {
+          id: string;
+          program_slug: string;
+          prompt_en: string;
+          prompt_zh: string | null;
+          order: number;
+          program_order: number;
+          is_published: boolean | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_slug: string;
+          prompt_en: string;
+          prompt_zh?: string | null;
+          order?: number;
+          program_order?: number;
+          is_published?: boolean | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["summer_program_prompts"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "summer_program_prompts_program_slug_fkey";
+            columns: ["program_slug"];
+            referencedRelation: "summer_programs";
+            referencedColumns: ["slug"];
+          }
+        ];
+      };
+
+      /**
+       * Individual example essays linked to a prompt in summer_program_prompts.
+       * No Chinese essay translation — only English essay text.
+       * RLS restricts SELECT to paid users.
+       */
+      program_example_essays: {
+        Row: {
+          id: string;
+          prompt_id: string;
+          program_slug: string;
+          program_name: string;
+          essay: string;
+          word_count: number | null;
+          year: number | null;
+          outcome: string | null;
+          sort_order: number | null;
+          is_published: boolean | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          prompt_id: string;
+          program_slug: string;
+          program_name: string;
+          essay: string;
+          word_count?: number | null;
+          year?: number | null;
+          outcome?: string | null;
+          sort_order?: number | null;
+          is_published?: boolean | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["program_example_essays"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "program_example_essays_prompt_id_fkey";
+            columns: ["prompt_id"];
+            referencedRelation: "summer_program_prompts";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      /**
        * Interview preparation guides (one row per program).
        * RLS restricts SELECT to paid users.
        */
@@ -318,6 +402,17 @@ export type Favorite = Database["public"]["Tables"]["favorites"]["Row"];
 
 /** A row from the `example_essays` table. */
 export type ExampleEssay = Database["public"]["Tables"]["example_essays"]["Row"];
+
+/** A row from the `summer_program_prompts` table. */
+export type SummerProgramPrompt = Database["public"]["Tables"]["summer_program_prompts"]["Row"];
+
+/** A row from the `program_example_essays` table. */
+export type ProgramExampleEssay = Database["public"]["Tables"]["program_example_essays"]["Row"];
+
+/** A prompt with its example essays hydrated. */
+export type SummerProgramPromptWithEssays = SummerProgramPrompt & {
+  program_example_essays: ProgramExampleEssay[];
+};
 
 /** A row from the `interview_guides` table. */
 export type InterviewGuide = Database["public"]["Tables"]["interview_guides"]["Row"];

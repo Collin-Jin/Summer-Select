@@ -7,69 +7,46 @@ import { Card } from "@/components/ui/Card";
 import { ProtectedContent } from "@/components/ui/ProtectedContent";
 import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
-import type { ExampleEssay } from "@/lib/database.types";
+import type { SummerProgramPromptWithEssays } from "@/lib/database.types";
 import type { ProgramDescription } from "./page";
-
-/** Strip "[Example N]" or "[Track N: ...]" suffixes to get the canonical prompt text. */
-function basePrompt(prompt: string): string {
-  return prompt
-    .replace(/\s*\[Example\s+\d+\]\s*$/i, "")
-    .replace(/\s*\[Track\s+\d+:[^\]]*\]\s*$/i, "")
-    .trim();
-}
-
-interface PromptGroup {
-  base: string;
-  base_zh: string | null;
-  essays: ExampleEssay[];
-}
 
 interface ProgramGroup {
   programSlug: string;
   programName: string;
-  promptGroups: PromptGroup[];
+  prompts: SummerProgramPromptWithEssays[];
 }
 
-function buildProgramGroups(essays: ExampleEssay[]): ProgramGroup[] {
-  const programMap = new Map<string, { name: string; prompts: Map<string, PromptGroup> }>();
+function buildProgramGroups(prompts: SummerProgramPromptWithEssays[]): ProgramGroup[] {
+  const programMap = new Map<string, ProgramGroup>();
 
-  for (const essay of essays) {
-    if (!programMap.has(essay.program_slug)) {
-      programMap.set(essay.program_slug, {
-        name: essay.program_name,
-        prompts: new Map(),
+  for (const prompt of prompts) {
+    const { program_slug } = prompt;
+    if (!programMap.has(program_slug)) {
+      // Derive display name from the first essay in this prompt
+      const firstName = prompt.program_example_essays[0]?.program_name ?? program_slug;
+      programMap.set(program_slug, {
+        programSlug: program_slug,
+        programName: firstName,
+        prompts: [],
       });
     }
-    const prog = programMap.get(essay.program_slug)!;
-    const base = basePrompt(essay.prompt);
-    if (!prog.prompts.has(base)) {
-      prog.prompts.set(base, {
-        base,
-        base_zh: essay.prompt_zh ? basePrompt(essay.prompt_zh) : null,
-        essays: [],
-      });
-    }
-    prog.prompts.get(base)!.essays.push(essay);
+    programMap.get(program_slug)!.prompts.push(prompt);
   }
 
-  return Array.from(programMap.entries()).map(([slug, { name, prompts }]) => ({
-    programSlug: slug,
-    programName: name,
-    promptGroups: Array.from(prompts.values()),
-  }));
+  return Array.from(programMap.values());
 }
 
 export function EssaysClientView({
-  essays,
+  prompts,
   programDescriptions,
 }: {
-  essays: ExampleEssay[];
+  prompts: SummerProgramPromptWithEssays[];
   programDescriptions: Record<string, ProgramDescription>;
 }) {
   const { lang } = useLanguage();
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
-  const groups = buildProgramGroups(essays);
+  const groups = buildProgramGroups(prompts);
   const [activeProgramSlug, setActiveProgramSlug] = useState<string>(
     groups[0]?.programSlug ?? ""
   );
@@ -88,8 +65,8 @@ export function EssaysClientView({
 
   if (!activeGroup) return null;
 
-  const totalEssays = activeGroup.promptGroups.reduce(
-    (s, pg) => s + pg.essays.length,
+  const totalEssays = activeGroup.prompts.reduce(
+    (s, p) => s + p.program_example_essays.length,
     0
   );
 
@@ -201,8 +178,8 @@ export function EssaysClientView({
 
         {/* Prompts with grouped essays */}
         <div className="space-y-8">
-          {activeGroup.promptGroups.map((promptGroup, promptIdx) => (
-            <div key={promptGroup.base}>
+          {activeGroup.prompts.map((prompt, promptIdx) => (
+            <div key={prompt.id}>
               {/* Prompt header */}
               <div
                 className="mb-3 px-4 py-3 rounded-xl border"
@@ -215,99 +192,91 @@ export function EssaysClientView({
                   {lang === "zh" ? `题目 ${promptIdx + 1}` : `Prompt ${promptIdx + 1}`}
                 </p>
                 <p className="text-sm font-medium leading-snug" style={{ color: "var(--color-brand-700, #3a3d6e)" }}>
-                  {lang === "zh" && promptGroup.base_zh
-                    ? promptGroup.base_zh
-                    : promptGroup.base}
+                  {lang === "zh" && prompt.prompt_zh
+                    ? prompt.prompt_zh
+                    : prompt.prompt_en}
                 </p>
               </div>
 
               {/* Essays under this prompt */}
               <div className="space-y-3 pl-2">
-                {promptGroup.essays.map((essay, essayIdx) => {
-                  const isOpen = openIds.has(essay.id);
-                  return (
-                    <Card key={essay.id} outlined className="overflow-hidden">
-                      {/* Accordion trigger */}
-                      <button
-                        onClick={() => toggle(essay.id)}
-                        className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span
-                              className="text-xs font-semibold"
-                              style={{ color: "var(--color-brand-400)" }}
-                            >
-                              {lang === "zh" ? `示例 ${essayIdx + 1}` : `Example ${essayIdx + 1}`}
-                            </span>
-                            {essay.outcome && (
-                              <Badge variant="success" size="sm">
-                                {essay.outcome}
-                              </Badge>
-                            )}
-                            {essay.year && (
-                              <Badge variant="default" size="sm">
-                                {essay.year}
-                              </Badge>
-                            )}
-                            {essay.word_count && (
-                              <Badge variant="outline" size="sm">
-                                ~{essay.word_count}{" "}
-                                {lang === "zh" ? "词" : "words"}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        {isOpen ? (
-                          <ChevronUp className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
-                        )}
-                      </button>
-
-                      {/* Expanded essay body */}
-                      {isOpen && (
-                        <div className="px-5 pb-6 border-t border-slate-100">
-                          {/* Language indicator */}
-                          <div className="flex gap-1 my-4">
-                            {(["en", "zh"] as const).map((l) => (
+                {prompt.program_example_essays
+                  .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                  .map((essay, essayIdx) => {
+                    const isOpen = openIds.has(essay.id);
+                    return (
+                      <Card key={essay.id} outlined className="overflow-hidden">
+                        {/* Accordion trigger */}
+                        <button
+                          onClick={() => toggle(essay.id)}
+                          className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span
-                                key={l}
-                                className="px-3 py-1 text-xs rounded-lg font-medium"
-                                style={
-                                  lang === l
-                                    ? { background: "var(--color-brand-500)", color: "#fff" }
-                                    : { background: "#f1f5f9", color: "#94a3b8" }
-                                }
+                                className="text-xs font-semibold"
+                                style={{ color: "var(--color-brand-400)" }}
                               >
-                                {l === "en" ? "EN" : "中文"}
+                                {lang === "zh" ? `示例 ${essayIdx + 1}` : `Example ${essayIdx + 1}`}
                               </span>
-                            ))}
-                          </div>
-
-                          {/* Essay body — copy protected */}
-                          <ProtectedContent>
-                            <div className="prose prose-sm prose-slate max-w-none">
-                              {(lang === "zh" && essay.essay_zh
-                                ? essay.essay_zh
-                                : essay.essay
-                              )
-                                .split("\n\n")
-                                .map((para, i) => (
-                                  <p
-                                    key={i}
-                                    className="text-sm text-slate-700 leading-relaxed mb-3 last:mb-0"
-                                  >
-                                    {para}
-                                  </p>
-                                ))}
+                              {essay.outcome && (
+                                <Badge variant="success" size="sm">
+                                  {essay.outcome}
+                                </Badge>
+                              )}
+                              {essay.year && (
+                                <Badge variant="default" size="sm">
+                                  {essay.year}
+                                </Badge>
+                              )}
+                              {essay.word_count && (
+                                <Badge variant="outline" size="sm">
+                                  ~{essay.word_count}{" "}
+                                  {lang === "zh" ? "词" : "words"}
+                                </Badge>
+                              )}
                             </div>
-                          </ProtectedContent>
-                        </div>
-                      )}
-                    </Card>
-                  );
-                })}
+                          </div>
+                          {isOpen ? (
+                            <ChevronUp className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                          )}
+                        </button>
+
+                        {/* Expanded essay body */}
+                        {isOpen && (
+                          <div className="px-5 pb-6 border-t border-slate-100">
+                            {/* Language indicator — essays are English only */}
+                            <div className="flex gap-1 my-4">
+                              <span
+                                className="px-3 py-1 text-xs rounded-lg font-medium"
+                                style={{ background: "var(--color-brand-500)", color: "#fff" }}
+                              >
+                                EN
+                              </span>
+                            </div>
+
+                            {/* Essay body — copy protected */}
+                            <ProtectedContent>
+                              <div className="prose prose-sm prose-slate max-w-none">
+                                {essay.essay
+                                  .split("\n\n")
+                                  .map((para, i) => (
+                                    <p
+                                      key={i}
+                                      className="text-sm text-slate-700 leading-relaxed mb-3 last:mb-0"
+                                    >
+                                      {para}
+                                    </p>
+                                  ))}
+                              </div>
+                            </ProtectedContent>
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })}
               </div>
             </div>
           ))}
