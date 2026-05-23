@@ -16,7 +16,7 @@ type Lang = "en" | "zh";
 // ─────────────────────────────────────────────────────────────────────────────
 // Scroll-reveal hook — fires once when element enters viewport
 // ─────────────────────────────────────────────────────────────────────────────
-function useReveal(threshold = 0.12) {
+function useReveal(threshold = 0.12, rootMargin = "0px 0px -80px 0px") {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -24,7 +24,7 @@ function useReveal(threshold = 0.12) {
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setVisible(true); io.disconnect(); } },
-      { threshold, rootMargin: "0px 0px -80px 0px" }
+      { threshold, rootMargin }
     );
     io.observe(el);
     return () => io.disconnect();
@@ -253,14 +253,15 @@ export default function PaywallPage() {
 
   // Reveal refs
   const founder   = useReveal();
-  const stats     = useReveal(0.08);
+  // stats: 50% visible + 120px into viewport — numbers only count when user genuinely sees them
+  const stats     = useReveal(0.5, "0px 0px -120px 0px");
   const valueGrid = useReveal(0.06);
   const adCta     = useReveal(0.12);
 
-  // Count-up values (fire only when stats section scrolls into view)
-  const count1 = useCountUp(6,  1400, stats.visible);
-  const count2 = useCountUp(5,  1600, stats.visible);
-  const count3 = useCountUp(50, 2000, stats.visible);
+  // Count-up values — slightly slower so the animation is readable
+  const count1 = useCountUp(6,  2200, stats.visible);
+  const count2 = useCountUp(5,  2600, stats.visible);
+  const count3 = useCountUp(50, 3200, stats.visible);
 
   // Typewriter — composes both paragraphs into one flowing block
   const founderText = lang === "en"
@@ -347,21 +348,36 @@ export default function PaywallPage() {
           <GraduationCap className="h-9 w-9 text-white" />
         </div>
 
-        {/* Eyebrow */}
-        <p
-          className="text-xs font-bold uppercase tracking-widest mb-4"
+        {/* Eyebrow pill */}
+        <div
+          className="mb-6 inline-flex items-center gap-2"
           style={{
-            color: "var(--color-brand-500)",
             opacity: mounted ? 1 : 0,
-            transition: "opacity 0.5s ease",
+            transform: mounted ? "translateY(0)" : "translateY(-10px)",
+            transition: "opacity 0.5s ease, transform 0.5s ease",
           }}
         >
-          {t(copy.heroEyebrow)}
-        </p>
+          <span
+            className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
+            style={{
+              background: "var(--color-brand-500)",
+              color: "#fff",
+              letterSpacing: "0.1em",
+            }}
+          >
+            Summer Select
+          </span>
+          <span
+            className="text-xs font-semibold uppercase tracking-widest"
+            style={{ color: "var(--color-brand-500)", opacity: 0.7 }}
+          >
+            {t(copy.heroEyebrow)}
+          </span>
+        </div>
 
-        {/* Headline */}
+        {/* Headline — two-colour, clean line breaks */}
         <h1
-          className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight max-w-4xl text-balance"
+          className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.12] max-w-2xl text-balance"
           style={{
             color: "var(--color-brand-700)",
             fontFamily: "var(--font-syne, sans-serif)",
@@ -373,14 +389,26 @@ export default function PaywallPage() {
           {lang === "en" ? (
             <>
               Unlock Your Dream{" "}
-              <span style={{ color: "var(--color-brand-500)" }}>Summer Research Program</span>{" "}
-              <span style={{ color: "var(--color-brand-accent)" }}>with SUMMER SELECT</span>
+              <span style={{
+                color: "transparent",
+                backgroundImage: "linear-gradient(90deg, var(--color-brand-500), #8B85C1)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+              }}>
+                Summer Research Program
+              </span>
             </>
           ) : (
             <>
-              解锁你的梦想{" "}
-              <span style={{ color: "var(--color-brand-500)" }}>暑期科研项目</span>{" "}
-              <span style={{ color: "var(--color-brand-accent)" }}>· SUMMER SELECT</span>
+              解锁你梦想中的{" "}
+              <span style={{
+                color: "transparent",
+                backgroundImage: "linear-gradient(90deg, var(--color-brand-500), #8B85C1)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+              }}>
+                暑期科研项目
+              </span>
             </>
           )}
         </h1>
