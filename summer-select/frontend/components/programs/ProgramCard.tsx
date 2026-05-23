@@ -18,9 +18,6 @@ interface ProgramCardProps {
   onToggleFavorite: (programId: string, nowFavorited: boolean) => void;
 }
 
-/**
- * Card component displaying a program summary in the dashboard grid and My List page.
- */
 export function ProgramCard({
   program,
   isFavorited,
@@ -46,75 +43,96 @@ export function ProgramCard({
   const deadlineInfo = getDeadlineLabel(deadline);
   const location = [city, program.location_state].filter(Boolean).join(", ");
 
+  const acceptanceRate =
+    program.acceptance_rate !== null && program.acceptance_rate !== undefined
+      ? Math.round(
+          program.acceptance_rate <= 1
+            ? program.acceptance_rate * 100
+            : program.acceptance_rate
+        )
+      : null;
+
+  // Build a compact inline stats string
+  const statParts: React.ReactNode[] = [];
+  if (location) {
+    statParts.push(
+      <span key="loc" className="flex items-center gap-1">
+        <MapPin className="h-3 w-3 flex-shrink-0" />
+        {location}
+      </span>
+    );
+  }
+  if (program.duration_weeks) {
+    statParts.push(
+      <span key="dur" className="flex items-center gap-1">
+        <Clock className="h-3 w-3 flex-shrink-0" />
+        {program.duration_weeks}{lang === "zh" ? "周" : `w`}
+      </span>
+    );
+  }
+  if (acceptanceRate !== null) {
+    statParts.push(
+      <span key="acc" className="flex items-center gap-1">
+        <Users className="h-3 w-3 flex-shrink-0" />
+        ~{acceptanceRate}%
+      </span>
+    );
+  }
+
   return (
-    <Card
-      hoverable
-      className="group overflow-hidden flex flex-col animate-fade-in-up"
-      style={{ borderLeft: "3px solid var(--color-brand-500)" }}
-    >
+    <Card hoverable className="group overflow-hidden flex flex-col animate-fade-in-up">
       <Link
         href={`/dashboard/program/${program.slug}`}
-        className="flex flex-col flex-1 p-6"
+        className="flex flex-col flex-1 p-5"
       >
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Logo or fallback icon */}
-            {program.logo_url ? (
-              <div className="relative h-12 w-12 flex-shrink-0 rounded-xl overflow-hidden border border-slate-100">
-                <Image
-                  src={program.logo_url}
-                  alt={`${name} logo`}
-                  fill
-                  className="object-contain"
-                  sizes="48px"
-                />
-              </div>
-            ) : (
-              <div
-                className="h-12 w-12 flex-shrink-0 rounded-xl flex items-center justify-center"
-                style={{ background: "var(--color-brand-50)" }}
-              >
-                <GraduationCap className="h-6 w-6" style={{ color: "var(--color-brand-500)" }} />
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 transition-colors duration-150 group-hover:[color:var(--color-brand-600)]">
-                {name}
-              </h3>
-              {institution && (
-                <p className="text-xs text-slate-500 mt-1 truncate">
-                  {institution}
-                </p>
-              )}
+        {/* Header */}
+        <div className="flex items-start gap-3 mb-3">
+          {program.logo_url ? (
+            <div className="relative h-10 w-10 flex-shrink-0 rounded-lg overflow-hidden border border-slate-100">
+              <Image
+                src={program.logo_url}
+                alt={`${name} logo`}
+                fill
+                className="object-contain"
+                sizes="40px"
+              />
             </div>
+          ) : (
+            <div
+              className="h-10 w-10 flex-shrink-0 rounded-lg flex items-center justify-center"
+              style={{ background: "var(--color-brand-50)" }}
+            >
+              <GraduationCap className="h-5 w-5" style={{ color: "var(--color-brand-500)" }} />
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 group-hover:[color:var(--color-brand-600)] transition-colors duration-150">
+              {name}
+            </h3>
+            {institution && (
+              <p className="text-xs text-slate-400 mt-0.5 truncate">{institution}</p>
+            )}
           </div>
 
-          {/* Collin index + Favorite stacked */}
-          <div className="flex flex-col items-center gap-2 flex-shrink-0">
+          {/* Collin Index + Favorite — side by side */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <CollinIndexBadge score={program.collin_rec_index} variant="compact" />
             <FavoriteButton
               programId={program.lid}
               initialFavorited={isFavorited}
-              onToggle={(nowFavorited) =>
-                onToggleFavorite(program.lid, nowFavorited)
-              }
+              onToggle={(nowFavorited) => onToggleFavorite(program.lid, nowFavorited)}
             />
           </div>
         </div>
 
-        {/* Badge row */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        {/* Badges */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
           {category && (
-            <Badge variant={categoryVariant(category)} size="sm">
-              {category}
-            </Badge>
+            <Badge variant={categoryVariant(category)} size="sm">{category}</Badge>
           )}
           {format && (
-            <Badge variant="format" size="sm">
-              {format}
-            </Badge>
+            <Badge variant="format" size="sm">{format}</Badge>
           )}
           {program.is_rolling_admission && (
             <Badge variant="coral" size="sm">
@@ -133,47 +151,27 @@ export function ProgramCard({
           )}
         </div>
 
-        {/* Details row */}
-        <div
-          className="flex flex-col gap-1.5 text-xs text-slate-500 mt-auto pt-4 border-t"
-          style={{ borderColor: "var(--color-brand-100)" }}
-        >
-          {location && (
-            <div className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-              <span className="truncate">{location}</span>
-            </div>
-          )}
-          {program.duration_weeks && (
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-              <span>
-                {program.duration_weeks}{" "}
-                {lang === "zh" ? "周" : `week${program.duration_weeks !== 1 ? "s" : ""}`}
+        {/* Stats — single inline row with dot separators */}
+        {statParts.length > 0 && (
+          <div className="flex items-center flex-wrap gap-x-2.5 gap-y-1 text-xs text-slate-400 mt-auto pt-3 border-t border-slate-100">
+            {statParts.map((part, i) => (
+              <span key={i} className="flex items-center gap-2.5">
+                {part}
+                {i < statParts.length - 1 && (
+                  <span className="text-slate-200 select-none">·</span>
+                )}
               </span>
-            </div>
-          )}
-          {program.acceptance_rate !== null && program.acceptance_rate !== undefined && (
-            <div className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
-              <span>
-                ~{Math.round(program.acceptance_rate <= 1 ? program.acceptance_rate * 100 : program.acceptance_rate)}%{" "}
-                {lang === "zh" ? "录取率" : "acceptance"}
-              </span>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </Link>
 
       {/* Footer: deadline + cost */}
-      <div
-        className="px-6 py-4 border-t flex items-center justify-between"
-        style={{ background: "var(--color-brand-50)", borderColor: "var(--color-brand-100)" }}
-      >
+      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50">
         <div>
           {deadlineInfo ? (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-400">
                 {lang === "zh" ? "截止" : "Deadline"}:
               </span>
               <Badge variant={deadlineTierVariant(deadlineInfo.tier)} size="sm">
@@ -186,9 +184,9 @@ export function ProgramCard({
             </span>
           )}
         </div>
-        <div className="text-right">
+        <div>
           {program.tuition_cost !== null && program.tuition_cost !== undefined ? (
-            <span className="text-sm font-bold" style={{ color: "var(--color-brand-600)" }}>
+            <span className="text-sm font-semibold text-slate-700">
               {formatCost(program.tuition_cost)}
             </span>
           ) : (
