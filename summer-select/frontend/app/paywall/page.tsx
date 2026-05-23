@@ -260,8 +260,8 @@ export default function PaywallPage() {
 
   // Count-up values — slightly slower so the animation is readable
   const count1 = useCountUp(6,  2200, stats.visible);
-  const count2 = useCountUp(5,  2600, stats.visible);
-  const count3 = useCountUp(50, 3200, stats.visible);
+  const count2 = useCountUp(12, 2600, stats.visible);
+  const count3 = useCountUp(60, 3200, stats.visible);
 
   // Typewriter — composes both paragraphs into one flowing block
   const founderText = lang === "en"
@@ -331,7 +331,7 @@ export default function PaywallPage() {
           1. HERO
       ══════════════════════════════════════════════════════════════════════ */}
       <section
-        className="relative flex flex-col items-center justify-center text-center px-6 py-24 overflow-hidden"
+        className="relative flex flex-col items-center justify-center text-center px-6 py-14 overflow-hidden"
         style={{ background: "linear-gradient(160deg, #EEEEF7 0%, #FFFFFB 60%, #FFF8EC 100%)" }}
       >
         {/* Blurred blobs */}
@@ -342,42 +342,27 @@ export default function PaywallPage() {
 
         {/* Floating icon */}
         <div
-          className="animate-float mb-6 h-18 w-18 rounded-3xl flex items-center justify-center shadow-xl"
-          style={{ background: "var(--color-brand-500)", height: 72, width: 72 }}
+          className="animate-float mb-4 rounded-2xl flex items-center justify-center shadow-lg"
+          style={{ background: "var(--color-brand-500)", height: 56, width: 56 }}
         >
-          <GraduationCap className="h-9 w-9 text-white" />
+          <GraduationCap className="h-7 w-7 text-white" />
         </div>
 
-        {/* Eyebrow pill */}
-        <div
-          className="mb-6 inline-flex items-center gap-2"
+        {/* Eyebrow */}
+        <p
+          className="text-xs font-bold uppercase tracking-widest mb-3"
           style={{
+            color: "var(--color-brand-500)",
             opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(-10px)",
-            transition: "opacity 0.5s ease, transform 0.5s ease",
+            transition: "opacity 0.5s ease",
           }}
         >
-          <span
-            className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
-            style={{
-              background: "var(--color-brand-500)",
-              color: "#fff",
-              letterSpacing: "0.1em",
-            }}
-          >
-            Summer Select
-          </span>
-          <span
-            className="text-xs font-semibold uppercase tracking-widest"
-            style={{ color: "var(--color-brand-500)", opacity: 0.7 }}
-          >
-            {t(copy.heroEyebrow)}
-          </span>
-        </div>
+          {t(copy.heroEyebrow)}
+        </p>
 
-        {/* Headline — two-colour, clean line breaks */}
+        {/* Headline — 3-colour with gradient background accent */}
         <h1
-          className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.12] max-w-2xl text-balance"
+          className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.12] max-w-4xl text-balance"
           style={{
             color: "var(--color-brand-700)",
             fontFamily: "var(--font-syne, sans-serif)",
@@ -389,26 +374,14 @@ export default function PaywallPage() {
           {lang === "en" ? (
             <>
               Unlock Your Dream{" "}
-              <span style={{
-                color: "transparent",
-                backgroundImage: "linear-gradient(90deg, var(--color-brand-500), #8B85C1)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-              }}>
-                Summer Research Program
-              </span>
+              <span style={{ color: "var(--color-brand-500)" }}>Summer Research Program</span>{" "}
+              <span style={{ color: "var(--color-brand-accent)" }}>with SUMMER SELECT</span>
             </>
           ) : (
             <>
-              解锁你梦想中的{" "}
-              <span style={{
-                color: "transparent",
-                backgroundImage: "linear-gradient(90deg, var(--color-brand-500), #8B85C1)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-              }}>
-                暑期科研项目
-              </span>
+              解锁你的梦想{" "}
+              <span style={{ color: "var(--color-brand-500)" }}>暑期科研项目</span>{" "}
+              <span style={{ color: "var(--color-brand-accent)" }}>· SUMMER SELECT</span>
             </>
           )}
         </h1>
@@ -473,7 +446,7 @@ export default function PaywallPage() {
               <div className="relative flex-shrink-0 h-24 w-24 rounded-2xl overflow-hidden shadow-md"
                 style={{ outline: "2px solid var(--color-brand-100)" }}>
                 <Image
-                  src="/collinjin-founder.jpg"
+                  src="/collinjin-founder-ss.jpg"
                   alt="Collin Jin"
                   fill
                   className="object-cover object-top"
