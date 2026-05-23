@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useLanguage } from "@/context/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { supabaseClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -26,7 +27,7 @@ const navLinks = [
 
 export function Navbar({ userEmail }: { userEmail?: string | null }) {
   const pathname = usePathname();
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
 
@@ -102,22 +103,7 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
           {/* Right controls */}
           <div className="hidden md:flex items-center gap-3">
             {/* Language toggle */}
-            <button
-              onClick={() => {
-                const next = lang === "en" ? "zh" : "en";
-                setLang(next);
-                router.refresh();
-              }}
-              className="px-3 py-1.5 text-sm font-semibold rounded-lg transition-all"
-              style={{
-                background: "rgba(255,255,255,0.12)",
-                color: "#FFFFFB",
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}
-              title="Switch language"
-            >
-              {lang === "en" ? "中文" : "EN"}
-            </button>
+            <LanguageToggle />
 
             {/* User + sign out */}
             <div
@@ -199,21 +185,7 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
               className="pt-3 flex items-center justify-between"
               style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}
             >
-              <button
-                onClick={() => {
-                  const next = lang === "en" ? "zh" : "en";
-                  setLang(next);
-                  router.refresh();
-                }}
-                className="px-3 py-1.5 text-sm font-semibold rounded-lg"
-                style={{
-                  background: "rgba(255,255,255,0.12)",
-                  color: "#FFFFFB",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                {lang === "en" ? "中文" : "EN"}
-              </button>
+              <LanguageToggle />
               <button
                 onClick={handleSignOut}
                 className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg"
