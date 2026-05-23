@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
     // (e.g. due to multiple lockfiles on the machine), which can slow down dev.
     root: __dirname,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
