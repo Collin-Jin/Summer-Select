@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/utils/supabase/client";
+import Image from "next/image";
 import {
   GraduationCap, CheckCircle2, XCircle, LogOut,
   MessageCircle, ExternalLink, Award, ShieldCheck,
@@ -52,6 +53,39 @@ function useCountUp(target: number, duration = 1400, trigger: boolean) {
     return () => cancelAnimationFrame(raf);
   }, [trigger, target, duration]);
   return value;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Typewriter hook — reveals text char by char, variable speed, blinking cursor
+// ─────────────────────────────────────────────────────────────────────────────
+function useTypewriter(text: string, trigger: boolean, speed = 18) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (!trigger) return;
+    setDisplayed("");
+    setDone(false);
+    let i = 0;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const type = () => {
+      if (i >= text.length) { setDone(true); return; }
+      i++;
+      setDisplayed(text.slice(0, i));
+      const ch = text[i - 1];
+      const delay = /[.!?。！？]/.test(ch) ? speed * 12
+        : /[,;:，；：]/.test(ch)            ? speed * 5
+        : /[\s]/.test(ch)                   ? speed * 1.5
+        : speed + Math.random() * speed * 0.4;
+      timer = setTimeout(type, delay);
+    };
+
+    timer = setTimeout(type, 400);
+    return () => clearTimeout(timer);
+  }, [trigger, text, speed]);
+
+  return { displayed, done };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -228,6 +262,17 @@ export default function PaywallPage() {
   const count2 = useCountUp(5,  1600, stats.visible);
   const count3 = useCountUp(50, 2000, stats.visible);
 
+  // Typewriter — composes both paragraphs into one flowing block
+  const founderText = lang === "en"
+    ? `Hi, I'm Collin Jin. Just a couple of years ago, I was exactly where you are—DIYing my entire application process for summer programs and colleges. That hustle paid off: I got admitted to UCSB RMP and SRA, Harvey Mudd, and am now pursuing a dual degree in Electrical Engineering & CS at Northwestern's McCormick School of Engineering.\n\nAfter cracking the formula for standing out, I started mentoring students in the 2025–2026 application cycle. That's why I built SUMMER SELECT.`
+    : `大家好，我是 Collin Jin。就在几年前，我和你一样——自己摸索着申请暑期项目和大学的全流程。那段努力没有白费：我成为了 UCSB RMP 和 SRA 的校友，被 Harvey Mudd 录取，目前正在西北大学麦考密克工程学院攻读电气工程与计算机科学双学位。\n\n在摸索出一套脱颖而出的方法论后，我开始在 2025–2026 申请季为学生提供指导。这就是我打造 SUMMER SELECT 的初衷。`;
+
+  const { displayed: typedText, done: typingDone } = useTypewriter(
+    founderText,
+    founder.visible,
+    lang === "zh" ? 30 : 18
+  );
+
   return (
     <div className="min-h-screen" style={{ background: "#FFFFFB", fontFamily: "var(--font-sans, system-ui)" }}>
 
@@ -365,58 +410,112 @@ export default function PaywallPage() {
           2. FOUNDER STORY
       ══════════════════════════════════════════════════════════════════════ */}
       <section className="py-20 px-6" style={{ background: "#FFFFFB" }}>
-        <div className="max-w-3xl mx-auto">
-          <div
-            ref={founder.ref}
-            className="relative rounded-3xl p-8 sm:p-10 overflow-hidden"
+        <div className="max-w-3xl mx-auto" ref={founder.ref}>
+
+          {/* Eyebrow */}
+          <p
+            className="text-xs font-bold uppercase tracking-widest mb-6 text-center"
             style={{
-              background: "linear-gradient(135deg, #F5F5FB 0%, #FAFAFD 100%)",
-              border: "1px solid #D0D0E8",
+              color: "var(--color-brand-500)",
               opacity: founder.visible ? 1 : 0,
-              transform: founder.visible ? "translateX(0)" : "translateX(-44px)",
-              transition: "opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1)",
+              transition: "opacity 0.5s ease",
             }}
           >
-            {/* Left gradient bar */}
-            <div className="absolute top-0 left-0 bottom-0 w-1 rounded-l-3xl"
-              style={{ background: "linear-gradient(180deg, #5B5F97, #FFC145)" }} />
+            {t(copy.founderEyebrow)}
+          </p>
 
-            {/* Header row */}
-            <div className="flex items-center gap-4 mb-6">
-              <div
-                className="flex-shrink-0 h-14 w-14 rounded-2xl flex items-center justify-center text-xl font-black shadow"
-                style={{ background: "var(--color-brand-500)", color: "#FFC145" }}
-              >
-                CJ
+          {/* Card */}
+          <div
+            className="rounded-3xl overflow-hidden"
+            style={{
+              background: "#fff",
+              border: "1px solid #E4E4F0",
+              boxShadow: "0 4px 24px rgba(91,95,151,0.08)",
+              opacity: founder.visible ? 1 : 0,
+              transform: founder.visible ? "translateY(0)" : "translateY(28px)",
+              transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s",
+            }}
+          >
+            {/* Photo + identity header */}
+            <div
+              className="flex flex-col sm:flex-row items-center sm:items-end gap-5 px-8 pt-8 pb-6"
+              style={{ borderBottom: "1px solid #F0F0F8" }}
+            >
+              {/* Photo */}
+              <div className="relative flex-shrink-0 h-24 w-24 rounded-2xl overflow-hidden shadow-md"
+                style={{ outline: "2px solid var(--color-brand-100)" }}>
+                <Image
+                  src="/collinjin-founder.jpg"
+                  alt="Collin Jin"
+                  fill
+                  className="object-cover object-top"
+                  sizes="96px"
+                />
               </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--color-brand-500)" }}>
-                  {t(copy.founderEyebrow)}
+
+              {/* Name + title + credential chips */}
+              <div className="text-center sm:text-left flex-1">
+                <p className="text-xl font-extrabold text-slate-900 leading-tight">Collin Jin</p>
+                <p className="text-sm text-slate-500 mt-0.5 mb-3">
+                  {lang === "en"
+                    ? "Founder · Northwestern University (EE & CS)"
+                    : "创始人 · 西北大学（电气工程与计算机科学）"}
                 </p>
-                <p className="text-sm font-semibold text-slate-800 mt-0.5">Collin Jin</p>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                  {[
+                    { label: "UCSB RMP", gold: true },
+                    { label: "UCSB SRA", gold: true },
+                    { label: "Harvey Mudd", gold: false },
+                    { label: "Northwestern", gold: false },
+                  ].map(({ label, gold }) => (
+                    <span
+                      key={label}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold"
+                      style={
+                        gold
+                          ? { background: "#FFF3CC", color: "#92600A", border: "1px solid #FFD97D" }
+                          : { background: "#EEEEF7", color: "#3a3d6e", border: "1px solid #C8C8E0" }
+                      }
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <p className="text-base leading-relaxed text-slate-700 mb-4">
-              {lang === "en" ? (
-                <>
-                  Hi, I&apos;m <strong className="text-slate-900">Collin Jin</strong>. Just a couple of years ago, I was exactly where you are—DIYing my entire application process for summer programs and colleges. That hustle paid off: I became an alum of{" "}
-                  <Cred gold>UCSB RMP</Cred> and <Cred gold>SRA</Cred>, got admitted to{" "}
-                  <Cred>Harvey Mudd</Cred>, and am currently pursuing a dual degree in Electrical Engineering and Computer Science at{" "}
-                  <Cred>Northwestern — McCormick School of Engineering</Cred>.
-                </>
-              ) : (
-                <>
-                  大家好，我是 <strong className="text-slate-900">Collin Jin</strong>。就在几年前，我和你一样——自己摸索着申请暑期项目和大学的全流程。那段努力没有白费：我成为了{" "}
-                  <Cred gold>UCSB RMP</Cred> 和 <Cred gold>SRA</Cred> 的校友，被{" "}
-                  <Cred>Harvey Mudd</Cred> 录取，目前正在{" "}
-                  <Cred>西北大学麦考密克工程学院</Cred> 攻读电气工程与计算机科学双学位。
-                </>
-              )}
-            </p>
-            <p className="text-base leading-relaxed text-slate-700">
-              {t(copy.founderP2)}
-            </p>
+            {/* Typing message body */}
+            <div className="px-8 py-6">
+              <div
+                className="rounded-2xl p-5 text-sm leading-relaxed"
+                style={{
+                  background: "#F8F7FD",
+                  border: "1px solid #E8E7F5",
+                  color: "#374151",
+                  minHeight: "7rem",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {typedText}
+                {/* Blinking cursor */}
+                {!typingDone && (
+                  <span
+                    className="inline-block w-0.5 h-4 ml-0.5 rounded-sm align-text-bottom"
+                    style={{
+                      background: "var(--color-brand-500)",
+                      animation: "cursorBlink 0.8s ease-in-out infinite",
+                    }}
+                  />
+                )}
+                {/* Idle cursor after typing finishes */}
+                {typingDone && (
+                  <span
+                    className="inline-block w-0.5 h-4 ml-0.5 rounded-sm align-text-bottom opacity-0"
+                    style={{ background: "var(--color-brand-500)" }}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </section>
