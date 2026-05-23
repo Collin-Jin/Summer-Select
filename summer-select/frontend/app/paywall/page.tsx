@@ -381,7 +381,7 @@ export default function PaywallPage() {
             <>
               解锁你的梦想{" "}
               <span style={{ color: "var(--color-brand-500)" }}>暑期项目</span>{" "}
-              <span style={{ color: "var(--color-brand-accent)" }}>· SUMMER SELECT</span>
+              <span style={{ color: "var(--color-brand-accent)" }}>SUMMER SELECT</span>
             </>
           )}
         </h1>
