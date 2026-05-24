@@ -5,16 +5,32 @@ import { useRouter } from "next/navigation";
 
 /**
  * Invisible client component mounted inside the dashboard layout.
- * Calls router.refresh() on a fixed interval, which re-runs the server
- * layout and triggers the ss_sid vs profiles.active_session_id check.
- * This ensures a logged-in user is kicked out within `intervalMs` even
- * if they are idle and haven't navigated to a new page.
+ * Polls /api/session-validate every `intervalMs` milliseconds. If the
+ * server reports the ss_sid cookie no longer matches the active session
+ * in the database (i.e. another device has logged in), the client
+ * navigates to /login. Using a fetch + client-side push avoids the
+ * crash that occurs when redirect() is called inside a server component
+ * triggered by router.refresh().
  */
 export function SessionWatcher({ intervalMs = 60_000 }: { intervalMs?: number }) {
   const router = useRouter();
 
   useEffect(() => {
-    const id = setInterval(() => router.refresh(), intervalMs);
+    const check = async () => {
+      try {
+        const res = await fetch("/api/session-validate");
+        const data: { valid: boolean; reason?: string } = await res.json();
+        if (!data.valid) {
+          router.push(
+            data.reason ? `/login?reason=${data.reason}` : "/login"
+          );
+        }
+      } catch {
+        // Network error — fail open, do not log the user out.
+      }
+    };
+
+    const id = setInterval(check, intervalMs);
     return () => clearInterval(id);
   }, [router, intervalMs]);
 
