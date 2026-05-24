@@ -57,8 +57,8 @@ export default async function DashboardLayout({
     cookieSessionId !== profile.active_session_id
   ) {
     // Another device has logged in and taken over this account.
-    // Sign out the current session and send to login with an explanatory message.
-    await supabase.auth.signOut();
+    // Sign out locally only — global scope would also kill the new device's session.
+    await supabase.auth.signOut({ scope: "local" });
     redirect("/login?reason=duplicate_session");
   }
 
