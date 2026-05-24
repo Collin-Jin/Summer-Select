@@ -57,9 +57,10 @@ export default async function DashboardLayout({
     cookieSessionId !== profile.active_session_id
   ) {
     // Another device has logged in and taken over this account.
-    // Sign out locally only — global scope would also kill the new device's session.
-    await supabase.auth.signOut({ scope: "local" });
-    redirect("/login?reason=duplicate_session");
+    // Redirect to the force-signout Route Handler which calls signOut legally.
+    // Calling signOut() directly here would crash because cookies().set() is
+    // forbidden in Server Components in Next.js 15+.
+    redirect("/api/auth/force-signout?reason=duplicate_session");
   }
 
   const rawLang = cookieStore.get("lang")?.value;

@@ -21,9 +21,9 @@ export function SessionWatcher({ intervalMs = 60_000 }: { intervalMs?: number })
         const res = await fetch("/api/session-validate");
         const data: { valid: boolean; reason?: string } = await res.json();
         if (!data.valid) {
-          router.push(
-            data.reason ? `/login?reason=${data.reason}` : "/login"
-          );
+          // Hard navigation to the force-signout Route Handler so the
+          // signOut + cookie clearing happens in the correct context.
+          window.location.href = `/api/auth/force-signout?reason=${data.reason ?? ""}`;
         }
       } catch {
         // Network error — fail open, do not log the user out.
