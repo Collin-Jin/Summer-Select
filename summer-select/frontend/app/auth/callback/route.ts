@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+import { randomUUID } from "crypto";
 
 /**
  * Auth callback route — exchanges Supabase's PKCE `code` for a session,
@@ -15,8 +17,24 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await supabaseServer();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error && data.user) {
+      // Register this device as the active session so single-device
+      // enforcement applies to users arriving via email links too.
+      const sessionId = randomUUID();
+      await supabase
+        .from("profiles")
+        .update({ active_session_id: sessionId })
+        .eq("id", data.user.id);
+
+      const cookieStore = await cookies();
+      cookieStore.set("ss_sid", sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+      });
+
       return NextResponse.redirect(new URL(next, origin));
     }
   }

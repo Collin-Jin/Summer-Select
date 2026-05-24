@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { SessionWatcher } from "./_components/SessionWatcher";
 import type { Lang } from "@/lib/database.types";
 import type { Metadata } from "next";
 
@@ -67,6 +68,7 @@ export default async function DashboardLayout({
 
   return (
     <LanguageProvider initialLang={initialLang}>
+      <SessionWatcher />
       <AppLayout userEmail={user.email}>{children}</AppLayout>
     </LanguageProvider>
   );
