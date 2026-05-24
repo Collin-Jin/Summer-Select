@@ -176,7 +176,6 @@ export interface Database {
           prompt_zh: string | null;
           essay: string;
           essay_zh: string | null;
-          word_count: number | null;
           year: number | null;
           outcome: string | null;
           sort_order: number | null;
@@ -192,7 +191,6 @@ export interface Database {
           prompt_zh?: string | null;
           essay: string;
           essay_zh?: string | null;
-          word_count?: number | null;
           year?: number | null;
           outcome?: string | null;
           sort_order?: number | null;
@@ -253,7 +251,6 @@ export interface Database {
           program_slug: string;
           program_name: string;
           essay: string;
-          word_count: number | null;
           year: number | null;
           outcome: string | null;
           sort_order: number | null;
@@ -267,7 +264,6 @@ export interface Database {
           program_slug: string;
           program_name: string;
           essay: string;
-          word_count?: number | null;
           year?: number | null;
           outcome?: string | null;
           sort_order?: number | null;

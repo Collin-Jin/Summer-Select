@@ -229,12 +229,6 @@ export function EssaysClientView({
                                   {essay.year}
                                 </Badge>
                               )}
-                              {essay.word_count && (
-                                <Badge variant="outline" size="sm">
-                                  ~{essay.word_count}{" "}
-                                  {lang === "zh" ? "词" : "words"}
-                                </Badge>
-                              )}
                             </div>
                           </div>
                           {isOpen ? (
