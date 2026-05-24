@@ -61,19 +61,64 @@ function DuplicateSessionAlert() {
 function DeviceLockedAlert({ onDismiss }: { onDismiss: () => void }) {
   return (
     <div
-      className="mb-5 rounded-xl border overflow-hidden text-sm"
-      style={{ borderColor: "#E4E4F0" }}
+      className="mb-5 rounded-2xl overflow-hidden text-sm"
+      style={{
+        border: "1.5px solid #E4E4F0",
+        boxShadow: "0 4px 24px rgba(91,95,151,0.10)",
+      }}
     >
-      <div className="px-4 py-3" style={{ background: "#EEEEF7" }}>
-        <p className="font-bold mb-0.5" style={{ color: "var(--color-brand-700)" }}>
-          This account is registered to another device.
+      {/* Header */}
+      <div
+        className="px-5 pt-5 pb-4"
+        style={{ background: "linear-gradient(135deg, #3a3d6e 0%, #5B5F97 100%)" }}
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className="flex-shrink-0 h-8 w-8 rounded-lg flex items-center justify-center mt-0.5"
+            style={{ background: "rgba(255,255,255,0.15)" }}
+          >
+            <span style={{ fontSize: 15 }}>⚠️</span>
+          </div>
+          <div>
+            <p
+              className="font-extrabold text-base leading-snug"
+              style={{ color: "#FFFFFB", fontFamily: "var(--font-syne, sans-serif)" }}
+            >
+              Account Access Restricted
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
+              This account is already registered to another device.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Policy reminder */}
+      <div
+        className="px-5 py-4"
+        style={{ background: "#FFF8EC", borderBottom: "1px solid #FFE4A0" }}
+      >
+        <p
+          className="text-xs font-bold uppercase tracking-wider mb-2"
+          style={{ color: "#92600A" }}
+        >
+          Important Reminder
         </p>
-        <p style={{ color: "var(--color-brand-600)" }}>
-          To transfer access to this device, contact us:
+        <p className="leading-relaxed" style={{ color: "#7A4F00", fontSize: 13 }}>
+          Sharing your account login credentials is <strong>strictly prohibited</strong>.
+          Any further attempts to share account access may result in the{" "}
+          <strong>suspension or termination</strong> of your access to our services,
+          without refund. We appreciate your cooperation and ask that you refrain
+          from doing this again.
         </p>
       </div>
-      <div className="px-4 py-3 flex flex-col gap-2" style={{ background: "#FFFFFB" }}>
-        <div className="flex items-center gap-2 text-slate-600">
+
+      {/* Contact + dismiss */}
+      <div className="px-5 py-4 flex flex-col gap-2.5" style={{ background: "#FFFFFB" }}>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          To transfer access to this device, contact:
+        </p>
+        <div className="flex items-center gap-2" style={{ color: "#3a3d6e" }}>
           <MessageCircle className="h-4 w-4 flex-shrink-0" style={{ color: "var(--color-brand-500)" }} />
           <span>WeChat: <strong>collinxuezhang</strong></span>
         </div>
@@ -81,7 +126,8 @@ function DeviceLockedAlert({ onDismiss }: { onDismiss: () => void }) {
           href="https://instagram.com/collin.jin"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-slate-600 hover:underline underline-offset-2"
+          className="flex items-center gap-2 hover:underline underline-offset-2"
+          style={{ color: "#3a3d6e" }}
         >
           <ExternalLink className="h-4 w-4 flex-shrink-0" style={{ color: "var(--color-brand-500)" }} />
           <span>Instagram: <strong>@collin.jin</strong></span>
@@ -89,7 +135,7 @@ function DeviceLockedAlert({ onDismiss }: { onDismiss: () => void }) {
         <button
           type="button"
           onClick={onDismiss}
-          className="mt-1 text-xs text-slate-400 hover:text-slate-600 transition-colors text-left"
+          className="mt-1 text-xs text-slate-400 hover:text-slate-500 transition-colors text-left"
         >
           Dismiss
         </button>
