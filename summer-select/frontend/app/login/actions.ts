@@ -53,6 +53,25 @@ export async function handleSignIn(formData: FormData) {
   }
 
   if (data.user) {
+    const cookieStore = await cookies();
+    const cookieSessionId = cookieStore.get("ss_sid")?.value;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("active_session_id")
+      .eq("id", data.user.id)
+      .single();
+
+    const registeredId = profile?.active_session_id;
+
+    if (registeredId && cookieSessionId !== registeredId) {
+      // A different device already holds the registration for this account.
+      // Sign out locally (legal in a Server Action) and block the login.
+      await supabase.auth.signOut({ scope: "local" });
+      return { error: "device_locked" as const };
+    }
+
+    // First login (registeredId is null) or the same device reconnecting.
     await writeSessionId(supabase, data.user.id);
   }
 

@@ -11,7 +11,7 @@ import {
 } from "./actions";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Mail, ArrowLeft, RefreshCw, KeyRound, LogIn } from "lucide-react";
+import { Mail, ArrowLeft, RefreshCw, KeyRound, LogIn, MessageCircle, ExternalLink } from "lucide-react";
 
 type Tab = "signin" | "signup";
 type SignUpState = "idle" | { stage: "verify_email"; email: string };
@@ -54,6 +54,46 @@ function DuplicateSessionAlert() {
       }}
     >
       Your account was signed in on another device. Please sign in again to continue.
+    </div>
+  );
+}
+
+function DeviceLockedAlert({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div
+      className="mb-5 rounded-xl border overflow-hidden text-sm"
+      style={{ borderColor: "#E4E4F0" }}
+    >
+      <div className="px-4 py-3" style={{ background: "#EEEEF7" }}>
+        <p className="font-bold mb-0.5" style={{ color: "var(--color-brand-700)" }}>
+          This account is registered to another device.
+        </p>
+        <p style={{ color: "var(--color-brand-600)" }}>
+          To transfer access to this device, contact us:
+        </p>
+      </div>
+      <div className="px-4 py-3 flex flex-col gap-2" style={{ background: "#FFFFFB" }}>
+        <div className="flex items-center gap-2 text-slate-600">
+          <MessageCircle className="h-4 w-4 flex-shrink-0" style={{ color: "var(--color-brand-500)" }} />
+          <span>WeChat: <strong>collinxuezhang</strong></span>
+        </div>
+        <a
+          href="https://instagram.com/collin.jin"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-slate-600 hover:underline underline-offset-2"
+        >
+          <ExternalLink className="h-4 w-4 flex-shrink-0" style={{ color: "var(--color-brand-500)" }} />
+          <span>Instagram: <strong>@collin.jin</strong></span>
+        </a>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="mt-1 text-xs text-slate-400 hover:text-slate-600 transition-colors text-left"
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
   );
 }
@@ -108,6 +148,7 @@ function AlreadyRegisteredCallout({
 export default function LoginPage() {
   const [tab, setTab] = useState<Tab>("signin");
   const [error, setError] = useState<string | null>(null);
+  const [deviceLocked, setDeviceLocked] = useState(false);
   const [duplicateEmail, setDuplicateEmail] = useState<string | null>(null);
   const [signUpState, setSignUpState] = useState<SignUpState>("idle");
   const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -120,6 +161,7 @@ export default function LoginPage() {
   function switchToSignIn(prefillEmail?: string) {
     setTab("signin");
     setError(null);
+    setDeviceLocked(false);
     setDuplicateEmail(null);
     if (prefillEmail) setForgotEmail(prefillEmail);
   }
@@ -395,6 +437,7 @@ export default function LoginPage() {
                     onClick={() => {
                       setTab(t);
                       setError(null);
+                      setDeviceLocked(false);
                       setDuplicateEmail(null);
                     }}
                     className={clsx(
@@ -420,6 +463,11 @@ export default function LoginPage() {
                   <DuplicateSessionAlert />
                 </Suspense>
 
+                {/* Device locked callout */}
+                {deviceLocked && (
+                  <DeviceLockedAlert onDismiss={() => setDeviceLocked(false)} />
+                )}
+
                 {/* Duplicate-email callout */}
                 {duplicateEmail && (
                   <AlreadyRegisteredCallout
@@ -439,10 +487,15 @@ export default function LoginPage() {
                   className="space-y-5"
                   action={async (formData) => {
                     setError(null);
+                    setDeviceLocked(false);
                     setDuplicateEmail(null);
                     if (tab === "signin") {
                       const result = await handleSignIn(formData);
-                      if (result?.error) setError(result.error);
+                      if (result?.error === "device_locked") {
+                        setDeviceLocked(true);
+                      } else if (result?.error) {
+                        setError(result.error);
+                      }
                     } else {
                       const result = await handleSignUp(formData);
                       if (result && "error" in result) {
