@@ -186,7 +186,7 @@ const copy = {
     { en: "Bilingual content (EN / 中文)", zh: "中英双语内容" },
     { en: "Advanced search & filters", zh: "高级搜索与筛选" },
     { en: "Save programs to My List", zh: "收藏项目到我的列表" },
-    { en: "Example essays (5 programs)", zh: "范文参考（5 个项目）" },
+    { en: "Example essays (60+ essays)", zh: "范文参考（60+ 篇）" },
     { en: "Interview Q&A guides", zh: "面试问答指南" },
   ],
   contactH2:     { en: "Ready to get full access?", zh: "准备好获取完整访问权限了吗？" },
