@@ -280,8 +280,10 @@ export default function LoginPage() {
                   {signUpState.email}
                 </p>
                 <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                  Click the link in the email to activate your account, then sign in.
-                  Check your spam folder if you don&apos;t see it.
+                  Click the link in the email to activate your account, then sign in.{" "}
+                  <strong className="font-semibold text-slate-600">
+                    Check your spam folder if you don&apos;t see it.
+                  </strong>
                 </p>
               </div>
 
@@ -455,7 +457,10 @@ export default function LoginPage() {
                   {forgotEmail}
                 </p>
                 <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                  you&apos;ll receive a password reset link shortly. Check your spam folder if you don&apos;t see it.
+                  you&apos;ll receive a password reset link shortly.{" "}
+                  <strong className="font-semibold text-slate-600">
+                    Check your spam folder if you don&apos;t see it.
+                  </strong>
                 </p>
               </div>
 
