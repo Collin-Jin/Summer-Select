@@ -281,6 +281,7 @@ export default function LoginPage() {
                 </p>
                 <p className="text-sm text-slate-500 mt-2 leading-relaxed">
                   Click the link in the email to activate your account, then sign in.
+                  Check your spam folder if you don&apos;t see it.
                 </p>
               </div>
 
