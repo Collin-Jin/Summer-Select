@@ -156,14 +156,20 @@ export function InterviewsClientView({
             >
               {lang === "zh" ? "面试形式说明" : "Interview Format"}
             </p>
-            <p
-              className="text-sm leading-relaxed"
+            <div
+              className="text-sm leading-relaxed space-y-3"
               style={{ color: "var(--color-brand-700, #3a3d6e)" }}
             >
-              {lang === "zh" && activeGuide.format_note_zh
+              {(lang === "zh" && activeGuide.format_note_zh
                 ? activeGuide.format_note_zh
-                : activeGuide.format_note}
-            </p>
+                : activeGuide.format_note ?? ""
+              )
+                .split("\n\n")
+                .filter((para) => para.trim())
+                .map((para, i) => (
+                  <p key={i}>{para.trim()}</p>
+                ))}
+            </div>
           </div>
         )}
 
