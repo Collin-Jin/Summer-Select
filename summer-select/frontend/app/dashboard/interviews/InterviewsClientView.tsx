@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Lightbulb,
 } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { ProtectedContent } from "@/components/ui/ProtectedContent";
 import { useLanguage } from "@/context/LanguageContext";
@@ -90,8 +89,8 @@ export function InterviewsClientView({
           style={{ background: "#F0EFF8", borderColor: "#C4C2E0", color: "#3D3B6B" }}
         >
           {lang === "zh"
-            ? "每道题包含攻略提示和高质量范例答案，助你做好充分的面试准备。内容受版权保护，禁止复制或传播。"
-            : "Each question includes strategy tips and a sample strong answer. Content is protected — copying or sharing is prohibited."}
+            ? "每道题包含攻略提示，助你做好充分的面试准备。内容受版权保护，禁止复制或传播。"
+            : "Each question includes strategy tips to help you prepare. Content is protected — copying or sharing is prohibited."}
         </p>
       </div>
 
@@ -190,7 +189,6 @@ export function InterviewsClientView({
                 {questions.map((qa, idx) => {
                   const isOpen = openIds.has(qa.id);
                   const hasTips = qa.tips || qa.tips_zh;
-                  const hasSample = qa.sample_answer || qa.sample_answer_zh;
                   return (
                     <Card key={qa.id} outlined className="overflow-hidden">
                       <button
@@ -220,65 +218,32 @@ export function InterviewsClientView({
                         )}
                       </button>
 
-                      {isOpen && (hasTips || hasSample) && (
-                        <div className="px-5 pb-6 border-t border-slate-100 space-y-5">
-                          {/* Tips */}
-                          {hasTips && (
-                            <ProtectedContent>
-                              <div
-                                className="mt-4 p-4 rounded-xl border"
-                                style={{
-                                  background: "#FFF8EC",
-                                  borderColor: "#FFE4A0",
-                                }}
-                              >
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Lightbulb className="h-4 w-4" style={{ color: "#C07A00" }} />
-                                  <p
-                                    className="text-xs font-semibold uppercase tracking-wider"
-                                    style={{ color: "#92600A" }}
-                                  >
-                                    {lang === "zh" ? "攻略提示" : "Strategy Tips"}
-                                  </p>
-                                </div>
-                                <p className="text-sm leading-relaxed" style={{ color: "#6B4800" }}>
-                                  {lang === "zh" && qa.tips_zh
-                                    ? qa.tips_zh
-                                    : qa.tips}
+                      {isOpen && hasTips && (
+                        <div className="px-5 pb-6 border-t border-slate-100">
+                          <ProtectedContent>
+                            <div
+                              className="mt-4 p-4 rounded-xl border"
+                              style={{
+                                background: "#FFF8EC",
+                                borderColor: "#FFE4A0",
+                              }}
+                            >
+                              <div className="flex items-center gap-2 mb-2">
+                                <Lightbulb className="h-4 w-4" style={{ color: "#C07A00" }} />
+                                <p
+                                  className="text-xs font-semibold uppercase tracking-wider"
+                                  style={{ color: "#92600A" }}
+                                >
+                                  {lang === "zh" ? "攻略提示" : "Strategy Tips"}
                                 </p>
                               </div>
-                            </ProtectedContent>
-                          )}
-
-                          {/* Sample answer */}
-                          {hasSample && (
-                            <div>
-                              <div className="flex items-center gap-2 mb-3">
-                                <Badge variant="success" size="sm">
-                                  {lang === "zh"
-                                    ? "优秀范例答案"
-                                    : "Sample Strong Answer"}
-                                </Badge>
-                              </div>
-                              <ProtectedContent>
-                                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                                  {(lang === "zh" && qa.sample_answer_zh
-                                    ? qa.sample_answer_zh
-                                    : qa.sample_answer ?? ""
-                                  )
-                                    .split("\n\n")
-                                    .map((para, i) => (
-                                      <p
-                                        key={i}
-                                        className="text-sm text-slate-700 leading-relaxed mb-3 last:mb-0"
-                                      >
-                                        {para}
-                                      </p>
-                                    ))}
-                                </div>
-                              </ProtectedContent>
+                              <p className="text-sm leading-relaxed" style={{ color: "#6B4800" }}>
+                                {lang === "zh" && qa.tips_zh
+                                  ? qa.tips_zh
+                                  : qa.tips}
+                              </p>
                             </div>
-                          )}
+                          </ProtectedContent>
                         </div>
                       )}
                     </Card>

@@ -323,8 +323,6 @@ export interface Database {
           question_zh: string | null;
           tips: string | null;
           tips_zh: string | null;
-          sample_answer: string | null;
-          sample_answer_zh: string | null;
           category: string | null;
           sort_order: number | null;
           is_published: boolean | null;
@@ -337,8 +335,6 @@ export interface Database {
           question_zh?: string | null;
           tips?: string | null;
           tips_zh?: string | null;
-          sample_answer?: string | null;
-          sample_answer_zh?: string | null;
           category?: string | null;
           sort_order?: number | null;
           is_published?: boolean | null;
