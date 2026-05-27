@@ -4,6 +4,10 @@ import { supabaseServer } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
+import {
+  DEVICE_SESSION_COOKIE,
+  deviceSessionCookieOptions,
+} from "@/lib/session";
 
 function getAuthFields(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
@@ -27,13 +31,7 @@ async function writeSessionId(supabase: Awaited<ReturnType<typeof supabaseServer
 
   // Set as HttpOnly cookie so the dashboard layout can verify it
   const cookieStore = await cookies();
-  cookieStore.set("ss_sid", sessionId, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    // Expire with the browser session (no maxAge = session cookie)
-  });
+  cookieStore.set(DEVICE_SESSION_COOKIE, sessionId, deviceSessionCookieOptions());
 }
 
 export async function handleSignIn(formData: FormData) {
@@ -54,7 +52,7 @@ export async function handleSignIn(formData: FormData) {
 
   if (data.user) {
     const cookieStore = await cookies();
-    const cookieSessionId = cookieStore.get("ss_sid")?.value;
+    const cookieSessionId = cookieStore.get(DEVICE_SESSION_COOKIE)?.value;
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -65,13 +63,12 @@ export async function handleSignIn(formData: FormData) {
     const registeredId = profile?.active_session_id;
 
     if (registeredId && cookieSessionId !== registeredId) {
-      // A different device already holds the registration for this account.
-      // Sign out locally (legal in a Server Action) and block the login.
+      // Registered device cookie missing or from another browser — block login.
       await supabase.auth.signOut({ scope: "local" });
       return { error: "device_locked" as const };
     }
 
-    // First login (registeredId is null) or the same device reconnecting.
+    // First login, or same registered device reconnecting with a matching cookie.
     await writeSessionId(supabase, data.user.id);
   }
 

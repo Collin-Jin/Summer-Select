@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
+import {
+  DEVICE_SESSION_COOKIE,
+  deviceSessionCookieOptions,
+} from "@/lib/session";
 
 /**
  * Auth callback route — exchanges Supabase's PKCE `code` for a session,
@@ -28,12 +32,7 @@ export async function GET(request: Request) {
         .eq("id", data.user.id);
 
       const cookieStore = await cookies();
-      cookieStore.set("ss_sid", sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-      });
+      cookieStore.set(DEVICE_SESSION_COOKIE, sessionId, deviceSessionCookieOptions());
 
       return NextResponse.redirect(new URL(next, origin));
     }
