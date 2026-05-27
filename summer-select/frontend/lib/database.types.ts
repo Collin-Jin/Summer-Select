@@ -81,8 +81,6 @@ export interface Database {
           has_interview: boolean | null;
 
           // ── Proprietary Analysis (The "Collin Index") ─────────────────
-          difficulty_level_en: string | null;
-          difficulty_level_zh: string | null;
           /** Integer score 1–10. CHECK constraint enforced at DB level. */
           collin_rec_index: number | null;
           collin_rationale_en: string | null;
@@ -128,8 +126,6 @@ export interface Database {
           essays_required_en?: string | null;
           essays_required_zh?: string | null;
           has_interview?: boolean | null;
-          difficulty_level_en?: string | null;
-          difficulty_level_zh?: string | null;
           collin_rec_index?: number | null;
           collin_rationale_en?: string | null;
           collin_rationale_zh?: string | null;

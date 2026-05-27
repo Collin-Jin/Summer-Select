@@ -8,6 +8,7 @@ import type { Lang, SummerProgram } from "@/lib/database.types";
 import { Badge, categoryVariant, deadlineTierVariant } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { CollinIndexBadge } from "@/components/programs/CollinIndexBadge";
+import { getCollinSelectivityTier } from "@/utils/collinIndex";
 import { ProgramDetailFavoriteButton } from "./ProgramDetailFavoriteButton";
 import {
   formatProgramDate,
@@ -144,7 +145,6 @@ export default async function ProgramDetailPage({ params }: Props) {
   const city = l("location_city");
   const category = l("primary_category");
   const format = l("format");
-  const difficultyLevel = l("difficulty_level");
   const rationale = l("collin_rationale");
   const strategy = l("collin_strategy");
   const essaysText = l("essays_required");
@@ -153,6 +153,8 @@ export default async function ProgramDetailPage({ params }: Props) {
       ? program.offered_disciplines_zh
       : program.offered_disciplines_en
   ) ?? program.offered_disciplines_en;
+
+  const selectivityTier = getCollinSelectivityTier(program.collin_rec_index, lang);
 
   const location = [city, program.location_state].filter(Boolean).join(", ");
   const deadline = program.regular_deadline || program.priority_deadline;
@@ -296,12 +298,12 @@ export default async function ProgramDetailPage({ params }: Props) {
               {lang === "zh" ? "专属申请分析" : "Proprietary Application Analysis"}
             </h2>
           </div>
-          {difficultyLevel && (
+          {selectivityTier && (
             <span
               className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider"
               style={{ background: "rgba(255,255,255,0.15)", color: "#FFFFFB" }}
             >
-              {difficultyLevel}
+              {selectivityTier}
             </span>
           )}
         </div>
