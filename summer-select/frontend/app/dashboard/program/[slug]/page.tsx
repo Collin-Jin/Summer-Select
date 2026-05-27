@@ -431,9 +431,23 @@ export default async function ProgramDetailPage({ params }: Props) {
               value={formatStipend(program.is_paid_stipend, program.stipend_amount)}
             />
           </Card>
+
+          {/* Disciplines */}
+          {disciplines && disciplines.length > 0 && (
+            <Card className="p-6 border-l-[3px] [border-left-color:var(--color-brand-rose)]">
+              <SectionHeader title={lang === "zh" ? "研究方向" : "Offered Disciplines"} />
+              <div className="flex flex-wrap gap-2">
+                {disciplines.map((d) => (
+                  <Badge key={d} variant="default" size="md">
+                    {d}
+                  </Badge>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
 
-        {/* RIGHT column: Requirements & Selectivity + Disciplines */}
+        {/* RIGHT column: Requirements & Selectivity */}
         <div className="flex flex-col gap-6 animate-fade-in-up delay-300">
           {/* Requirements */}
           <Card className="p-6 border-l-[3px] [border-left-color:var(--color-brand-coral)]">
@@ -503,20 +517,6 @@ export default async function ProgramDetailPage({ params }: Props) {
               </div>
             )}
           </Card>
-
-          {/* Disciplines */}
-          {disciplines && disciplines.length > 0 && (
-            <Card className="p-6 border-l-[3px] [border-left-color:var(--color-brand-rose)]">
-              <SectionHeader title={lang === "zh" ? "研究方向" : "Offered Disciplines"} />
-              <div className="flex flex-wrap gap-2">
-                {disciplines.map((d) => (
-                  <Badge key={d} variant="default" size="md">
-                    {d}
-                  </Badge>
-                ))}
-              </div>
-            </Card>
-          )}
         </div>
       </div>
     </div>
