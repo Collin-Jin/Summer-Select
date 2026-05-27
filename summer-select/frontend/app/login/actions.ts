@@ -56,20 +56,24 @@ export async function handleSignIn(formData: FormData) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("active_session_id")
+      .select("active_session_id, enforce_device_lock")
       .eq("id", data.user.id)
       .single();
 
-    const registeredId = profile?.active_session_id;
+    const deviceLockEnabled = profile?.enforce_device_lock !== false;
 
-    if (registeredId && cookieSessionId !== registeredId) {
-      // Registered device cookie missing or from another browser — block login.
-      await supabase.auth.signOut({ scope: "local" });
-      return { error: "device_locked" as const };
+    if (deviceLockEnabled) {
+      const registeredId = profile?.active_session_id;
+
+      if (registeredId && cookieSessionId !== registeredId) {
+        // Registered device cookie missing or from another browser — block login.
+        await supabase.auth.signOut({ scope: "local" });
+        return { error: "device_locked" as const };
+      }
+
+      // First login, or same registered device reconnecting with a matching cookie.
+      await writeSessionId(supabase, data.user.id);
     }
-
-    // First login, or same registered device reconnecting with a matching cookie.
-    await writeSessionId(supabase, data.user.id);
   }
 
   redirect("/dashboard");
@@ -110,7 +114,15 @@ export async function handleSignUp(formData: FormData) {
   }
 
   if (data.user) {
-    await writeSessionId(supabase, data.user.id);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("enforce_device_lock")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profile?.enforce_device_lock !== false) {
+      await writeSessionId(supabase, data.user.id);
+    }
   }
 
   redirect("/dashboard");

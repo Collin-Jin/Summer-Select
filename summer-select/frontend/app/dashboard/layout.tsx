@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { SessionWatcher } from "./_components/SessionWatcher";
+import { DEVICE_SESSION_COOKIE } from "@/lib/session";
 import type { Lang } from "@/lib/database.types";
 import type { Metadata } from "next";
 
@@ -40,7 +41,7 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_paid, active_session_id")
+    .select("is_paid, active_session_id, enforce_device_lock")
     .eq("id", user.id)
     .single();
 
@@ -48,11 +49,14 @@ export default async function DashboardLayout({
     redirect("/paywall");
   }
 
-  // Single-device enforcement: if we stored a session ID, verify it matches.
+  const deviceLockEnabled = profile.enforce_device_lock !== false;
+
+  // Single-device enforcement: skip when admin disabled it for this user.
   const cookieStore = await cookies();
-  const cookieSessionId = cookieStore.get("ss_sid")?.value;
+  const cookieSessionId = cookieStore.get(DEVICE_SESSION_COOKIE)?.value;
 
   if (
+    deviceLockEnabled &&
     profile.active_session_id &&
     cookieSessionId !== profile.active_session_id
   ) {
@@ -69,7 +73,7 @@ export default async function DashboardLayout({
 
   return (
     <LanguageProvider initialLang={initialLang}>
-      <SessionWatcher />
+      {deviceLockEnabled && <SessionWatcher />}
       <AppLayout userEmail={user.email}>{children}</AppLayout>
     </LanguageProvider>
   );

@@ -150,15 +150,18 @@ export interface Database {
           id: string;
           is_paid: boolean | null;
           active_session_id: string | null;
+          enforce_device_lock: boolean;
         };
         Insert: {
           id: string;
           is_paid?: boolean | null;
           active_session_id?: string | null;
+          enforce_device_lock?: boolean;
         };
         Update: {
           is_paid?: boolean | null;
           active_session_id?: string | null;
+          enforce_device_lock?: boolean;
         };
         Relationships: [];
       };

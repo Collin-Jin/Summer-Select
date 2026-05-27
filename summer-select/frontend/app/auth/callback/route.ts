@@ -23,16 +23,24 @@ export async function GET(request: Request) {
     const supabase = await supabaseServer();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data.user) {
-      // Register this device as the active session so single-device
-      // enforcement applies to users arriving via email links too.
-      const sessionId = randomUUID();
-      await supabase
+      const { data: profile } = await supabase
         .from("profiles")
-        .update({ active_session_id: sessionId })
-        .eq("id", data.user.id);
+        .select("enforce_device_lock")
+        .eq("id", data.user.id)
+        .single();
 
-      const cookieStore = await cookies();
-      cookieStore.set(DEVICE_SESSION_COOKIE, sessionId, deviceSessionCookieOptions());
+      if (profile?.enforce_device_lock !== false) {
+        // Register this device as the active session so single-device
+        // enforcement applies to users arriving via email links too.
+        const sessionId = randomUUID();
+        await supabase
+          .from("profiles")
+          .update({ active_session_id: sessionId })
+          .eq("id", data.user.id);
+
+        const cookieStore = await cookies();
+        cookieStore.set(DEVICE_SESSION_COOKIE, sessionId, deviceSessionCookieOptions());
+      }
 
       return NextResponse.redirect(new URL(next, origin));
     }

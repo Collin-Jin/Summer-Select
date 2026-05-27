@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { DEVICE_SESSION_COOKIE } from "@/lib/session";
 
 /**
  * Lightweight session-validation endpoint polled by SessionWatcher.
@@ -23,12 +24,16 @@ export async function GET() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("active_session_id")
+      .select("active_session_id, enforce_device_lock")
       .eq("id", user.id)
       .single();
 
+    if (profile?.enforce_device_lock === false) {
+      return NextResponse.json({ valid: true });
+    }
+
     const cookieStore = await cookies();
-    const cookieSessionId = cookieStore.get("ss_sid")?.value;
+    const cookieSessionId = cookieStore.get(DEVICE_SESSION_COOKIE)?.value;
 
     if (
       profile?.active_session_id &&
