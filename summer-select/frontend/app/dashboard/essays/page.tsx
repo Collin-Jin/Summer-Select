@@ -54,5 +54,15 @@ export default async function EssaysPage() {
     programDescriptions[p.slug] = p as ProgramDescription;
   }
 
-  return <EssaysClientView prompts={publishedPrompts} programDescriptions={programDescriptions} />;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return (
+    <EssaysClientView
+      prompts={publishedPrompts}
+      programDescriptions={programDescriptions}
+      userEmail={user?.email ?? null}
+    />
+  );
 }

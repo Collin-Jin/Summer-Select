@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, BookOpen, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { ProtectedContent } from "@/components/ui/ProtectedContent";
+import { WatermarkedContent } from "@/components/ui/WatermarkedContent";
 import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import type { SummerProgramPromptWithEssays } from "@/lib/database.types";
@@ -39,9 +39,11 @@ function buildProgramGroups(prompts: SummerProgramPromptWithEssays[]): ProgramGr
 export function EssaysClientView({
   prompts,
   programDescriptions,
+  userEmail,
 }: {
   prompts: SummerProgramPromptWithEssays[];
   programDescriptions: Record<string, ProgramDescription>;
+  userEmail: string | null;
 }) {
   const { lang } = useLanguage();
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
@@ -262,8 +264,8 @@ export function EssaysClientView({
                               </span>
                             </div>
 
-                            {/* Essay body — copy protected */}
-                            <ProtectedContent>
+                            {/* Essay body — copy protected + watermarked */}
+                            <WatermarkedContent userEmail={userEmail}>
                               <div className="prose prose-sm prose-slate max-w-none">
                                 {essay.essay
                                   .split("\n\n")
@@ -276,7 +278,7 @@ export function EssaysClientView({
                                     </p>
                                   ))}
                               </div>
-                            </ProtectedContent>
+                            </WatermarkedContent>
                           </div>
                         )}
                       </Card>
