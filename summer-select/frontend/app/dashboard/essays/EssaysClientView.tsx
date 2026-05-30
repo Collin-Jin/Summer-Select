@@ -65,7 +65,11 @@ export function EssaysClientView({
 
   if (!activeGroup) return null;
 
-  const totalEssays = activeGroup.prompts.reduce(
+  const programEssayCount = activeGroup.prompts.reduce(
+    (s, p) => s + p.program_example_essays.length,
+    0
+  );
+  const grandTotalEssays = prompts.reduce(
     (s, p) => s + p.program_example_essays.length,
     0
   );
@@ -87,8 +91,8 @@ export function EssaysClientView({
             </h1>
             <p className="text-sm text-slate-500">
               {lang === "zh"
-                ? `${groups.length} 个项目 · ${totalEssays} 篇文书`
-                : `${groups.length} programs · ${totalEssays} essays`}
+                ? `${groups.length} 个项目 · ${grandTotalEssays} 篇范文`
+                : `${groups.length} programs · ${grandTotalEssays} example essays`}
             </p>
           </div>
         </div>
@@ -137,6 +141,70 @@ export function EssaysClientView({
 
       {/* Active program content */}
       <section>
+        {/* Essay counts — program + grand total */}
+        <div
+          className="mb-5 flex items-stretch gap-3 rounded-2xl overflow-hidden border p-1"
+          style={{
+            borderColor: "var(--color-brand-100)",
+            background: "linear-gradient(135deg, var(--color-brand-50) 0%, #FFFFFB 100%)",
+            boxShadow: "0 4px 20px rgba(91,95,151,0.08)",
+          }}
+        >
+          <div className="flex-1 rounded-xl px-5 py-4" style={{ background: "rgba(255,255,255,0.85)" }}>
+            <p
+              className="text-[10px] font-bold uppercase tracking-widest mb-1"
+              style={{ color: "var(--color-brand-500)", letterSpacing: "0.14em" }}
+            >
+              {lang === "zh" ? "本项目" : "This program"}
+            </p>
+            <div className="flex items-baseline gap-2">
+              <span
+                className="text-3xl font-extrabold tabular-nums leading-none"
+                style={{ fontFamily: "var(--font-syne, sans-serif)", color: "var(--color-brand-600)" }}
+              >
+                {programEssayCount}
+              </span>
+              <span className="text-sm font-medium text-slate-500">
+                {lang === "zh"
+                  ? `篇范文 · ${activeGroup.prompts.length} 道题目`
+                  : `essay${programEssayCount !== 1 ? "s" : ""} · ${activeGroup.prompts.length} prompt${activeGroup.prompts.length !== 1 ? "s" : ""}`}
+              </span>
+            </div>
+          </div>
+
+          <div
+            className="w-px self-stretch my-3 flex-shrink-0"
+            style={{ background: "var(--color-brand-100)" }}
+          />
+
+          <div
+            className="flex-1 rounded-xl px-5 py-4 text-right"
+            style={{
+              background: "linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-brand-700) 100%)",
+            }}
+          >
+            <p
+              className="text-[10px] font-bold uppercase tracking-widest mb-1"
+              style={{ color: "var(--color-brand-accent)", letterSpacing: "0.14em" }}
+            >
+              {lang === "zh" ? "文库总计" : "Library total"}
+            </p>
+            <div className="flex items-baseline justify-end gap-2">
+              <span
+                className="text-3xl font-extrabold tabular-nums leading-none text-white"
+                style={{ fontFamily: "var(--font-syne, sans-serif)" }}
+              >
+                {grandTotalEssays}
+              </span>
+              <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>
+                {lang === "zh"
+                  ? `篇 · ${groups.length} 个项目`
+                  : `essays · ${groups.length} programs`}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Program header row */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold" style={{ color: "var(--color-brand-600)" }}>
