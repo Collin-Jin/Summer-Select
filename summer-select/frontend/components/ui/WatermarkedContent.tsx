@@ -12,8 +12,8 @@ function escapeXml(str: string) {
     .replace(/"/g, "&quot;");
 }
 
-const TILE_W = 272;
-const TILE_H = 170;
+const TILE_W = 210;
+const TILE_H = 132;
 
 interface WatermarkedContentProps {
   userEmail: string | null | undefined;
