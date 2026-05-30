@@ -194,7 +194,7 @@ function AlreadyRegisteredCallout({
         }}
       >
         <LogIn className="h-4 w-4" />
-        Sign in instead →
+        Sign in instead
       </button>
     </div>
   );
