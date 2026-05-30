@@ -12,6 +12,9 @@ function escapeXml(str: string) {
     .replace(/"/g, "&quot;");
 }
 
+const TILE_W = 272;
+const TILE_H = 170;
+
 interface WatermarkedContentProps {
   userEmail: string | null | undefined;
   children: ReactNode;
@@ -31,10 +34,14 @@ export function WatermarkedContent({
   const tileUrl = useMemo(() => {
     const emailLine = escapeXml(userEmail?.trim() || "Summer Select");
     const brandLine = escapeXml(brandLabel);
+    const tileW = TILE_W;
+    const tileH = TILE_H;
+    const cx = tileW / 2;
+    const cy = tileH / 2;
     const svg =
-      `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='200'>` +
-      `<text x='160' y='88' fill='rgba(91,95,151,0.13)' font-size='12' font-weight='500' font-family='system-ui,-apple-system,sans-serif' text-anchor='middle' transform='rotate(-24 160 100)'>${emailLine}</text>` +
-      `<text x='160' y='108' fill='rgba(91,95,151,0.10)' font-size='11' font-weight='600' font-family='system-ui,-apple-system,sans-serif' text-anchor='middle' transform='rotate(-24 160 100)'>${brandLine}</text>` +
+      `<svg xmlns='http://www.w3.org/2000/svg' width='${tileW}' height='${tileH}'>` +
+      `<text x='${cx}' y='${cy - 8}' fill='rgba(91,95,151,0.13)' font-size='12' font-weight='500' font-family='system-ui,-apple-system,sans-serif' text-anchor='middle' transform='rotate(-24 ${cx} ${cy})'>${emailLine}</text>` +
+      `<text x='${cx}' y='${cy + 10}' fill='rgba(91,95,151,0.10)' font-size='11' font-weight='600' font-family='system-ui,-apple-system,sans-serif' text-anchor='middle' transform='rotate(-24 ${cx} ${cy})'>${brandLine}</text>` +
       `</svg>`;
     return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
   }, [userEmail, brandLabel]);
@@ -47,7 +54,7 @@ export function WatermarkedContent({
         style={{
           backgroundImage: tileUrl,
           backgroundRepeat: "repeat",
-          backgroundSize: "320px 200px",
+          backgroundSize: `${TILE_W}px ${TILE_H}px`,
           zIndex: 1,
         }}
         aria-hidden="true"
