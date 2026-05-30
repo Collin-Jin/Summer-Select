@@ -42,9 +42,34 @@ Create a `.env.local` file in the `frontend/` directory:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_KEY=<your-publishable-anon-key>
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 > **Never** expose the `service_role` key in a client-side environment variable.
+
+For production, set `NEXT_PUBLIC_APP_URL` to your canonical site URL (e.g. `https://collinxuezhang.com`). Auth email redirects depend on this value.
+
+### Supabase Auth redirect URLs
+
+In **Supabase Dashboard → Authentication → URL Configuration**, set:
+
+| Setting | Value |
+|---|---|
+| **Site URL** | `https://collinxuezhang.com` (or your production URL) |
+| **Redirect URLs** | Add each of the following (plus local dev URLs): |
+
+```
+https://collinxuezhang.com/auth/callback
+https://collinxuezhang.com/auth/confirmed
+https://collinxuezhang.com/reset-password
+https://collinxuezhang.com/reset-password/success
+http://localhost:3000/auth/callback
+http://localhost:3000/auth/confirmed
+http://localhost:3000/reset-password
+http://localhost:3000/reset-password/success
+```
+
+Signup verification emails redirect to `/auth/callback?next=/auth/confirmed`. Password reset emails redirect to `/auth/callback?next=/reset-password`. These paths are set in `app/login/actions.ts` via `emailRedirectTo` and `redirectTo`.
 
 ### 3. Run the development server
 
@@ -156,17 +181,25 @@ frontend/
 ## Authentication & Access Control
 
 ```
-/login              → Public (Supabase Auth)
+/login                    → Public (Sign In / Sign Up, forgot password)
+/auth/callback            → PKCE code exchange (email verify + password reset links)
+/auth/confirmed           → Email verification success → Sign In
+/reset-password           → Set new password (after reset link)
+/reset-password/success   → Password updated confirmation → Sign In
     ↓ login success
-/dashboard/layout   → Checks: authenticated? → else /login
-                      Checks: profiles.is_paid? → else /paywall
+/dashboard/layout         → Checks: authenticated? → else /login
+                          → Checks: profiles.is_paid? → else /paywall
     ↓ paid user
-/dashboard          → Program directory
+/dashboard                → Program directory
 /dashboard/program/[slug]
 /dashboard/my-list
 /dashboard/essays
 /dashboard/interviews
 ```
+
+**Signup flow:** Create account (password + confirm password) → check inbox → click verify link → `/auth/confirmed` → Sign In.
+
+**Password reset flow:** Forgot password → reset link sent → click link → `/reset-password` → `/reset-password/success` → Sign In.
 
 Row-Level Security enforces the `is_paid` check at the database level — the `summer_programs` table RLS policy blocks unpaid users from reading any program data even if they bypass the UI redirect.
 

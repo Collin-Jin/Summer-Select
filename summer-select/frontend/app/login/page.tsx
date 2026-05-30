@@ -8,6 +8,7 @@ import {
   handleSignUp,
   handleResendVerification,
   handleForgotPassword,
+  handleResendPasswordReset,
 } from "./actions";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -20,15 +21,17 @@ type CardView = "auth" | "forgot_password" | "forgot_password_sent";
 function SubmitButton({
   label,
   pendingLabel,
+  disabled = false,
 }: {
   label: string;
   pendingLabel: string;
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       style={{
         background: "var(--color-brand-500)",
@@ -54,6 +57,16 @@ function DuplicateSessionAlert() {
       }}
     >
       Your account was signed in on another device. Please sign in again to continue.
+    </div>
+  );
+}
+
+function LinkExpiredAlert() {
+  const params = useSearchParams();
+  if (params.get("reason") !== "link_expired") return null;
+  return (
+    <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+      This link has expired or already been used. Request a new verification or reset email.
     </div>
   );
 }
@@ -203,6 +216,15 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotStatus, setForgotStatus] = useState<"idle" | "sending" | "error">("idle");
   const [forgotError, setForgotError] = useState<string | null>(null);
+  const [resetResendStatus, setResetResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [resetResendError, setResetResendError] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password, setPassword] = useState("");
+
+  const passwordMismatch =
+    tab === "signup" &&
+    confirmPassword.length > 0 &&
+    password !== confirmPassword;
 
   function switchToSignIn(prefillEmail?: string) {
     setTab("signin");
@@ -448,7 +470,7 @@ export default function LoginPage() {
                   <Mail className="h-7 w-7" style={{ color: "var(--color-brand-500)" }} />
                 </div>
                 <h2 className="text-xl font-bold mb-2" style={{ color: "var(--color-brand-700)" }}>
-                  Check your inbox
+                  Reset link sent
                 </h2>
                 <p className="text-sm text-slate-500 leading-relaxed">
                   If an account exists for
@@ -464,6 +486,51 @@ export default function LoginPage() {
                 </p>
               </div>
 
+              {resetResendStatus === "sent" && (
+                <div
+                  className="mb-4 px-4 py-3 rounded-xl border text-sm text-center"
+                  style={{ background: "#F0FDF4", borderColor: "#BBF7D0", color: "#166534" }}
+                >
+                  Reset link resent successfully.
+                </div>
+              )}
+              {resetResendStatus === "error" && resetResendError && (
+                <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-center text-red-700">
+                  {resetResendError}
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={resetResendStatus === "sending" || resetResendStatus === "sent"}
+                onClick={async () => {
+                  setResetResendStatus("sending");
+                  setResetResendError(null);
+                  const result = await handleResendPasswordReset(forgotEmail);
+                  if ("error" in result) {
+                    setResetResendStatus("error");
+                    setResetResendError(result.error ?? null);
+                  } else {
+                    setResetResendStatus("sent");
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed mb-4"
+                style={{
+                  background: "var(--color-brand-50)",
+                  color: "var(--color-brand-600)",
+                  border: "1.5px solid var(--color-brand-100)",
+                }}
+              >
+                <RefreshCw
+                  className={clsx("h-4 w-4", resetResendStatus === "sending" && "animate-spin")}
+                />
+                {resetResendStatus === "sending"
+                  ? "Sending…"
+                  : resetResendStatus === "sent"
+                  ? "Email Sent"
+                  : "Resend Reset Link"}
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -471,6 +538,8 @@ export default function LoginPage() {
                   setTab("signin");
                   setForgotStatus("idle");
                   setForgotError(null);
+                  setResetResendStatus("idle");
+                  setResetResendError(null);
                 }}
                 className="w-full flex items-center justify-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors"
               >
@@ -491,6 +560,8 @@ export default function LoginPage() {
                       setError(null);
                       setDeviceLocked(false);
                       setDuplicateEmail(null);
+                      setConfirmPassword("");
+                      setPassword("");
                     }}
                     className={clsx(
                       "flex-1 py-3.5 text-sm font-semibold transition-all focus-visible:outline-none"
@@ -513,6 +584,7 @@ export default function LoginPage() {
               <div className="p-8">
                 <Suspense>
                   <DuplicateSessionAlert />
+                  <LinkExpiredAlert />
                 </Suspense>
 
                 {/* Device locked callout */}
@@ -541,6 +613,10 @@ export default function LoginPage() {
                     setError(null);
                     setDeviceLocked(false);
                     setDuplicateEmail(null);
+                    if (tab === "signup" && passwordMismatch) {
+                      setError("Passwords do not match.");
+                      return;
+                    }
                     if (tab === "signin") {
                       const result = await handleSignIn(formData);
                       if (result?.error === "device_locked") {
@@ -620,6 +696,8 @@ export default function LoginPage() {
                       autoComplete={tab === "signin" ? "current-password" : "new-password"}
                       required
                       minLength={8}
+                      value={tab === "signup" ? password : undefined}
+                      onChange={tab === "signup" ? (e) => setPassword(e.target.value) : undefined}
                       className="w-full px-4 py-2.5 text-sm rounded-xl bg-white placeholder:text-slate-400 transition focus:outline-none"
                       style={{
                         border: "1.5px solid var(--color-brand-100)",
@@ -638,6 +716,50 @@ export default function LoginPage() {
                   </div>
 
                   {tab === "signup" && (
+                    <div>
+                      <label
+                        htmlFor="confirmPassword"
+                        className="block text-sm font-medium mb-1.5"
+                        style={{ color: "var(--color-brand-700)" }}
+                      >
+                        Confirm password
+                      </label>
+                      <input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        autoComplete="new-password"
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full px-4 py-2.5 text-sm rounded-xl bg-white placeholder:text-slate-400 transition focus:outline-none"
+                        style={{
+                          border: passwordMismatch
+                            ? "1.5px solid #f87171"
+                            : "1.5px solid var(--color-brand-100)",
+                          color: "var(--color-brand-700)",
+                        }}
+                        onFocus={(e) => {
+                          if (!passwordMismatch) {
+                            e.currentTarget.style.borderColor = "var(--color-brand-500)";
+                            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,95,151,0.12)";
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!passwordMismatch) {
+                            e.currentTarget.style.borderColor = "var(--color-brand-100)";
+                            e.currentTarget.style.boxShadow = "none";
+                          }
+                        }}
+                        placeholder="Re-enter your password"
+                      />
+                      {passwordMismatch && (
+                        <p className="mt-1 text-xs text-red-500">Passwords do not match.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {tab === "signup" && (
                     <p className="text-xs text-slate-400">
                       By creating an account you agree to our Terms of Service.
                       Access to the program directory requires a paid subscription.
@@ -647,10 +769,9 @@ export default function LoginPage() {
                   <SubmitButton
                     label={tab === "signin" ? "Sign In" : "Create Account"}
                     pendingLabel="Working…"
+                    disabled={tab === "signup" && passwordMismatch}
                   />
                 </form>
-
-                {/* Toggle tab link */}
                 <p className="mt-5 text-center text-sm text-slate-400">
                   {tab === "signin" ? (
                     <>
@@ -661,6 +782,8 @@ export default function LoginPage() {
                           setTab("signup");
                           setError(null);
                           setDuplicateEmail(null);
+                          setConfirmPassword("");
+                          setPassword("");
                         }}
                         className="font-semibold underline-offset-2 hover:underline"
                         style={{ color: "var(--color-brand-500)" }}
@@ -677,6 +800,8 @@ export default function LoginPage() {
                           setTab("signin");
                           setError(null);
                           setDuplicateEmail(null);
+                          setConfirmPassword("");
+                          setPassword("");
                         }}
                         className="font-semibold underline-offset-2 hover:underline"
                         style={{ color: "var(--color-brand-500)" }}

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/utils/supabase/client";
-import { KeyRound, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { KeyRound, Eye, EyeOff } from "lucide-react";
+import { AuthCardShell } from "@/components/auth/AuthCardShell";
 
 /**
  * Password reset page — reached after the user clicks the Supabase-sent
@@ -15,7 +16,7 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const mismatch = confirm.length > 0 && password !== confirm;
@@ -40,86 +41,34 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    setStatus("success");
-    setTimeout(() => router.push("/dashboard"), 2000);
+    router.push("/reset-password/success");
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-12"
-      style={{
-        background: "linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-brand-700) 60%, #2a1f5e 100%)",
-      }}
-    >
-      <div className="w-full max-w-md">
-        {/* Brand header */}
-        <div className="text-center mb-8">
-          <p
-            className="text-4xl font-extrabold tracking-tight leading-none uppercase"
-            style={{
-              fontFamily: "var(--font-syne, sans-serif)",
-              color: "#FFFFFB",
-              textShadow: "0 2px 20px rgba(0,0,0,0.25)",
-              letterSpacing: "0.05em",
-            }}
+    <AuthCardShell showBrandHeader={false}>
+      <div className="p-8">
+        <div className="text-center mb-6">
+          <div
+            className="inline-flex items-center justify-center h-14 w-14 rounded-2xl mb-4"
+            style={{ background: "var(--color-brand-50)" }}
           >
-            Summer Select
-          </p>
-          <p
-            className="text-sm font-semibold tracking-widest uppercase mt-2"
-            style={{ color: "var(--color-brand-accent)", letterSpacing: "0.3em" }}
-          >
-            by Collin
+            <KeyRound className="h-7 w-7" style={{ color: "var(--color-brand-500)" }} />
+          </div>
+          <h2 className="text-xl font-bold mb-1" style={{ color: "var(--color-brand-700)" }}>
+            Set a new password
+          </h2>
+          <p className="text-sm text-slate-500">
+            Choose a strong password for your account.
           </p>
         </div>
 
-        {/* Card */}
-        <div
-          className="rounded-2xl overflow-hidden p-8"
-          style={{
-            background: "#FFFFFB",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
-          }}
-        >
-          {status === "success" ? (
-            <div className="text-center py-4">
-              <div
-                className="inline-flex items-center justify-center h-14 w-14 rounded-2xl mb-4"
-                style={{ background: "var(--color-brand-50)" }}
-              >
-                <CheckCircle2 className="h-7 w-7" style={{ color: "var(--color-brand-500)" }} />
-              </div>
-              <h2 className="text-xl font-bold mb-2" style={{ color: "var(--color-brand-700)" }}>
-                Password updated!
-              </h2>
-              <p className="text-sm text-slate-500">
-                Redirecting you to the dashboard…
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="text-center mb-6">
-                <div
-                  className="inline-flex items-center justify-center h-14 w-14 rounded-2xl mb-4"
-                  style={{ background: "var(--color-brand-50)" }}
-                >
-                  <KeyRound className="h-7 w-7" style={{ color: "var(--color-brand-500)" }} />
-                </div>
-                <h2 className="text-xl font-bold mb-1" style={{ color: "var(--color-brand-700)" }}>
-                  Set a new password
-                </h2>
-                <p className="text-sm text-slate-500">
-                  Choose a strong password for your account.
-                </p>
-              </div>
+        {errorMsg && (
+          <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-sm text-red-700">{errorMsg}</p>
+          </div>
+        )}
 
-              {errorMsg && (
-                <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
-                  <p className="text-sm text-red-700">{errorMsg}</p>
-                </div>
-              )}
-
-              <form className="space-y-5" onSubmit={handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit}>
                 {/* New password */}
                 <div>
                   <label
@@ -216,17 +165,10 @@ export default function ResetPasswordPage() {
                     boxShadow: "0 2px 12px rgba(91,95,151,0.35)",
                   }}
                 >
-                  {status === "submitting" ? "Updating…" : "Update Password"}
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-
-        <p className="text-center text-xs mt-6" style={{ color: "rgba(255,255,255,0.4)" }}>
-          Summer Select &copy; {new Date().getFullYear()} · All rights reserved
-        </p>
+                {status === "submitting" ? "Updating…" : "Update Password"}
+              </button>
+            </form>
       </div>
-    </div>
+    </AuthCardShell>
   );
 }

@@ -9,10 +9,26 @@ import {
   deviceSessionCookieOptions,
 } from "@/lib/session";
 
+function getAppOrigin() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+  );
+}
+
+function getEmailConfirmRedirect() {
+  return `${getAppOrigin()}/auth/callback?next=/auth/confirmed`;
+}
+
+function getPasswordResetRedirect() {
+  return `${getAppOrigin()}/auth/callback?next=/reset-password`;
+}
+
 function getAuthFields(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  return { email, password };
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+  return { email, password, confirmPassword };
 }
 
 /**
@@ -80,15 +96,19 @@ export async function handleSignIn(formData: FormData) {
 }
 
 export async function handleSignUp(formData: FormData) {
-  const { email, password } = getAuthFields(formData);
+  const { email, password, confirmPassword } = getAuthFields(formData);
   if (!email || !password) return { error: "Email and password are required." as const };
   if (password.length < 8) return { error: "Password must be at least 8 characters." as const };
+  if (password !== confirmPassword) {
+    return { error: "Passwords do not match." as const };
+  }
 
   const supabase = await supabaseServer();
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: { emailRedirectTo: getEmailConfirmRedirect() },
   });
 
   if (error) {
@@ -132,12 +152,19 @@ export async function handleForgotPassword(email: string) {
   if (!email?.trim()) return { error: "Email is required." };
 
   const supabase = await supabaseServer();
-  const origin =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    redirectTo: getPasswordResetRedirect(),
+  });
+
+  return error ? { error: error.message } : { success: true };
+}
+
+export async function handleResendPasswordReset(email: string) {
+  if (!email?.trim()) return { error: "Email is required." };
+
+  const supabase = await supabaseServer();
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: getPasswordResetRedirect(),
   });
 
   return error ? { error: error.message } : { success: true };
@@ -145,6 +172,10 @@ export async function handleForgotPassword(email: string) {
 
 export async function handleResendVerification(email: string) {
   const supabase = await supabaseServer();
-  const { error } = await supabase.auth.resend({ type: "signup", email });
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: getEmailConfirmRedirect() },
+  });
   return error ? { error: error.message } : { success: true };
 }
