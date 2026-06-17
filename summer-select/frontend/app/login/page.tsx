@@ -13,6 +13,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Mail, ArrowLeft, RefreshCw, KeyRound, LogIn, MessageCircle, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 type Tab = "signin" | "signup";
 type SignUpState = "idle" | { stage: "verify_email"; email: string };
@@ -220,6 +221,7 @@ export default function LoginPage() {
   const [resetResendError, setResetResendError] = useState<string | null>(null);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [password, setPassword] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const passwordMismatch =
     tab === "signup" &&
@@ -562,6 +564,7 @@ export default function LoginPage() {
                       setDuplicateEmail(null);
                       setConfirmPassword("");
                       setPassword("");
+                      setTermsAccepted(false);
                     }}
                     className={clsx(
                       "flex-1 py-3.5 text-sm font-semibold transition-all focus-visible:outline-none"
@@ -760,16 +763,34 @@ export default function LoginPage() {
                   )}
 
                   {tab === "signup" && (
-                    <p className="text-xs text-slate-400">
-                      By creating an account you agree to our Terms of Service.
-                      Access to the program directory requires a paid subscription.
-                    </p>
+                    <div className="flex items-start gap-3">
+                      <input
+                        id="terms"
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 flex-shrink-0 rounded cursor-pointer accent-[var(--color-brand-500)]"
+                      />
+                      <label htmlFor="terms" className="text-xs text-slate-500 leading-relaxed cursor-pointer select-none">
+                        I have read and agree to the{" "}
+                        <Link
+                          href="/terms"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold underline-offset-2 hover:underline"
+                          style={{ color: "var(--color-brand-500)" }}
+                        >
+                          Terms and Conditions
+                        </Link>
+                        . Access to the program directory requires a paid subscription.
+                      </label>
+                    </div>
                   )}
 
                   <SubmitButton
                     label={tab === "signin" ? "Sign In" : "Create Account"}
                     pendingLabel="Working…"
-                    disabled={tab === "signup" && passwordMismatch}
+                    disabled={tab === "signup" && (passwordMismatch || !termsAccepted)}
                   />
                 </form>
                 <p className="mt-5 text-center text-sm text-slate-400">
@@ -784,6 +805,7 @@ export default function LoginPage() {
                           setDuplicateEmail(null);
                           setConfirmPassword("");
                           setPassword("");
+                          setTermsAccepted(false);
                         }}
                         className="font-semibold underline-offset-2 hover:underline"
                         style={{ color: "var(--color-brand-500)" }}
@@ -802,6 +824,7 @@ export default function LoginPage() {
                           setDuplicateEmail(null);
                           setConfirmPassword("");
                           setPassword("");
+                          setTermsAccepted(false);
                         }}
                         className="font-semibold underline-offset-2 hover:underline"
                         style={{ color: "var(--color-brand-500)" }}
