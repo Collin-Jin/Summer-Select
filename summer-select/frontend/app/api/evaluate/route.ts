@@ -33,7 +33,14 @@ export async function POST(req: Request) {
     const openaiKey = process.env.OPENAI_API_KEY;
 
     if (!supabaseUrl || !supabaseKey || !openaiKey) {
-      console.error("[evaluate] Missing required environment variables.");
+      const missing = [
+        !supabaseUrl && "NEXT_PUBLIC_SUPABASE_URL",
+        !supabaseKey && "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        !openaiKey && "OPENAI_API_KEY",
+      ].filter(Boolean);
+      console.error(
+        `[evaluate] Missing required environment variables: ${missing.join(", ")}`
+      );
       return NextResponse.json(
         { error: "Server is not configured correctly." },
         { status: 500 }
