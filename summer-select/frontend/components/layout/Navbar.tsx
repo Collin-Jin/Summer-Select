@@ -8,6 +8,7 @@ import {
   Bookmark,
   BookOpen,
   MessageSquare,
+  Sparkles,
   LogOut,
   Menu,
   X,
@@ -22,6 +23,7 @@ const navLinks = [
   { href: "/dashboard", label: "Programs", labelZh: "项目库", icon: LayoutDashboard },
   { href: "/dashboard/my-list", label: "My List", labelZh: "收藏", icon: Bookmark },
   { href: "/dashboard/essays", label: "Essays", labelZh: "文书", icon: BookOpen },
+  { href: "/dashboard/evaluate", label: "Evaluate", labelZh: "文书评估", icon: Sparkles },
   { href: "/dashboard/interviews", label: "Interviews", labelZh: "面试", icon: MessageSquare },
 ];
 
