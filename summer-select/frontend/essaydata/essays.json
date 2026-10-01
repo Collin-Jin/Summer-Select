@@ -1,0 +1,17 @@
+[
+    {
+      "program": "MIT RSI",
+      "prompt": "Describe your research interests and future goals.",
+      "content": "During my recent academic research program through Pioneer Academics, I investigated the application of neural networks in predicting algorithmic efficiency. I was fascinated by how machine learning models could optimize data sorting under extreme constraints. My goal at RSI is to expand this research by working alongside mentors who are pushing the boundaries of computational theory, ultimately aiming to develop more energy-efficient search algorithms for large-scale databases."
+    },
+    {
+      "program": "Stanford SUMaC",
+      "prompt": "Why do you want to attend this math program?",
+      "content": "Mathematics has always been the fundamental language I use to decode complex systems. Recently, while competing in algorithmic programming contests on Codeforces, I realized that brute-force coding only gets you so far; the most elegant solutions are deeply rooted in advanced combinatorics and graph theory. I want to attend SUMaC to build a rigorous mathematical foundation that bridges the gap between theoretical pure math and competitive software engineering."
+    },
+    {
+      "program": "UofT Engineering Science",
+      "prompt": "Describe a project that demonstrates your engineering mindset.",
+      "content": "When deploying my first full-stack application, I struggled with slow database query times as user traffic scaled. Instead of just upgrading the server, I dug into the backend infrastructure using Supabase and PostgreSQL. By implementing pgvector and restructuring how the application cached user sessions, I reduced latency by over 60%. This experience taught me that true engineering isn't just about building things that work; it's about architecting systems that scale efficiently."
+    }
+  ]
