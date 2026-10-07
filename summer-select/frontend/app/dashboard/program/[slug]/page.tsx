@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { getProgramBySlug } from "@/lib/programs";
 import { getViewer } from "@/lib/viewer";
 import { loginUrl } from "@/lib/access";
+import { isAdminEmail } from "@/lib/admin/config";
 import { cookies } from "next/headers";
 import type { Lang, SummerProgram } from "@/lib/database.types";
 import { Badge, categoryVariant, deadlineTierVariant } from "@/components/ui/Badge";
@@ -27,6 +28,7 @@ import {
 } from "@/utils/formatFinancial";
 import {
   ArrowLeft,
+  Pencil,
   ExternalLink,
   MapPin,
   Clock,
@@ -166,13 +168,25 @@ export default async function ProgramDetailPage({ params }: Props) {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Back nav */}
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:[color:var(--color-brand-500)] mb-6 transition-colors duration-150 animate-fade-in"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {lang === "zh" ? "返回项目库" : "Back to directory"}
-      </Link>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:[color:var(--color-brand-500)] transition-colors duration-150 animate-fade-in"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {lang === "zh" ? "返回项目库" : "Back to directory"}
+        </Link>
+        {isAdminEmail(viewer.user?.email) && (
+          <Link
+            href={`/admin/programs/${program.lid}`}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all hover:brightness-110"
+            style={{ background: "var(--color-brand-500)" }}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit this program
+          </Link>
+        )}
+      </div>
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <Card className="p-6 mb-6 animate-fade-in-up delay-75 border-t-[3px] [border-top-color:var(--color-brand-500)]">

@@ -6,6 +6,8 @@ interface AppLayoutProps {
   userEmail?: string | null;
   /** Who is viewing: drives which nav tabs and account controls are shown. */
   access?: ViewerAccess;
+  /** Show the Admin tab (site owner only). */
+  isAdmin?: boolean;
   /** Skip the centred max-width container (for full-width landing sections). */
   fullBleed?: boolean;
 }
@@ -21,11 +23,12 @@ export function AppLayout({
   children,
   userEmail,
   access = "guest",
+  isAdmin = false,
   fullBleed = false,
 }: AppLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--background)" }}>
-      <Navbar userEmail={userEmail} access={access} />
+      <Navbar userEmail={userEmail} access={access} isAdmin={isAdmin} />
       {/* Subtle brand-gradient page topper for depth */}
       <div
         className="h-1 w-full flex-shrink-0"

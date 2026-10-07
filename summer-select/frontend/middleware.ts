@@ -13,6 +13,9 @@ const PAID_FEATURE_PREFIXES = [
   "/dashboard/essays",
   "/dashboard/evaluate",
   "/dashboard/interviews",
+  // Admin area: the real admin check happens in app/admin/layout.tsx and in the
+  // database (RLS); this just sends guests to the login page.
+  "/admin",
 ];
 
 /**
@@ -23,10 +26,10 @@ const PAID_FEATURE_PREFIXES = [
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
-  const isProtected = PAID_FEATURE_PREFIXES.some((p) => {
-    const path = req.nextUrl.pathname;
-    return path === p || path.startsWith(`${p}/`);
-  });
+  const path = req.nextUrl.pathname;
+  const isProtected = PAID_FEATURE_PREFIXES.some(
+    (p) => path === p || path.startsWith(`${p}/`)
+  );
   if (!isProtected) return res;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -80,5 +83,6 @@ export const config = {
     "/dashboard/essays/:path*",
     "/dashboard/evaluate/:path*",
     "/dashboard/interviews/:path*",
+    "/admin/:path*",
   ],
 };

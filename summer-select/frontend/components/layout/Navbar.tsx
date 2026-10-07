@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Sparkles,
   Info,
+  Settings2,
   Lock,
   LogIn,
   LogOut,
@@ -32,6 +33,8 @@ interface NavLink {
   paid?: boolean;
   /** Only shown to people who haven't paid (guests and unpaid accounts). */
   hideWhenPaid?: boolean;
+  /** Only shown to the site admin. */
+  adminOnly?: boolean;
 }
 
 const navLinks: NavLink[] = [
@@ -42,25 +45,30 @@ const navLinks: NavLink[] = [
   { href: "/dashboard/essays", label: "Essays", labelZh: "文书", icon: BookOpen, paid: true },
   { href: "/dashboard/evaluate", label: "Evaluate", labelZh: "文书评估", icon: Sparkles, paid: true },
   { href: "/dashboard/interviews", label: "Interviews", labelZh: "面试", icon: MessageSquare, paid: true },
+  { href: "/admin", label: "Admin", labelZh: "管理", icon: Settings2, adminOnly: true },
 ];
 
 /** Exact-match tabs, so "/" and "/dashboard" don't light up on every sub-page. */
 function isLinkActive(href: string, pathname: string) {
   if (href === "/" || href === "/dashboard") return pathname === href;
-  return pathname.startsWith(href);
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function Navbar({
   userEmail,
   access = "guest",
+  isAdmin = false,
 }: {
   userEmail?: string | null;
   access?: ViewerAccess;
+  isAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const isPaid = access === "paid";
   const isSignedIn = access !== "guest";
-  const visibleLinks = navLinks.filter((l) => !(l.hideWhenPaid && isPaid));
+  const visibleLinks = navLinks.filter(
+    (l) => !(l.hideWhenPaid && isPaid) && (!l.adminOnly || isAdmin)
+  );
   const { lang } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();

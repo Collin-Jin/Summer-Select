@@ -5,6 +5,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { SessionWatcher } from "@/app/dashboard/_components/SessionWatcher";
 import { getViewer } from "@/lib/viewer";
+import { isAdminEmail } from "@/lib/admin/config";
 import { DEVICE_SESSION_COOKIE } from "@/lib/session";
 import type { Lang } from "@/lib/database.types";
 
@@ -62,6 +63,7 @@ export async function SiteShell({ children, fullBleed = false }: SiteShellProps)
       <AppLayout
         userEmail={user?.email}
         access={access}
+        isAdmin={isAdminEmail(user?.email)}
         fullBleed={fullBleed}
       >
         {children}
