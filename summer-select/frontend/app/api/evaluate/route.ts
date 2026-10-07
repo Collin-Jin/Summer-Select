@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { createClient } from "@supabase/supabase-js";
 import { getViewer } from "@/lib/viewer";
+import { supabaseServer } from "@/utils/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -28,19 +28,10 @@ A short numbered list of concrete revisions to make in the next draft.`;
 
 export async function POST(req: Request) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
 
-    if (!supabaseUrl || !supabaseKey || !openaiKey) {
-      const missing = [
-        !supabaseUrl && "NEXT_PUBLIC_SUPABASE_URL",
-        !supabaseKey && "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-        !openaiKey && "OPENAI_API_KEY",
-      ].filter(Boolean);
-      console.error(
-        `[evaluate] Missing required environment variables: ${missing.join(", ")}`
-      );
+    if (!openaiKey) {
+      console.error("[evaluate] Missing required environment variable: OPENAI_API_KEY");
       return NextResponse.json(
         { error: "Server is not configured correctly." },
         { status: 500 }
@@ -88,7 +79,9 @@ export async function POST(req: Request) {
     }
 
     const openai = new OpenAI({ apiKey: openaiKey });
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Retrieval runs as the signed-in member: match_documents only answers to
+    // paid members (the reference table itself is locked down by RLS).
+    const supabase = await supabaseServer();
 
     // 1. Embed the student's essay.
     const embeddingResponse = await openai.embeddings.create({
