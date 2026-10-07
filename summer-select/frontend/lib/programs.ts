@@ -1,17 +1,39 @@
 import { supabaseServer } from "@/utils/supabase/server";
+import { getViewer } from "@/lib/viewer";
 import type { SummerProgram } from "@/lib/database.types";
 
 export type FormatOption = { en: string; zh: string | null };
 export type CategoryOption = { en: string; zh: string | null };
 
 /**
+ * Paid members read the full `summer_programs` table (including Collin's
+ * rationale and strategy). Everyone else — guests and unpaid accounts — reads
+ * `public_summer_programs`, a view of published programs without those paid
+ * columns. The database enforces this split; see the view migration.
+ */
+async function programsSource() {
+  const [supabase, viewer] = await Promise.all([supabaseServer(), getViewer()]);
+  const table = viewer.isPaid ? "summer_programs" : "public_summer_programs";
+  return supabase.from(table);
+}
+
+/** Fills the paid-only fields with null so public rows match `SummerProgram`. */
+function toProgram(row: Record<string, unknown>): SummerProgram {
+  return {
+    collin_rationale_en: null,
+    collin_rationale_zh: null,
+    collin_strategy_en: null,
+    collin_strategy_zh: null,
+    ...row,
+  } as SummerProgram;
+}
+
+/**
  * Fetches all published summer programs from Supabase.
  * Called exclusively from Server Components — uses the cookie-based server client.
  */
 export async function getAllPrograms(): Promise<SummerProgram[]> {
-  const supabase = await supabaseServer();
-  const { data, error } = await supabase
-    .from("summer_programs")
+  const { data, error } = await (await programsSource())
     .select("*")
     .order("collin_rec_index", { ascending: false, nullsFirst: false });
 
@@ -20,7 +42,7 @@ export async function getAllPrograms(): Promise<SummerProgram[]> {
     return [];
   }
 
-  return data ?? [];
+  return (data ?? []).map(toProgram);
 }
 
 /**
@@ -29,9 +51,7 @@ export async function getAllPrograms(): Promise<SummerProgram[]> {
 export async function getProgramBySlug(
   slug: string
 ): Promise<SummerProgram | null> {
-  const supabase = await supabaseServer();
-  const { data, error } = await supabase
-    .from("summer_programs")
+  const { data, error } = await (await programsSource())
     .select("*")
     .eq("slug", slug)
     .single();
@@ -43,7 +63,7 @@ export async function getProgramBySlug(
     return null;
   }
 
-  return data;
+  return toProgram(data);
 }
 
 /**
@@ -54,9 +74,7 @@ export async function getProgramsByIds(
 ): Promise<SummerProgram[]> {
   if (lids.length === 0) return [];
 
-  const supabase = await supabaseServer();
-  const { data, error } = await supabase
-    .from("summer_programs")
+  const { data, error } = await (await programsSource())
     .select("*")
     .in("lid", lids);
 
@@ -65,7 +83,7 @@ export async function getProgramsByIds(
     return [];
   }
 
-  return data ?? [];
+  return (data ?? []).map(toProgram);
 }
 
 /**
@@ -73,10 +91,9 @@ export async function getProgramsByIds(
  * Returns deduplicated pairs keyed on the English value.
  */
 export async function getProgramCategories(): Promise<CategoryOption[]> {
-  const supabase = await supabaseServer();
-  const { data, error } = await supabase
-    .from("summer_programs")
-    .select("primary_category_en, primary_category_zh");
+  const { data, error } = await (await programsSource()).select(
+    "primary_category_en, primary_category_zh"
+  );
 
   if (error || !data) return [];
 
@@ -98,10 +115,9 @@ export async function getProgramCategories(): Promise<CategoryOption[]> {
  * Returns deduplicated pairs keyed on the English value.
  */
 export async function getProgramFormats(): Promise<FormatOption[]> {
-  const supabase = await supabaseServer();
-  const { data, error } = await supabase
-    .from("summer_programs")
-    .select("format_en, format_zh");
+  const { data, error } = await (await programsSource()).select(
+    "format_en, format_zh"
+  );
 
   if (error || !data) return [];
 

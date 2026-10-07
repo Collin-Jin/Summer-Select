@@ -1,17 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { supabaseClient } from "@/utils/supabase/client";
+import Link from "next/link";
 import Image from "next/image";
 import {
-  GraduationCap, CheckCircle2, XCircle, LogOut,
+  GraduationCap, CheckCircle2, XCircle, LogIn, Compass,
   MessageCircle, ExternalLink, Award, ShieldCheck,
   Crosshair, ChevronDown,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-
-type Lang = "en" | "zh";
+import { useLanguage } from "@/context/LanguageContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Scroll-reveal hook — fires once when element enters viewport
@@ -110,8 +107,9 @@ function Cred({ children, gold }: { children: React.ReactNode; gold?: boolean })
 // Full bilingual copy
 // ─────────────────────────────────────────────────────────────────────────────
 const copy = {
-  // Navbar
-  signOutShort: { en: "Sign out", zh: "退出" },
+  // Hero calls to action
+  ctaLogin:  { en: "Log in or create account", zh: "登录 / 注册" },
+  ctaBrowse: { en: "Browse the Program Directory", zh: "浏览项目库" },
 
   // Hero
   heroEyebrow: { en: "The #1 Summer Program Platform", zh: "顶尖暑期项目平台" },
@@ -176,17 +174,16 @@ const copy = {
     paid:    { en: "Paid ✦", zh: "付费 ✦" },
   },
   freeFeatures: [
-    { en: "Create an account", zh: "创建账户" },
-    { en: "View basic program names", zh: "查看基础项目名称" },
+    { en: "Browse the full Program Directory", zh: "浏览完整项目库" },
+    { en: "Advanced search & filters", zh: "高级搜索与筛选" },
+    { en: "Collin Index scores", zh: "Collin 指数评分" },
+    { en: "Bilingual content (EN / 中文)", zh: "中英双语内容" },
   ],
   paidFeatures: [
-    { en: "Full program directory (50+ programs)", zh: "完整项目库（50+ 个项目）" },
-    { en: "Collin Index scores & rationale", zh: "Collin 指数评分与分析" },
-    { en: "Application strategy guides", zh: "申请策略指南" },
-    { en: "Bilingual content (EN / 中文)", zh: "中英双语内容" },
-    { en: "Advanced search & filters", zh: "高级搜索与筛选" },
+    { en: "Collin's analysis & application strategy", zh: "Collin 的分析与申请策略" },
     { en: "Save programs to My List", zh: "收藏项目到我的列表" },
     { en: "Example essays (60+ essays)", zh: "范文参考（60+ 篇）" },
+    { en: "AI essay evaluator", zh: "AI 文书评估" },
     { en: "Interview Q&A guides", zh: "面试问答指南" },
   ],
   contactH2:     { en: "Ready to get full access?", zh: "准备好获取完整访问权限了吗？" },
@@ -195,7 +192,6 @@ const copy = {
     zh: "通过微信或 Instagram 联系我们订阅，立即升级您的账户。",
   },
   wechatLabel:   { en: "WeChat", zh: "微信" },
-  signOutFull:   { en: "Sign out of this account", zh: "退出账户" },
 };
 
 // Value prop card data (bilingual)
@@ -226,30 +222,15 @@ const valueCards = [
 // ─────────────────────────────────────────────────────────────────────────────
 // Page component
 // ─────────────────────────────────────────────────────────────────────────────
-export default function PaywallPage() {
-  const router = useRouter();
-  const [lang, setLang] = useState<Lang>("en");
+export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
+  const { lang } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem("lang");
-    if (stored === "en" || stored === "zh") setLang(stored as Lang);
   }, []);
 
-  const toggleLang = () => {
-    const next: Lang = lang === "en" ? "zh" : "en";
-    setLang(next);
-    localStorage.setItem("lang", next);
-    document.cookie = `lang=${next}; path=/; max-age=31536000; SameSite=Lax`;
-  };
-
   const t = (obj: { en: string; zh: string }) => obj[lang];
-
-  const handleLogout = async () => {
-    await supabaseClient().auth.signOut();
-    router.push("/login");
-  };
 
   // Reveal refs
   const founder   = useReveal();
@@ -276,56 +257,6 @@ export default function PaywallPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "#FFFFFB", fontFamily: "var(--font-sans, system-ui)" }}>
-
-      {/* ── Sticky nav bar ─────────────────────────────────────────────────── */}
-      <header
-        className="sticky top-0 z-50 flex items-center justify-between px-6 py-3"
-        style={{ background: "var(--color-brand-500)", borderBottom: "1px solid var(--color-brand-600)" }}
-      >
-        <span
-          className="text-sm font-extrabold uppercase tracking-widest"
-          style={{ color: "#FFFFFB", fontFamily: "var(--font-syne, sans-serif)", letterSpacing: "0.1em" }}
-        >
-          Summer Select
-        </span>
-        <div className="flex items-center gap-2">
-          {/* Language pill toggle */}
-          <div
-            className="relative flex items-center rounded-full p-[3px]"
-            style={{ background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.14)" }}
-          >
-            <span
-              aria-hidden="true"
-              className="absolute top-[3px] bottom-[3px] rounded-full pointer-events-none"
-              style={{
-                left: "3px",
-                width: "calc(50% - 3px)",
-                background: lang === "zh" ? "var(--color-brand-accent)" : "rgba(255,255,255,0.93)",
-                transform: lang === "zh" ? "translateX(100%)" : "translateX(0%)",
-                transition: "transform 320ms cubic-bezier(0.34,1.56,0.64,1), background 250ms ease",
-              }}
-            />
-            <button onClick={() => lang !== "en" && toggleLang()}
-              className="relative z-10 px-3 py-1 text-xs font-bold rounded-full"
-              style={{ color: lang === "en" ? "var(--color-brand-600)" : "rgba(255,255,255,0.5)", transition: "color 200ms ease" }}>
-              EN
-            </button>
-            <button onClick={() => lang !== "zh" && toggleLang()}
-              className="relative z-10 px-3 py-1 text-xs font-bold rounded-full"
-              style={{ color: lang === "zh" ? "var(--color-brand-700)" : "rgba(255,255,255,0.5)", transition: "color 200ms ease" }}>
-              中
-            </button>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full"
-            style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.15)" }}
-          >
-            <LogOut className="h-3 w-3" />
-            {t(copy.signOutShort)}
-          </button>
-        </div>
-      </header>
 
       {/* ══════════════════════════════════════════════════════════════════════
           1. HERO
@@ -398,6 +329,38 @@ export default function PaywallPage() {
         >
           {t(copy.heroSub)}
         </p>
+
+        {/* Calls to action */}
+        <div
+          className="mt-8 flex flex-col sm:flex-row items-center gap-3"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transition: "opacity 0.7s ease 0.35s",
+          }}
+        >
+          {!isSignedIn && (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-transform duration-150 hover:scale-105 active:scale-95"
+              style={{ background: "var(--color-brand-500)", color: "#FFFFFB" }}
+            >
+              <LogIn className="h-4 w-4" />
+              {t(copy.ctaLogin)}
+            </Link>
+          )}
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold border transition-transform duration-150 hover:scale-105 active:scale-95"
+            style={
+              isSignedIn
+                ? { background: "var(--color-brand-500)", color: "#FFFFFB", borderColor: "transparent" }
+                : { background: "#FFFFFB", color: "var(--color-brand-600)", borderColor: "var(--color-brand-100)" }
+            }
+          >
+            <Compass className="h-4 w-4" />
+            {t(copy.ctaBrowse)}
+          </Link>
+        </div>
 
         {/* Scroll hint */}
         <div className="animate-bounce-slow mt-14 flex flex-col items-center gap-1"
@@ -832,14 +795,6 @@ export default function PaywallPage() {
                 </div>
               </a>
             </div>
-          </div>
-
-          {/* Sign out */}
-          <div className="text-center pb-4">
-            <Button variant="ghost" onClick={handleLogout} className="text-slate-400 hover:text-slate-600 text-sm">
-              <LogOut className="h-4 w-4" />
-              {t(copy.signOutFull)}
-            </Button>
           </div>
         </div>
       </section>

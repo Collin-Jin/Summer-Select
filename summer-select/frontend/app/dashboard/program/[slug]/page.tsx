@@ -3,6 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { getProgramBySlug } from "@/lib/programs";
+import { getViewer } from "@/lib/viewer";
+import { loginUrl } from "@/lib/access";
 import { cookies } from "next/headers";
 import type { Lang, SummerProgram } from "@/lib/database.types";
 import { Badge, categoryVariant, deadlineTierVariant } from "@/components/ui/Badge";
@@ -36,6 +38,7 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 
 interface Props {
@@ -122,7 +125,7 @@ function BooleanIndicator({ value, trueLabel, falseLabel }: { value: boolean | n
  */
 export default async function ProgramDetailPage({ params }: Props) {
   const { slug } = await params;
-  const program = await getProgramBySlug(slug);
+  const [program, viewer] = await Promise.all([getProgramBySlug(slug), getViewer()]);
 
   if (!program) notFound();
 
@@ -214,7 +217,7 @@ export default async function ProgramDetailPage({ params }: Props) {
               </div>
 
               <div className="flex items-center gap-3 flex-shrink-0">
-                <ProgramDetailFavoriteButton programId={program.lid} />
+                <ProgramDetailFavoriteButton programId={program.lid} access={viewer.access} />
                 {program.program_url && (
                   <a
                     href={program.program_url}
@@ -349,7 +352,40 @@ export default async function ProgramDetailPage({ params }: Props) {
                 </p>
               </div>
             )}
-            {!rationale && !strategy && (
+            {!viewer.isPaid && (
+              <div
+                className="rounded-xl p-4 flex items-start gap-3"
+                style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)" }}
+              >
+                <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: "#FFC145" }} />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white">
+                    {lang === "zh"
+                      ? "Collin 的详细分析与申请策略仅限会员查看"
+                      : "Collin's full analysis and application strategy are for members"}
+                  </p>
+                  <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    {viewer.access === "guest"
+                      ? lang === "zh"
+                        ? "登录后即可了解升级方式。"
+                        : "Log in to see how to get access."
+                      : lang === "zh"
+                        ? "了解如何升级你的账户。"
+                        : "Learn how to upgrade your account."}
+                  </p>
+                  <Link
+                    href={viewer.access === "guest" ? loginUrl(`/dashboard/program/${slug}`) : "/"}
+                    className="inline-block mt-3 px-4 py-2 rounded-lg text-xs font-bold transition-transform hover:scale-[1.03]"
+                    style={{ background: "#FFC145", color: "#3a3d6e" }}
+                  >
+                    {viewer.access === "guest"
+                      ? lang === "zh" ? "登录 / 注册" : "Log in or sign up"
+                      : lang === "zh" ? "了解 Summer Select" : "About Summer Select"}
+                  </Link>
+                </div>
+              </div>
+            )}
+            {viewer.isPaid && !rationale && !strategy && (
               <p className="text-sm italic" style={{ color: "rgba(255,255,255,0.5)" }}>
                 {lang === "zh" ? "分析内容即将上线" : "Analysis coming soon"}
               </p>

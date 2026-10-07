@@ -62,6 +62,32 @@ function DuplicateSessionAlert() {
   );
 }
 
+function LoginRequiredAlert() {
+  const params = useSearchParams();
+  if (params.get("reason") !== "login_required") return null;
+  return (
+    <div
+      className="mb-5 px-4 py-3 rounded-xl border text-sm"
+      style={{
+        background: "#EEEEF7",
+        borderColor: "#B8B8D1",
+        color: "var(--color-brand-700)",
+      }}
+    >
+      Please log in to continue. My List, Essays, Evaluate and Interviews are
+      members-only features. New here? Create an account first.
+    </div>
+  );
+}
+
+/** Carries the page the visitor originally wanted through the login form. */
+function NextField() {
+  const params = useSearchParams();
+  const next = params.get("next");
+  if (!next) return null;
+  return <input type="hidden" name="next" value={next} />;
+}
+
 function LinkExpiredAlert() {
   const params = useSearchParams();
   if (params.get("reason") !== "link_expired") return null;
@@ -587,6 +613,7 @@ export default function LoginPage() {
               <div className="p-8">
                 <Suspense>
                   <DuplicateSessionAlert />
+                  <LoginRequiredAlert />
                   <LinkExpiredAlert />
                 </Suspense>
 
@@ -641,6 +668,10 @@ export default function LoginPage() {
                     }
                   }}
                 >
+                  <Suspense>
+                    <NextField />
+                  </Suspense>
+
                   <div>
                     <label
                       htmlFor="email"

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
-import { supabaseServer } from "@/utils/supabase/server";
+import { getViewer } from "@/lib/viewer";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -47,13 +47,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // This endpoint spends OpenAI credits, so require a signed-in user.
-    const authClient = await supabaseServer();
-    const {
-      data: { user },
-    } = await authClient.auth.getUser();
+    // This endpoint spends OpenAI credits and is a paid feature.
+    const { user, isPaid } = await getViewer();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+    if (!isPaid) {
+      return NextResponse.json(
+        { error: "The essay evaluator is available to paid members." },
+        { status: 403 }
+      );
     }
 
     let body: unknown;

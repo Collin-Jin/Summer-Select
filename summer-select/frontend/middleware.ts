@@ -2,6 +2,20 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 /**
+ * Members-only features. Guests are sent to the login page; the payment check
+ * happens server-side in app/dashboard/(paid)/layout.tsx.
+ *
+ * Everything else — the landing page, the Program Directory (/dashboard and
+ * /dashboard/program/*) and the auth pages — is public.
+ */
+const PAID_FEATURE_PREFIXES = [
+  "/dashboard/my-list",
+  "/dashboard/essays",
+  "/dashboard/evaluate",
+  "/dashboard/interviews",
+];
+
+/**
  * Protects routes that require auth.
  *
  * Note: This runs in the Edge Runtime.
@@ -9,11 +23,10 @@ import { createServerClient } from "@supabase/ssr";
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
-  // Only protect these route prefixes.
-  const protectedPrefixes = ["/dashboard", "/paywall"];
-  const isProtected = protectedPrefixes.some((p) =>
-    req.nextUrl.pathname.startsWith(p)
-  );
+  const isProtected = PAID_FEATURE_PREFIXES.some((p) => {
+    const path = req.nextUrl.pathname;
+    return path === p || path.startsWith(`${p}/`);
+  });
   if (!isProtected) return res;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -23,6 +36,9 @@ export async function middleware(req: NextRequest) {
   if (!supabaseUrl || !supabaseAnonKey) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/login";
+    redirectUrl.search = "";
+    redirectUrl.searchParams.set("reason", "login_required");
+    redirectUrl.searchParams.set("next", req.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
@@ -49,6 +65,8 @@ export async function middleware(req: NextRequest) {
   if (!session) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/login";
+    redirectUrl.search = "";
+    redirectUrl.searchParams.set("reason", "login_required");
     redirectUrl.searchParams.set("next", req.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
@@ -57,5 +75,10 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/paywall/:path*"],
+  matcher: [
+    "/dashboard/my-list/:path*",
+    "/dashboard/essays/:path*",
+    "/dashboard/evaluate/:path*",
+    "/dashboard/interviews/:path*",
+  ],
 };

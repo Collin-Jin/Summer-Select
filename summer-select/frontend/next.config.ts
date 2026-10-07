@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
     // (e.g. due to multiple lockfiles on the machine), which can slow down dev.
     root: __dirname,
   },
+  async redirects() {
+    return [
+      // The old pay-wall page is now the public landing page.
+      { source: "/paywall", destination: "/", permanent: false },
+    ];
+  },
   images: {
     remotePatterns: [
       {

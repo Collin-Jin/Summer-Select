@@ -10,12 +10,15 @@ import { fetchFavorites, addFavorite, removeFavorite } from "@/lib/favorites";
 import { useLanguage } from "@/context/LanguageContext";
 import type { SummerProgram } from "@/lib/database.types";
 import type { FormatOption, CategoryOption } from "@/lib/programs";
+import type { ViewerAccess } from "@/lib/access";
 import { Search, LayoutGrid } from "lucide-react";
 
 interface ProgramsClientViewProps {
   programs: SummerProgram[];
   categories: CategoryOption[];
   formats: FormatOption[];
+  /** Who is viewing — My List favorites are members-only. */
+  access: ViewerAccess;
 }
 
 /**
@@ -30,20 +33,22 @@ export function ProgramsClientView({
   programs,
   categories,
   formats,
+  access,
 }: ProgramsClientViewProps) {
   const { t, lang } = useLanguage();
   const [filters, setFilters] = useState<ProgramFilters>(DEFAULT_FILTERS);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
-  const [favoritesLoading, setFavoritesLoading] = useState(true);
+  const [favoritesLoading, setFavoritesLoading] = useState(access === "paid");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Load favorites on mount
+  // Load favorites on mount (paid members only; others have no My List)
   useEffect(() => {
+    if (access !== "paid") return;
     fetchFavorites().then((favs) => {
       setFavoritedIds(new Set(favs.map((f) => f.program_id)));
       setFavoritesLoading(false);
     });
-  }, []);
+  }, [access]);
 
   const handleToggleFavorite = (programId: string, nowFavorited: boolean) => {
     setFavoritedIds((prev) => {
@@ -224,6 +229,7 @@ export function ProgramsClientView({
                 program={program}
                 isFavorited={favoritedIds.has(program.lid)}
                 onToggleFavorite={handleToggleFavorite}
+                access={access}
               />
             ))}
           </div>

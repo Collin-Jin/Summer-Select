@@ -11,17 +11,20 @@ import { getDeadlineLabel } from "@/utils/formatDate";
 import { formatCost } from "@/utils/formatFinancial";
 import { useLanguage } from "@/context/LanguageContext";
 import type { SummerProgram } from "@/lib/database.types";
+import type { ViewerAccess } from "@/lib/access";
 
 interface ProgramCardProps {
   program: SummerProgram;
   isFavorited: boolean;
   onToggleFavorite: (programId: string, nowFavorited: boolean) => void;
+  access?: ViewerAccess;
 }
 
 export function ProgramCard({
   program,
   isFavorited,
   onToggleFavorite,
+  access = "paid",
 }: ProgramCardProps) {
   const { t, lang } = useLanguage();
 
@@ -121,6 +124,7 @@ export function ProgramCard({
             <FavoriteButton
               programId={program.lid}
               initialFavorited={isFavorited}
+              access={access}
               onToggle={(nowFavorited) => onToggleFavorite(program.lid, nowFavorited)}
             />
           </div>

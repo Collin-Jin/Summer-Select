@@ -9,6 +9,9 @@ import {
   BookOpen,
   MessageSquare,
   Sparkles,
+  Info,
+  Lock,
+  LogIn,
   LogOut,
   Menu,
   X,
@@ -18,17 +21,46 @@ import { useLanguage } from "@/context/LanguageContext";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { supabaseClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import type { ViewerAccess } from "@/lib/access";
 
-const navLinks = [
+interface NavLink {
+  href: string;
+  label: string;
+  labelZh: string;
+  icon: React.ElementType;
+  /** Members-only feature: needs a paid account. */
+  paid?: boolean;
+  /** Only shown to people who haven't paid (guests and unpaid accounts). */
+  hideWhenPaid?: boolean;
+}
+
+const navLinks: NavLink[] = [
+  // The pitch for Summer Select. It disappears once someone has paid.
+  { href: "/", label: "About", labelZh: "关于我们", icon: Info, hideWhenPaid: true },
   { href: "/dashboard", label: "Programs", labelZh: "项目库", icon: LayoutDashboard },
-  { href: "/dashboard/my-list", label: "My List", labelZh: "收藏", icon: Bookmark },
-  { href: "/dashboard/essays", label: "Essays", labelZh: "文书", icon: BookOpen },
-  { href: "/dashboard/evaluate", label: "Evaluate", labelZh: "文书评估", icon: Sparkles },
-  { href: "/dashboard/interviews", label: "Interviews", labelZh: "面试", icon: MessageSquare },
+  { href: "/dashboard/my-list", label: "My List", labelZh: "收藏", icon: Bookmark, paid: true },
+  { href: "/dashboard/essays", label: "Essays", labelZh: "文书", icon: BookOpen, paid: true },
+  { href: "/dashboard/evaluate", label: "Evaluate", labelZh: "文书评估", icon: Sparkles, paid: true },
+  { href: "/dashboard/interviews", label: "Interviews", labelZh: "面试", icon: MessageSquare, paid: true },
 ];
 
-export function Navbar({ userEmail }: { userEmail?: string | null }) {
+/** Exact-match tabs, so "/" and "/dashboard" don't light up on every sub-page. */
+function isLinkActive(href: string, pathname: string) {
+  if (href === "/" || href === "/dashboard") return pathname === href;
+  return pathname.startsWith(href);
+}
+
+export function Navbar({
+  userEmail,
+  access = "guest",
+}: {
+  userEmail?: string | null;
+  access?: ViewerAccess;
+}) {
   const pathname = usePathname();
+  const isPaid = access === "paid";
+  const isSignedIn = access !== "guest";
+  const visibleLinks = navLinks.filter((l) => !(l.hideWhenPaid && isPaid));
   const { lang } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
@@ -36,7 +68,8 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
   const handleSignOut = async () => {
     const supabase = supabaseClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/");
+    router.refresh();
   };
 
   return (
@@ -48,7 +81,7 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
         <div className="flex items-center justify-between h-16">
           {/* Brand wordmark */}
           <Link
-            href="/dashboard"
+            href={isPaid ? "/dashboard" : "/"}
             className="flex items-center gap-2.5 group"
           >
             <div className="flex flex-col leading-none">
@@ -73,11 +106,8 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map(({ href, label, labelZh, icon: Icon }) => {
-              const isActive =
-                href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname.startsWith(href);
+            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid }) => {
+              const isActive = isLinkActive(href, pathname);
               return (
                 <Link
                   key={href}
@@ -97,6 +127,9 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
                   )}
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
+                  {paid && !isPaid && (
+                    <Lock className="h-3 w-3 opacity-60" aria-label="Members only" />
+                  )}
                 </Link>
               );
             })}
@@ -107,35 +140,48 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
             {/* Language toggle */}
             <LanguageToggle />
 
-            {/* User + sign out */}
+            {/* Account: sign out when signed in, log in otherwise */}
             <div
               className="flex items-center gap-2 pl-3"
               style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}
             >
-              {userEmail && (
-                <span
-                  className="text-xs max-w-[140px] truncate"
-                  style={{ color: "rgba(255,255,255,0.7)" }}
+              {isSignedIn ? (
+                <>
+                  {userEmail && (
+                    <span
+                      className="text-xs max-w-[140px] truncate"
+                      style={{ color: "rgba(255,255,255,0.7)" }}
+                    >
+                      {userEmail}
+                    </span>
+                  )}
+                  <button
+                    onClick={handleSignOut}
+                    title="Sign out"
+                    className="p-1.5 rounded-lg transition-all"
+                    style={{ color: "rgba(255,255,255,0.7)" }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.color = "var(--color-brand-coral)";
+                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,107,108,0.12)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
+                      (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all hover:brightness-105"
+                  style={{ background: "var(--color-brand-accent)", color: "var(--color-brand-700)" }}
                 >
-                  {userEmail}
-                </span>
+                  <LogIn className="h-4 w-4" />
+                  {lang === "zh" ? "登录" : "Log in"}
+                </Link>
               )}
-              <button
-                onClick={handleSignOut}
-                title="Sign out"
-                className="p-1.5 rounded-lg transition-all"
-                style={{ color: "rgba(255,255,255,0.7)" }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = "var(--color-brand-coral)";
-                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,107,108,0.12)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
-                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                }}
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
             </div>
           </div>
 
@@ -160,11 +206,8 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
           }}
         >
           <div className="px-4 pt-3 pb-4 space-y-1">
-            {navLinks.map(({ href, label, labelZh, icon: Icon }) => {
-              const isActive =
-                href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname.startsWith(href);
+            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid }) => {
+              const isActive = isLinkActive(href, pathname);
               return (
                 <Link
                   key={href}
@@ -180,6 +223,9 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
                 >
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
+                  {paid && !isPaid && (
+                    <Lock className="h-3 w-3 opacity-60" aria-label="Members only" />
+                  )}
                 </Link>
               );
             })}
@@ -188,14 +234,26 @@ export function Navbar({ userEmail }: { userEmail?: string | null }) {
               style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}
             >
               <LanguageToggle />
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg"
-                style={{ color: "var(--color-brand-rose)" }}
-              >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </button>
+              {isSignedIn ? (
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg"
+                  style={{ color: "var(--color-brand-rose)" }}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg"
+                  style={{ background: "var(--color-brand-accent)", color: "var(--color-brand-700)" }}
+                >
+                  <LogIn className="h-4 w-4" />
+                  {lang === "zh" ? "登录" : "Log in"}
+                </Link>
+              )}
             </div>
           </div>
         </div>

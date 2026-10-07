@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import { clsx } from "clsx";
 import { addFavorite, removeFavorite } from "@/lib/favorites";
+import { loginUrl, type ViewerAccess } from "@/lib/access";
 
 interface FavoriteButtonProps {
   programId: string;
@@ -11,6 +13,11 @@ interface FavoriteButtonProps {
   /** 'sm' for cards, 'md' for the detail page header */
   size?: "sm" | "md";
   onToggle?: (nowFavorited: boolean) => void;
+  /**
+   * Saving to My List is a members-only feature. Guests are sent to log in and
+   * unpaid accounts to the landing page instead of toggling the heart.
+   */
+  access?: ViewerAccess;
 }
 
 /**
@@ -25,7 +32,10 @@ export function FavoriteButton({
   initialFavorited,
   size = "sm",
   onToggle,
+  access = "paid",
 }: FavoriteButtonProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [favorited, setFavorited] = useState(initialFavorited);
   const [isPending, startTransition] = useTransition();
 
@@ -33,6 +43,15 @@ export function FavoriteButton({
     // Prevent click from bubbling to a parent Link
     e.preventDefault();
     e.stopPropagation();
+
+    if (access === "guest") {
+      router.push(loginUrl(pathname));
+      return;
+    }
+    if (access === "unpaid") {
+      router.push("/");
+      return;
+    }
 
     const next = !favorited;
     // Optimistic update
@@ -56,7 +75,15 @@ export function FavoriteButton({
     <button
       onClick={handleToggle}
       disabled={isPending}
-      title={favorited ? "Remove from My List" : "Save to My List"}
+      title={
+        access === "guest"
+          ? "Log in to save to My List"
+          : access === "unpaid"
+            ? "My List is a members-only feature"
+            : favorited
+              ? "Remove from My List"
+              : "Save to My List"
+      }
       aria-label={favorited ? "Remove from My List" : "Save to My List"}
       className={clsx(
         "rounded-full transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2",
