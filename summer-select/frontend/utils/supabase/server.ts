@@ -23,9 +23,19 @@ export async function supabaseServer() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
+        // Server Components are not allowed to write cookies, and Supabase
+        // calls this from an async callback when it silently refreshes an
+        // expired token. An uncaught throw there is an unhandled rejection that
+        // crashes the Node process. It is safe to ignore: middleware.ts
+        // refreshes the session on every request and persists the cookies, and
+        // Server Actions / Route Handlers (where writes are allowed) still work.
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // Called from a Server Component; see note above.
+        }
       },
     },
   });

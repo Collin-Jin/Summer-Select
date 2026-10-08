@@ -19,24 +19,30 @@ const PAID_FEATURE_PREFIXES = [
 ];
 
 /**
- * Protects routes that require auth.
+ * Two jobs:
+ *  1. On EVERY page request, refresh the Supabase session if its access token
+ *     has expired and persist the new cookies. Server Components can't write
+ *     cookies, so without this a public page (e.g. the Program Directory) that
+ *     reads the signed-in user would try to refresh mid-render and fail.
+ *  2. On members-only routes, send guests to the login page.
  *
  * Note: This runs in the Edge Runtime.
  */
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
+  let res = NextResponse.next({ request: req });
 
   const path = req.nextUrl.pathname;
   const isProtected = PAID_FEATURE_PREFIXES.some(
     (p) => path === p || path.startsWith(`${p}/`)
   );
-  if (!isProtected) return res;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
 
-  // If env vars aren't configured, fail closed (send user to login).
+  // If env vars aren't configured, protected routes fail closed (send user to
+  // login); public routes just render.
   if (!supabaseUrl || !supabaseAnonKey) {
+    if (!isProtected) return res;
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.search = "";
@@ -51,12 +57,14 @@ export async function middleware(req: NextRequest) {
         return req.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          // Update both request cookies (for current middleware execution)
-          // and response cookies (to persist).
-          req.cookies.set(name, value);
-          res.cookies.set(name, value, options);
-        });
+        // Update the request cookies (so Server Components in this same
+        // request see the fresh token) and the response cookies (so the
+        // browser stores it).
+        cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+        res = NextResponse.next({ request: req });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          res.cookies.set(name, value, options)
+        );
       },
     },
   });
@@ -65,7 +73,7 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) {
+  if (!session && isProtected) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.search = "";
@@ -78,11 +86,9 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
+  // Every page and API route except static assets, so sessions are refreshed
+  // everywhere (see above).
   matcher: [
-    "/dashboard/my-list/:path*",
-    "/dashboard/essays/:path*",
-    "/dashboard/evaluate/:path*",
-    "/dashboard/interviews/:path*",
-    "/admin/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|icon.jpg|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|woff2?)$).*)",
   ],
 };
