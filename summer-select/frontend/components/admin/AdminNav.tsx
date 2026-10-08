@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   MessageSquare,
   Users,
+  ArrowDownUp,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -20,6 +21,8 @@ const items = [
   { href: "/admin/essays", label: "Example essays", icon: BookOpen },
   { href: "/admin/guides", label: "Interview guides", icon: MessageSquare },
   { href: "/admin/documents", label: "AI reference essays", icon: Brain },
+  { href: "/admin/arrange/essays", label: "Arrange essays", icon: ArrowDownUp },
+  { href: "/admin/arrange/interviews", label: "Arrange interviews", icon: ArrowDownUp },
   { href: "/admin/users", label: "Members", icon: Users },
 ];
 

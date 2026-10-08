@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Plus, Search } from "lucide-react";
+import { ArrowDownUp, Plus, Search } from "lucide-react";
 import { clsx } from "clsx";
 import { requireAdmin } from "@/lib/admin/auth";
 import { listRecords } from "@/lib/admin/data";
@@ -53,12 +53,22 @@ export default async function ResourceListPage({
         description={resource.description}
         crumbs={[{ label: "Admin", href: "/admin" }, { label: resource.label }]}
         actions={
+          <>
+            {resource.arrange && (
+              <Link
+                href={`/admin/arrange/${resource.arrange}`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                <ArrowDownUp className="h-4 w-4" /> Arrange order
+              </Link>
+            )}
           <Link
             href={`/admin/${resource.key}/new`}
             className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-brand-500)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-brand-600)]"
           >
             <Plus className="h-4 w-4" /> New {resource.singular}
           </Link>
+          </>
         }
       />
 

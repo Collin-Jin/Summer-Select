@@ -118,6 +118,8 @@ export interface ResourceDef {
   listSelect?: string[];
   /** Shown above the form. */
   note?: string;
+  /** Drag-and-drop screen for ordering this resource, if it has one. */
+  arrange?: "essays" | "interviews";
 }
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -249,18 +251,15 @@ const prompts: ResourceDef = {
     { name: "program_slug", label: "Program", type: "select", required: true, refResource: "programs", immutable: true, help: "The program this prompt belongs to. Cannot be changed later." },
     { name: "prompt_en", label: "Prompt (English)", type: "textarea", required: true, rows: 4 },
     { name: "prompt_zh", label: "题目 (中文)", type: "textarea", rows: 4 },
-    { name: "order", label: "Order within the program", type: "int", min: 0, default: 0, required: true, help: "Prompts of one program are shown from lowest to highest." },
-    { name: "program_order", label: "Program position on the Essays page", type: "int", min: 0, default: 0, required: true, help: "Use the same number on all prompts of a program. Lower numbers appear first." },
     { name: "is_published", label: "Published", type: "bool", default: true },
   ],
   sections: [
     { title: "Prompt", rows: ["program_slug", ["prompt_en", "prompt_zh"]] },
-    { title: "Display", rows: ["order", "program_order", "is_published"] },
+    { title: "Display", description: "New prompts go to the end of their program. Change the order with “Arrange essays page” (drag and drop).", rows: ["is_published"] },
   ],
   columns: [
     { key: "program_slug", label: "Program", kind: "badge" },
     { key: "prompt_en", label: "Prompt", kind: "clamp" },
-    { key: "order", label: "Order", kind: "number" },
     { key: "is_published", label: "Published", kind: "bool" },
   ],
   searchColumns: ["program_slug", "prompt_en", "prompt_zh"],
@@ -269,7 +268,8 @@ const prompts: ResourceDef = {
     { column: "program_slug", ascending: true },
     { column: "order", ascending: true },
   ],
-  listSelect: ["id", "program_slug", "prompt_en", "order", "is_published"],
+  listSelect: ["id", "program_slug", "prompt_en", "is_published"],
+  arrange: "essays",
   children: [{ resource: "essays", field: "prompt_id", title: "Example essays for this prompt" }],
 };
 
@@ -337,22 +337,21 @@ const guides: ResourceDef = {
     { name: "program_slug", label: "Program slug", type: "text", required: true, suggest: true, suggestFrom: { resource: "programs", column: "slug" }, help: "Short identifier for the program, e.g. ucsb-rmp." },
     { name: "format_note", label: "Interview format note (English)", type: "textarea", rows: 4, help: "How the interview works: length, who interviews, style." },
     { name: "format_note_zh", label: "面试形式说明 (中文)", type: "textarea", rows: 4 },
-    { name: "sort_order", label: "Order", type: "int", min: 0, default: 0, required: true, help: "Lower numbers appear first." },
     { name: "is_published", label: "Published", type: "bool", default: true },
   ],
   sections: [
     { title: "Guide", rows: [["program_name", "program_slug"], ["format_note", "format_note_zh"]] },
-    { title: "Display", rows: ["sort_order", "is_published"] },
+    { title: "Display", description: "New guides go to the end. Change the order with “Arrange interviews page” (drag and drop).", rows: ["is_published"] },
   ],
   columns: [
     { key: "program_name", label: "Program" },
     { key: "program_slug", label: "Slug", kind: "badge" },
-    { key: "sort_order", label: "Order", kind: "number" },
     { key: "is_published", label: "Published", kind: "bool" },
   ],
   searchColumns: ["program_name", "program_slug"],
   order: [{ column: "sort_order", ascending: true }],
-  listSelect: ["id", "program_name", "program_slug", "sort_order", "is_published"],
+  listSelect: ["id", "program_name", "program_slug", "is_published"],
+  arrange: "interviews",
   children: [{ resource: "questions", field: "guide_id", title: "Questions in this guide" }],
 };
 
@@ -374,22 +373,21 @@ const questions: ResourceDef = {
     { name: "tips", label: "Answering tips (English)", type: "textarea", rows: 5 },
     { name: "tips_zh", label: "回答技巧 (中文)", type: "textarea", rows: 5 },
     { name: "category", label: "Category", type: "text", suggest: true, placeholder: "e.g. motivations", help: "Questions are grouped by category on the site." },
-    { name: "sort_order", label: "Order", type: "int", min: 0, default: 0, required: true, help: "Lower numbers appear first." },
     { name: "is_published", label: "Published", type: "bool", default: true },
   ],
   sections: [
     { title: "Question", rows: ["guide_id", ["question", "question_zh"], ["tips", "tips_zh"]] },
-    { title: "Display", rows: ["category", "sort_order", "is_published"] },
+    { title: "Display", description: "New questions go to the end of their guide. Change the order with “Arrange interviews page” (drag and drop).", rows: ["category", "is_published"] },
   ],
   columns: [
     { key: "question", label: "Question", kind: "clamp" },
     { key: "category", label: "Category", kind: "badge" },
-    { key: "sort_order", label: "Order", kind: "number" },
     { key: "is_published", label: "Published", kind: "bool" },
   ],
   searchColumns: ["question", "question_zh", "category"],
   order: [{ column: "sort_order", ascending: true }],
-  listSelect: ["id", "question", "category", "sort_order", "is_published"],
+  listSelect: ["id", "question", "category", "is_published"],
+  arrange: "interviews",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

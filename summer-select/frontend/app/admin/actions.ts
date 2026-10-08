@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import OpenAI from "openai";
 import { getAdminContext } from "@/lib/admin/auth";
+import { loadArrangeGroups } from "@/lib/admin/arrange";
+import { isArrangeKind } from "@/lib/admin/arrangeTypes";
 import { getRawRecord, isValidId, parentHref } from "@/lib/admin/data";
 import { getResource, type ResourceDef, type Values } from "@/lib/admin/resources";
 import { parseForm, type FieldErrors } from "@/lib/admin/validate";
@@ -77,6 +79,59 @@ async function embed(text: string): Promise<{ vector: number[] } | { error: stri
   }
 }
 
+type Supabase = NonNullable<Awaited<ReturnType<typeof getAdminContext>>>["supabase"];
+
+/** Order columns that put a brand-new record last in its list. */
+async function appendPosition(
+  supabase: Supabase,
+  resourceKey: string,
+  row: Values
+): Promise<Values | null> {
+  if (resourceKey === "prompts") {
+    const { data } = await supabase
+      .from("summer_program_prompts")
+      .select("program_order, order")
+      .eq("program_slug", row.program_slug as string)
+      .order("program_order", { ascending: false })
+      .order("order", { ascending: false })
+      .limit(1);
+    const last = data?.[0] as { program_order: number; order: number } | undefined;
+    if (last) return { program_order: last.program_order, order: last.order + 1 };
+
+    // First prompt of a program: the program goes to the end of the Essays page.
+    const { data: top } = await supabase
+      .from("summer_program_prompts")
+      .select("program_order")
+      .order("program_order", { ascending: false })
+      .limit(1);
+    const max = (top?.[0] as { program_order: number } | undefined)?.program_order;
+    return { program_order: max === undefined ? 0 : max + 1, order: 0 };
+  }
+
+  if (resourceKey === "guides") {
+    const { data } = await supabase
+      .from("interview_guides")
+      .select("sort_order")
+      .order("sort_order", { ascending: false })
+      .limit(1);
+    const max = (data?.[0] as { sort_order: number | null } | undefined)?.sort_order;
+    return { sort_order: (max ?? -1) + 1 };
+  }
+
+  if (resourceKey === "questions") {
+    const { data } = await supabase
+      .from("interview_questions")
+      .select("sort_order")
+      .eq("guide_id", row.guide_id as string)
+      .order("sort_order", { ascending: false })
+      .limit(1);
+    const max = (data?.[0] as { sort_order: number | null } | undefined)?.sort_order;
+    return { sort_order: (max ?? -1) + 1 };
+  }
+
+  return null;
+}
+
 /** Creates or updates one record. `id` is null when creating. */
 export async function saveRecord(
   resourceKey: string,
@@ -138,6 +193,13 @@ export async function saveRecord(
       if ("error" in result) return { ok: false, error: result.error };
       row.embedding = result.vector;
     }
+  }
+
+  // New prompts, guides and questions go to the end of their list; the
+  // drag-and-drop "Arrange" screens are the way to move them afterwards.
+  if (mode === "create") {
+    const placed = await appendPosition(supabase, resource.key, row);
+    if (placed) Object.assign(row, placed);
   }
 
   if (resource.hasUpdatedAt) row.updated_at = new Date().toISOString();
@@ -271,4 +333,73 @@ export async function updateUserAccess(input: UserAccessInput): Promise<ActionRe
 
   revalidatePath("/admin/users");
   return { ok: true, message: "Member updated." };
+}
+
+export interface ArrangementInput {
+  id: string;
+  itemIds: string[];
+}
+
+const STALE_MESSAGE =
+  "The list changed since you opened this page (something was added, removed or moved). Reload the page and arrange again.";
+
+/**
+ * Saves a drag-and-drop arrangement: the order of the groups, and the order
+ * of the items inside each group. Positions are written as 0..n-1, so there are
+ * never gaps or duplicates, and the whole change is applied atomically.
+ */
+export async function saveArrangement(
+  kind: string,
+  groups: ArrangementInput[]
+): Promise<ActionResult> {
+  const ctx = await getAdminContext();
+  if (!ctx) return NOT_ADMIN;
+  if (!isArrangeKind(kind)) return { ok: false, error: "Unknown list." };
+
+  const valid =
+    Array.isArray(groups) &&
+    groups.length <= 1000 &&
+    groups.every(
+      (g) =>
+        g &&
+        typeof g.id === "string" &&
+        Array.isArray(g.itemIds) &&
+        g.itemIds.length <= 2000 &&
+        g.itemIds.every((i) => typeof i === "string")
+    );
+  if (!valid) return { ok: false, error: "Invalid order." };
+
+  // Compare against the database so a stale page can never overwrite newer data.
+  const current = await loadArrangeGroups(ctx.supabase, kind);
+  const sameSet = (a: string[], b: string[]) =>
+    a.length === b.length && new Set(a).size === a.length && a.every((x) => b.includes(x));
+
+  if (!sameSet(groups.map((g) => g.id), current.map((g) => g.id))) {
+    return { ok: false, error: STALE_MESSAGE };
+  }
+  for (const g of groups) {
+    const existing = current.find((c) => c.id === g.id);
+    if (!existing || !sameSet(g.itemIds, existing.items.map((i) => i.id))) {
+      return { ok: false, error: STALE_MESSAGE };
+    }
+  }
+
+  if (kind === "essays") {
+    const items = groups.flatMap((g, gi) =>
+      g.itemIds.map((id, ii) => ({ id, program_order: gi, order: ii }))
+    );
+    const { error } = await ctx.supabase.rpc("admin_reorder_prompts", { p_items: items });
+    if (error) return error.code === "42501" ? NOT_ADMIN : { ok: false, error: error.message };
+  } else {
+    const guides = groups.map((g, gi) => ({ id: g.id, sort_order: gi }));
+    const questions = groups.flatMap((g) => g.itemIds.map((id, ii) => ({ id, sort_order: ii })));
+    const { error } = await ctx.supabase.rpc("admin_reorder_interviews", {
+      p_guides: guides,
+      p_questions: questions,
+    });
+    if (error) return error.code === "42501" ? NOT_ADMIN : { ok: false, error: error.message };
+  }
+
+  revalidateSite();
+  return { ok: true, message: "Order saved. The website is updated." };
 }

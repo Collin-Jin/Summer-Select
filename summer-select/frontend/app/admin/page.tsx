@@ -75,6 +75,7 @@ export default async function AdminOverviewPage() {
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>Open any program on the public site while signed in and use the <strong>Edit</strong> button to jump straight to its form.</li>
           <li>Switch a record to <strong>Draft</strong> to hide it without deleting it.</li>
+          <li>Use <strong>Arrange essays / interviews</strong> in the sidebar to drag programs, prompts and questions into the order students see.</li>
           <li>Essay prompts, example essays and interview questions are edited from inside their program or guide.</li>
         </ul>
       </section>
