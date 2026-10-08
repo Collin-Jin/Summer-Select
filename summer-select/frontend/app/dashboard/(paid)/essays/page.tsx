@@ -17,6 +17,15 @@ export type ProgramDescription = {
   collin_rationale_zh: string | null;
 };
 
+/** A program that exists in the directory but has no essay prompts yet (Edit mode only). */
+export type EmptyProgram = {
+  lid: string;
+  slug: string;
+  name_en: string;
+  name_zh: string | null;
+  is_published: boolean | null;
+};
+
 export default async function EssaysPage() {
   const supabase = await supabaseServer();
 
@@ -64,6 +73,18 @@ export default async function EssaysPage() {
     programDescriptions[p.slug] = p as ProgramDescription;
   }
 
+  // In Edit mode, also list directory programs that have no prompts yet, so the
+  // admin can start adding essays for a program (e.g. one just created).
+  let emptyPrograms: EmptyProgram[] = [];
+  if (editing) {
+    const { data: all } = await supabase
+      .from("summer_programs")
+      .select("lid, slug, name_en, name_zh, is_published")
+      .order("name_en", { ascending: true });
+    const used = new Set(uniqueSlugs);
+    emptyPrograms = ((all ?? []) as EmptyProgram[]).filter((p) => !used.has(p.slug));
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -72,6 +93,7 @@ export default async function EssaysPage() {
     <EssaysClientView
       prompts={publishedPrompts}
       programDescriptions={programDescriptions}
+      emptyPrograms={emptyPrograms}
       userEmail={user?.email ?? null}
     />
   );

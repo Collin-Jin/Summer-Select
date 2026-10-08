@@ -17,7 +17,7 @@ import { WatermarkedContent } from "@/components/ui/WatermarkedContent";
 import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import type { SummerProgramPromptWithEssays } from "@/lib/database.types";
-import type { ProgramDescription } from "./page";
+import type { EmptyProgram, ProgramDescription } from "./page";
 import { saveArrangement } from "@/app/admin/actions";
 import { useAdmin } from "@/components/admin/inline/AdminProvider";
 import { AddButton, DraftBadge, EditButton } from "@/components/admin/inline/EditControls";
@@ -460,15 +460,18 @@ function ProgramEssaysView({
 export function EssaysClientView({
   prompts: serverPrompts,
   programDescriptions,
+  emptyPrograms = [],
   userEmail,
 }: {
   prompts: SummerProgramPromptWithEssays[];
   programDescriptions: Record<string, ProgramDescription>;
+  /** Edit mode only: directory programs that have no prompts yet. */
+  emptyPrograms?: EmptyProgram[];
   userEmail: string | null;
 }) {
   const { lang } = useLanguage();
   const router = useRouter();
-  const { notify } = useAdmin();
+  const { notify, editing } = useAdmin();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [, startSaving] = useTransition();
 
@@ -592,7 +595,41 @@ export function EssaysClientView({
           />
         )}
       />
-      <AddButton resource="prompts" label="Add essay prompt" className="mt-5" />
+      <AddButton resource="programs" label="Add program" className="mt-5" />
+
+      {/* Edit mode: programs that exist but don't have any essay prompts yet. */}
+      {editing && emptyPrograms.length > 0 && (
+        <section className="mt-10">
+          <div className="flex items-center gap-3 mb-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+              Programs without essays yet
+            </p>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {emptyPrograms.map((p) => (
+              <li
+                key={p.lid}
+                className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-800">{p.name_en}</p>
+                  <DraftBadge published={p.is_published} />
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <AddButton
+                    resource="prompts"
+                    presets={{ program_slug: p.slug }}
+                    label="Add first prompt"
+                    className="!px-3 !py-1.5"
+                  />
+                  <EditButton resource="programs" id={p.lid} label={`Edit ${p.name_en}`} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
