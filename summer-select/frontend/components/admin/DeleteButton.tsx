@@ -13,9 +13,11 @@ interface DeleteButtonProps {
   name: string;
   /** Things that will be deleted with it. */
   cascade?: { label: string; count: number }[];
+  /** In-page editor: called after a successful delete instead of navigating. */
+  onDeleted?: (message: string) => void;
 }
 
-export function DeleteButton({ resourceKey, id, name, cascade = [] }: DeleteButtonProps) {
+export function DeleteButton({ resourceKey, id, name, cascade = [], onDeleted }: DeleteButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +39,10 @@ export function DeleteButton({ resourceKey, id, name, cascade = [] }: DeleteButt
         const res = await deleteRecord(resourceKey, id);
         if (!res.ok) {
           setError(res.error ?? "Could not delete.");
+          return;
+        }
+        if (onDeleted) {
+          onDeleted(res.message);
           return;
         }
         router.push(res.redirectTo ?? `/admin/${resourceKey}`);
@@ -62,7 +68,7 @@ export function DeleteButton({ resourceKey, id, name, cascade = [] }: DeleteButt
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/50 p-4"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget && !pending) setOpen(false);
           }}

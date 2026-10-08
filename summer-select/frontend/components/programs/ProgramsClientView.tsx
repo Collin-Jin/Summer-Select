@@ -12,6 +12,7 @@ import type { SummerProgram } from "@/lib/database.types";
 import type { FormatOption, CategoryOption } from "@/lib/programs";
 import type { ViewerAccess } from "@/lib/access";
 import { Search, LayoutGrid } from "lucide-react";
+import { AddButton } from "@/components/admin/inline/EditControls";
 
 interface ProgramsClientViewProps {
   programs: SummerProgram[];
@@ -170,6 +171,7 @@ export function ProgramsClientView({
               style={{ background: "var(--color-brand-accent)" }}
             />
           </div>
+          <AddButton resource="programs" label="Add program" className="ml-auto mr-3" />
           <button
             className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm border rounded-lg transition-colors duration-150"
             style={{ borderColor: "var(--color-brand-100)", color: "var(--color-brand-600)" }}

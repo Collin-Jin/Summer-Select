@@ -5,7 +5,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { SessionWatcher } from "@/app/dashboard/_components/SessionWatcher";
 import { getViewer } from "@/lib/viewer";
-import { isAdminEmail } from "@/lib/admin/config";
+import { getEditing } from "@/lib/admin/editMode";
+import { AdminProvider } from "@/components/admin/inline/AdminProvider";
 import { DEVICE_SESSION_COOKIE } from "@/lib/session";
 import type { Lang } from "@/lib/database.types";
 
@@ -29,12 +30,14 @@ interface SiteShellProps {
  * 3. Read the `lang` cookie to seed the LanguageProvider.
  */
 export async function SiteShell({ children, fullBleed = false }: SiteShellProps) {
-  const { user, isPaid, access } = await getViewer();
+  const { user, isPaid, access, isAdmin } = await getViewer();
+  const editing = await getEditing();
 
   const cookieStore = await cookies();
   let deviceLockEnabled = false;
 
-  if (user && isPaid) {
+  // The owner is never kicked out by the one-device rule.
+  if (user && isPaid && !isAdmin) {
     const supabase = await supabaseServer();
     const { data: profile } = await supabase
       .from("profiles")
@@ -63,10 +66,12 @@ export async function SiteShell({ children, fullBleed = false }: SiteShellProps)
       <AppLayout
         userEmail={user?.email}
         access={access}
-        isAdmin={isAdminEmail(user?.email)}
+        isAdmin={isAdmin}
         fullBleed={fullBleed}
       >
-        {children}
+        <AdminProvider isAdmin={isAdmin} editing={editing}>
+          {children}
+        </AdminProvider>
       </AppLayout>
     </LanguageProvider>
   );

@@ -1,5 +1,6 @@
 import { supabaseServer } from "@/utils/supabase/server";
 import { getViewer } from "@/lib/viewer";
+import { getEditing } from "@/lib/admin/editMode";
 import type { SummerProgram } from "@/lib/database.types";
 
 export type FormatOption = { en: string; zh: string | null };
@@ -10,11 +11,18 @@ export type CategoryOption = { en: string; zh: string | null };
  * rationale and strategy). Everyone else — guests and unpaid accounts — reads
  * `public_summer_programs`, a view of published programs without those paid
  * columns. The database enforces this split; see the view migration.
+ *
+ * The admin can read drafts too, but only sees them while Edit mode is on, so
+ * the rest of the time the site looks exactly like it does to members.
  */
 async function programsSource() {
-  const [supabase, viewer] = await Promise.all([supabaseServer(), getViewer()]);
+  const [supabase, viewer, editing] = await Promise.all([
+    supabaseServer(),
+    getViewer(),
+    getEditing(),
+  ]);
   const table = viewer.isPaid ? "summer_programs" : "public_summer_programs";
-  return supabase.from(table);
+  return { builder: supabase.from(table), publishedOnly: viewer.isAdmin && !editing };
 }
 
 /** Fills the paid-only fields with null so public rows match `SummerProgram`. */
@@ -33,9 +41,13 @@ function toProgram(row: Record<string, unknown>): SummerProgram {
  * Called exclusively from Server Components — uses the cookie-based server client.
  */
 export async function getAllPrograms(): Promise<SummerProgram[]> {
-  const { data, error } = await (await programsSource())
-    .select("*")
-    .order("collin_rec_index", { ascending: false, nullsFirst: false });
+  const { builder, publishedOnly } = await programsSource();
+  let query = builder.select("*");
+  if (publishedOnly) query = query.eq("is_published", true);
+  const { data, error } = await query.order("collin_rec_index", {
+    ascending: false,
+    nullsFirst: false,
+  });
 
   if (error) {
     console.error("[getAllPrograms] Supabase error:", error.message);
@@ -51,10 +63,10 @@ export async function getAllPrograms(): Promise<SummerProgram[]> {
 export async function getProgramBySlug(
   slug: string
 ): Promise<SummerProgram | null> {
-  const { data, error } = await (await programsSource())
-    .select("*")
-    .eq("slug", slug)
-    .single();
+  const { builder, publishedOnly } = await programsSource();
+  let query = builder.select("*").eq("slug", slug);
+  if (publishedOnly) query = query.eq("is_published", true);
+  const { data, error } = await query.single();
 
   if (error) {
     if (error.code !== "PGRST116") {
@@ -74,9 +86,10 @@ export async function getProgramsByIds(
 ): Promise<SummerProgram[]> {
   if (lids.length === 0) return [];
 
-  const { data, error } = await (await programsSource())
-    .select("*")
-    .in("lid", lids);
+  const { builder, publishedOnly } = await programsSource();
+  let query = builder.select("*").in("lid", lids);
+  if (publishedOnly) query = query.eq("is_published", true);
+  const { data, error } = await query;
 
   if (error) {
     console.error("[getProgramsByIds] Supabase error:", error.message);
@@ -91,9 +104,10 @@ export async function getProgramsByIds(
  * Returns deduplicated pairs keyed on the English value.
  */
 export async function getProgramCategories(): Promise<CategoryOption[]> {
-  const { data, error } = await (await programsSource()).select(
-    "primary_category_en, primary_category_zh"
-  );
+  const { builder, publishedOnly } = await programsSource();
+  let query = builder.select("primary_category_en, primary_category_zh");
+  if (publishedOnly) query = query.eq("is_published", true);
+  const { data, error } = await query;
 
   if (error || !data) return [];
 
@@ -115,9 +129,10 @@ export async function getProgramCategories(): Promise<CategoryOption[]> {
  * Returns deduplicated pairs keyed on the English value.
  */
 export async function getProgramFormats(): Promise<FormatOption[]> {
-  const { data, error } = await (await programsSource()).select(
-    "format_en, format_zh"
-  );
+  const { builder, publishedOnly } = await programsSource();
+  let query = builder.select("format_en, format_zh");
+  if (publishedOnly) query = query.eq("is_published", true);
+  const { data, error } = await query;
 
   if (error || !data) return [];
 

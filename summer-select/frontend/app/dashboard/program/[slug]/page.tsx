@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { getProgramBySlug } from "@/lib/programs";
 import { getViewer } from "@/lib/viewer";
 import { loginUrl } from "@/lib/access";
-import { isAdminEmail } from "@/lib/admin/config";
+import { EditButton, DraftBadge } from "@/components/admin/inline/EditControls";
 import { cookies } from "next/headers";
 import type { Lang, SummerProgram } from "@/lib/database.types";
 import { Badge, categoryVariant, deadlineTierVariant } from "@/components/ui/Badge";
@@ -28,7 +28,6 @@ import {
 } from "@/utils/formatFinancial";
 import {
   ArrowLeft,
-  Pencil,
   ExternalLink,
   MapPin,
   Clock,
@@ -176,16 +175,10 @@ export default async function ProgramDetailPage({ params }: Props) {
           <ArrowLeft className="h-4 w-4" />
           {lang === "zh" ? "返回项目库" : "Back to directory"}
         </Link>
-        {isAdminEmail(viewer.user?.email) && (
-          <Link
-            href={`/admin/programs/${program.lid}`}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all hover:brightness-110"
-            style={{ background: "var(--color-brand-500)" }}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit this program
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <DraftBadge published={program.is_published} />
+          <EditButton resource="programs" id={program.lid} label="Edit program" variant="pill" />
+        </div>
       </div>
 
       {/* ── Header ────────────────────────────────────────────────────────── */}

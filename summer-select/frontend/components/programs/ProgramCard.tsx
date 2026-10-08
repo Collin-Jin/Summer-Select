@@ -10,6 +10,7 @@ import { FavoriteButton } from "./FavoriteButton";
 import { getDeadlineLabel } from "@/utils/formatDate";
 import { formatCost } from "@/utils/formatFinancial";
 import { useLanguage } from "@/context/LanguageContext";
+import { EditButton, DraftBadge } from "@/components/admin/inline/EditControls";
 import type { SummerProgram } from "@/lib/database.types";
 import type { ViewerAccess } from "@/lib/access";
 
@@ -132,6 +133,7 @@ export function ProgramCard({
 
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5 mb-4">
+          <DraftBadge published={program.is_published} />
           {category && (
             <Badge variant={categoryVariant(category)} size="sm">{category}</Badge>
           )}
@@ -188,6 +190,7 @@ export function ProgramCard({
             </span>
           )}
         </div>
+        <EditButton resource="programs" id={program.lid} label={`Edit ${name}`} />
         <div>
           {program.tuition_cost !== null && program.tuition_cost !== undefined ? (
             <span className="text-sm font-semibold text-slate-700">

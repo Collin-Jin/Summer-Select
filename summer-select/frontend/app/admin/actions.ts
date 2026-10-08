@@ -1,12 +1,30 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import OpenAI from "openai";
 import { getAdminContext } from "@/lib/admin/auth";
 import { loadArrangeGroups } from "@/lib/admin/arrange";
 import { isArrangeKind } from "@/lib/admin/arrangeTypes";
-import { getRawRecord, isValidId, parentHref } from "@/lib/admin/data";
-import { getResource, type ResourceDef, type Values } from "@/lib/admin/resources";
+import {
+  getCascadeCounts,
+  getRawRecord,
+  getRefOptions,
+  getSuggestions,
+  isValidId,
+  parentHref,
+} from "@/lib/admin/data";
+import { EDIT_COOKIE } from "@/lib/admin/editMode";
+import {
+  getResource,
+  initialFormValues,
+  toFormSpec,
+  type FieldValue,
+  type FormSpec,
+  type Option,
+  type ResourceDef,
+  type Values,
+} from "@/lib/admin/resources";
 import { parseForm, type FieldErrors } from "@/lib/admin/validate";
 
 export type ActionResult =
@@ -402,4 +420,91 @@ export async function saveArrangement(
 
   revalidateSite();
   return { ok: true, message: "Order saved. The website is updated." };
+}
+
+/** Turns "Edit mode" on or off for the signed-in admin. */
+export async function setEditMode(on: boolean): Promise<ActionResult> {
+  const ctx = await getAdminContext();
+  if (!ctx) return NOT_ADMIN;
+  const store = await cookies();
+  if (on) {
+    store.set(EDIT_COOKIE, "1", {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 30,
+    });
+  } else {
+    store.delete(EDIT_COOKIE);
+  }
+  return { ok: true, message: on ? "Edit mode on." : "Edit mode off." };
+}
+
+export type EditorData =
+  | {
+      ok: true;
+      spec: FormSpec;
+      id: string | null;
+      title: string;
+      initialValues: Record<string, FieldValue>;
+      refOptions: Record<string, Option[]>;
+      suggestions: Record<string, string[]>;
+      cascade: { label: string; count: number }[];
+    }
+  | { ok: false; error: string };
+
+/**
+ * Everything the in-page editor needs to show a form for one record (or an
+ * empty one, with optional pre-filled values such as the parent program).
+ */
+export async function loadEditor(
+  resourceKey: string,
+  id: string | null,
+  presets: Record<string, string> = {}
+): Promise<EditorData> {
+  const ctx = await getAdminContext();
+  if (!ctx) return { ok: false, error: "You need to be signed in as the site admin to do that." };
+  const { supabase } = ctx;
+
+  const resource = getResource(resourceKey);
+  if (!resource) return { ok: false, error: "Unknown section." };
+
+  try {
+    let row: Values | null = null;
+    let raw: Values | null = null;
+    if (id) {
+      if (!isValidId(resource, id)) return { ok: false, error: "Invalid record." };
+      raw = await getRawRecord(supabase, resource, id);
+      if (!raw) return { ok: false, error: "This record no longer exists. It may have been deleted." };
+      row = resource.fromRow ? resource.fromRow(raw) : raw;
+    }
+
+    const safePresets: Record<string, string> = {};
+    if (!id && presets && typeof presets === "object") {
+      for (const f of resource.fields) {
+        const v = presets[f.name];
+        if (typeof v === "string" && v.length <= 200) safePresets[f.name] = v;
+      }
+    }
+
+    const [refOptions, suggestions, cascade] = await Promise.all([
+      getRefOptions(supabase, resource),
+      getSuggestions(supabase, resource),
+      raw ? getCascadeCounts(supabase, resource, raw) : Promise.resolve([]),
+    ]);
+
+    return {
+      ok: true,
+      spec: toFormSpec(resource),
+      id,
+      title: row ? resource.title(row) : `New ${resource.singular}`,
+      initialValues: initialFormValues(resource.fields, row, safePresets),
+      refOptions,
+      suggestions,
+      cascade,
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Could not load the editor." };
+  }
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Check, Lock, X } from "lucide-react";
 import { clsx } from "clsx";
-import { saveRecord } from "@/app/admin/actions";
+import { saveRecord, type ActionResult } from "@/app/admin/actions";
 import type { FieldDef, FieldValue, FormSpec, Option } from "@/lib/admin/resources";
 import { Button } from "@/components/ui/Button";
 import { errorClass, helpClass, inputClass, inputErrorClass, labelClass } from "./styles";
@@ -19,8 +19,14 @@ interface ResourceFormProps {
   initialValues: FormValues;
   refOptions: Record<string, Option[]>;
   suggestions: Record<string, string[]>;
-  /** Where "Cancel" goes. */
-  cancelHref: string;
+  /** Where "Back" goes (full-page use). */
+  cancelHref?: string;
+  /** In-page editor: called instead of navigating after a successful save. */
+  onSaved?: (result: Extract<ActionResult, { ok: true }>) => void;
+  /** In-page editor: close button instead of a link. */
+  onCancel?: () => void;
+  /** Lets a host (the in-page drawer) know when there are unsaved changes. */
+  onDirtyChange?: (dirty: boolean) => void;
   /** Optional extra content in the action bar (e.g. delete button). */
   extraActions?: React.ReactNode;
 }
@@ -44,6 +50,9 @@ export function ResourceForm({
   refOptions,
   suggestions,
   cancelHref,
+  onSaved,
+  onCancel,
+  onDirtyChange,
   extraActions,
 }: ResourceFormProps) {
   const router = useRouter();
@@ -62,6 +71,10 @@ export function ResourceForm({
   );
 
   const dirty = JSON.stringify(values) !== baseline;
+
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
 
   // Warn before closing the tab with unsaved work.
   useEffect(() => {
@@ -130,7 +143,8 @@ export function ResourceForm({
       setErrors({});
       setBaseline(JSON.stringify(values));
       setSavedMessage(result.message);
-      if (result.redirectTo) router.push(result.redirectTo);
+      if (onSaved) onSaved(result);
+      else if (result.redirectTo) router.push(result.redirectTo);
       else router.refresh();
     });
   }
@@ -193,12 +207,22 @@ export function ResourceForm({
             )}
           </div>
           {extraActions}
-          <Link
-            href={cancelHref}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-          >
-            {dirty ? "Discard" : "Back"}
-          </Link>
+          {onCancel ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+            >
+              {dirty ? "Discard" : "Close"}
+            </button>
+          ) : (
+            <Link
+              href={cancelHref ?? "/admin"}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+            >
+              {dirty ? "Discard" : "Back"}
+            </Link>
+          )}
           <Button type="submit" loading={pending} disabled={mode === "update" && !dirty}>
             {mode === "create" ? `Create ${spec.singular}` : "Save changes"}
           </Button>
