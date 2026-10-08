@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   ChevronUp,
@@ -15,6 +16,13 @@ import { ProtectedContent } from "@/components/ui/ProtectedContent";
 import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import type { InterviewGuideWithQuestions } from "@/lib/database.types";
+import { saveArrangement } from "@/app/admin/actions";
+import { useAdmin } from "@/components/admin/inline/AdminProvider";
+import { AddButton, DraftBadge, EditButton } from "@/components/admin/inline/EditControls";
+import { SortableList } from "@/components/admin/inline/SortableList";
+import { clsx } from "clsx";
+
+type Question = InterviewGuideWithQuestions["interview_questions"][number];
 
 const CATEGORY_LABELS: Record<string, { en: string; zh: string }> = {
   icebreakers:       { en: "Icebreakers & Self-Awareness",          zh: "破冰 & 自我认知" },
@@ -38,15 +46,19 @@ function GuideCard({
   guide,
   lang,
   onSelect,
+  handle,
 }: {
   guide: InterviewGuideWithQuestions;
   lang: "en" | "zh";
   onSelect: () => void;
+  handle?: React.ReactNode;
 }) {
+  const { editing } = useAdmin();
   const questionCount = guide.interview_questions.length;
   const categoryCount = new Set(guide.interview_questions.map((q) => q.category ?? "general")).size;
 
   return (
+    <div className="relative">
     <button
       onClick={onSelect}
       className="group text-left w-full rounded-2xl overflow-hidden transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
@@ -77,11 +89,12 @@ function GuideCard({
       <div className="px-5 pt-5 pb-5">
         {/* Program name */}
         <h3
-          className="font-bold text-base leading-snug mb-2 pr-6"
+          className={clsx("font-bold text-base leading-snug mb-2", editing ? "pr-24" : "pr-6")}
           style={{ color: "var(--color-brand-700)", fontFamily: "var(--font-syne, sans-serif)" }}
         >
           {guide.program_name}
         </h3>
+        <DraftBadge published={guide.is_published} className="mb-2 inline-block" />
 
         {/* Format note snippet */}
         {(guide.format_note || guide.format_note_zh) && (
@@ -128,6 +141,13 @@ function GuideCard({
         </div>
       </div>
     </button>
+    {editing && (
+      <div className="absolute right-3 top-4 z-10 flex items-center gap-1.5">
+        {handle}
+        <EditButton resource="guides" id={guide.id} label={`Edit ${guide.program_name}`} />
+      </div>
+    )}
+    </div>
   );
 }
 
@@ -137,10 +157,12 @@ function GuideDetailView({
   guide,
   lang,
   onBack,
+  onReorderQuestions,
 }: {
   guide: InterviewGuideWithQuestions;
   lang: "en" | "zh";
   onBack: () => void;
+  onReorderQuestions: (next: Question[]) => void;
 }) {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
@@ -217,19 +239,22 @@ function GuideDetailView({
                 </span>
               </div>
             </div>
-            <Link
-              href={`/dashboard/program/${guide.program_slug}`}
-              className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-              style={{
-                background: "rgba(255,255,255,0.18)",
-                color: "#FFFFFB",
-                border: "1px solid rgba(255,255,255,0.25)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {lang === "zh" ? "项目详情" : "View Program"}
-              <ExternalLink className="h-3 w-3" />
-            </Link>
+            <div className="flex flex-shrink-0 items-center gap-2">
+              <EditButton resource="guides" id={guide.id} label={`Edit ${guide.program_name}`} />
+              <Link
+                href={`/dashboard/program/${guide.program_slug}`}
+                className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+                style={{
+                  background: "rgba(255,255,255,0.18)",
+                  color: "#FFFFFB",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {lang === "zh" ? "项目详情" : "View Program"}
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -283,36 +308,58 @@ function GuideDetailView({
                 {lang === "zh" ? catLabel.zh : catLabel.en}
               </p>
             )}
-            <div className="space-y-3">
-              {questions.map((qa, idx) => {
+            <SortableList
+              items={questions}
+              layout="list"
+              className="space-y-3"
+              onReorder={(nextInCategory) => {
+                // Rebuild the guide's full question list, category by category, as displayed.
+                const all = Array.from(questionsByCategory.entries()).flatMap(([c, qs]) =>
+                  c === cat ? nextInCategory : qs
+                );
+                onReorderQuestions(all);
+              }}
+              renderItem={(qa, idx, handle) => {
                 const isOpen = openIds.has(qa.id);
                 const hasTips = qa.tips || qa.tips_zh;
                 return (
-                  <Card key={qa.id} outlined className="overflow-hidden">
-                    <button
-                      onClick={() => toggle(qa.id)}
-                      className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <span
-                          className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center mt-0.5"
-                          style={{
-                            background: "var(--color-brand-50)",
-                            color: "var(--color-brand-500)",
-                          }}
-                        >
-                          {idx + 1}
-                        </span>
-                        <p className="text-sm font-medium text-slate-700 leading-snug">
-                          {lang === "zh" && qa.question_zh ? qa.question_zh : qa.question}
-                        </p>
-                      </div>
-                      {isOpen ? (
-                        <ChevronUp className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
-                      )}
-                    </button>
+                  <Card outlined className="relative overflow-hidden">
+                    <div className="flex items-start">
+                      {handle && <div className="pl-3 pt-3">{handle}</div>}
+                      <button
+                        onClick={() => toggle(qa.id)}
+                        className="min-w-0 flex-1 text-left px-5 py-4 flex items-start justify-between gap-4 hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <span
+                            className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center mt-0.5"
+                            style={{
+                              background: "var(--color-brand-50)",
+                              color: "var(--color-brand-500)",
+                            }}
+                          >
+                            {idx + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <DraftBadge published={qa.is_published} className="mb-1 inline-block" />
+                            <p className="text-sm font-medium text-slate-700 leading-snug">
+                              {lang === "zh" && qa.question_zh ? qa.question_zh : qa.question}
+                            </p>
+                          </div>
+                        </div>
+                        {isOpen ? (
+                          <ChevronUp className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                        )}
+                      </button>
+                    </div>
+                    <EditButton
+                      resource="questions"
+                      id={qa.id}
+                      label="Edit question"
+                      className="absolute right-12 top-2 z-10"
+                    />
 
                     {isOpen && hasTips && (
                       <div className="px-5 pb-6 border-t border-slate-100">
@@ -339,11 +386,16 @@ function GuideDetailView({
                     )}
                   </Card>
                 );
-              })}
-            </div>
+              }}
+            />
           </div>
         );
       })}
+      <AddButton
+        resource="questions"
+        presets={{ guide_id: guide.id }}
+        label="Add interview question"
+      />
     </div>
   );
 }
@@ -351,12 +403,53 @@ function GuideDetailView({
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function InterviewsClientView({
-  guides,
+  guides: serverGuides,
 }: {
   guides: InterviewGuideWithQuestions[];
 }) {
   const { lang } = useLanguage();
+  const router = useRouter();
+  const { notify } = useAdmin();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [, startSaving] = useTransition();
+
+  // Local copy so drag-and-drop feels instant; resynced whenever the server sends new data.
+  const [guides, setGuides] = useState(serverGuides);
+  const [seenServerGuides, setSeenServerGuides] = useState(serverGuides);
+  if (seenServerGuides !== serverGuides) {
+    setSeenServerGuides(serverGuides);
+    setGuides(serverGuides);
+  }
+
+  /** Shows the new order immediately, saves it, and rolls back if saving fails. */
+  function persistOrder(next: InterviewGuideWithQuestions[]) {
+    const previous = guides;
+    setGuides(next);
+    const arrangement = next.map((g) => ({
+      id: g.id,
+      itemIds: g.interview_questions.map((q) => q.id),
+    }));
+    startSaving(async () => {
+      try {
+        const res = await saveArrangement("interviews", arrangement);
+        if (!res.ok) {
+          setGuides(previous);
+          notify(res.error ?? "Could not save the new order.", false);
+          return;
+        }
+        notify("Order saved.");
+        router.refresh();
+      } catch {
+        setGuides(previous);
+        notify("Couldn't reach the server. The order was not saved.", false);
+      }
+    });
+  }
+
+  const reorderQuestions = (guideId: string, questions: Question[]) =>
+    persistOrder(
+      guides.map((g) => (g.id === guideId ? { ...g, interview_questions: questions } : g))
+    );
 
   const grandTotalQuestions = guides.reduce((s, g) => s + g.interview_questions.length, 0);
   const selectedGuide = selectedId ? (guides.find((g) => g.id === selectedId) ?? null) : null;
@@ -368,6 +461,7 @@ export function InterviewsClientView({
         guide={selectedGuide}
         lang={lang}
         onBack={() => setSelectedId(null)}
+        onReorderQuestions={(next) => reorderQuestions(selectedGuide.id, next)}
       />
     );
   }
@@ -419,16 +513,21 @@ export function InterviewsClientView({
       </div>
 
       {/* Program cards grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {guides.map((guide) => (
+      <SortableList
+        items={guides}
+        layout="grid"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+        onReorder={persistOrder}
+        renderItem={(guide, _i, handle) => (
           <GuideCard
-            key={guide.id}
             guide={guide}
             lang={lang}
             onSelect={() => setSelectedId(guide.id)}
+            handle={handle}
           />
-        ))}
-      </div>
+        )}
+      />
+      <AddButton resource="guides" label="Add interview guide" className="mt-5" />
     </div>
   );
 }

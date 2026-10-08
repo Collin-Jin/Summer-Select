@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   ChevronUp,
@@ -17,8 +18,15 @@ import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import type { SummerProgramPromptWithEssays } from "@/lib/database.types";
 import type { ProgramDescription } from "./page";
+import { saveArrangement } from "@/app/admin/actions";
+import { useAdmin } from "@/components/admin/inline/AdminProvider";
+import { AddButton, DraftBadge, EditButton } from "@/components/admin/inline/EditControls";
+import { SortableList } from "@/components/admin/inline/SortableList";
+import { clsx } from "clsx";
 
 interface ProgramGroup {
+  /** Same as programSlug; lets the group be used in a sortable list. */
+  id: string;
   programSlug: string;
   programName: string;
   prompts: SummerProgramPromptWithEssays[];
@@ -30,7 +38,7 @@ function buildProgramGroups(prompts: SummerProgramPromptWithEssays[]): ProgramGr
     const { program_slug } = prompt;
     if (!programMap.has(program_slug)) {
       const firstName = prompt.program_example_essays[0]?.program_name ?? program_slug;
-      programMap.set(program_slug, { programSlug: program_slug, programName: firstName, prompts: [] });
+      programMap.set(program_slug, { id: program_slug, programSlug: program_slug, programName: firstName, prompts: [] });
     }
     programMap.get(program_slug)!.prompts.push(prompt);
   }
@@ -44,12 +52,15 @@ function ProgramCard({
   desc,
   lang,
   onSelect,
+  handle,
 }: {
   group: ProgramGroup;
   desc: ProgramDescription | undefined;
   lang: "en" | "zh";
   onSelect: () => void;
+  handle?: React.ReactNode;
 }) {
+  const { editing } = useAdmin();
   const essayCount = group.prompts.reduce((s, p) => s + p.program_example_essays.length, 0);
   const promptCount = group.prompts.length;
   const displayName = desc
@@ -65,6 +76,7 @@ function ProgramCard({
       : null;
 
   return (
+    <div className="relative">
     <button
       onClick={onSelect}
       className="group text-left w-full rounded-2xl overflow-hidden transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
@@ -100,7 +112,7 @@ function ProgramCard({
       <div className="px-5 pt-5 pb-5">
         {/* Program name */}
         <h3
-          className="font-bold text-base leading-snug mb-2 pr-6"
+          className={clsx("font-bold text-base leading-snug mb-2", editing ? "pr-24" : "pr-6")}
           style={{ color: "var(--color-brand-700)", fontFamily: "var(--font-syne, sans-serif)" }}
         >
           {displayName}
@@ -160,6 +172,13 @@ function ProgramCard({
         </div>
       </div>
     </button>
+    {editing && (
+      <div className="absolute right-3 top-4 z-10 flex items-center gap-1.5">
+        {handle}
+        {desc && <EditButton resource="programs" id={desc.lid} label={`Edit ${displayName}`} />}
+      </div>
+    )}
+    </div>
   );
 }
 
@@ -171,12 +190,14 @@ function ProgramEssaysView({
   lang,
   userEmail,
   onBack,
+  onReorderPrompts,
 }: {
   group: ProgramGroup;
   desc: ProgramDescription | undefined;
   lang: "en" | "zh";
   userEmail: string | null;
   onBack: () => void;
+  onReorderPrompts: (next: SummerProgramPromptWithEssays[]) => void;
 }) {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
@@ -262,19 +283,22 @@ function ProgramEssaysView({
                 </span>
               </div>
             </div>
-            <Link
-              href={`/dashboard/program/${group.programSlug}`}
-              className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-              style={{
-                background: "rgba(255,255,255,0.18)",
-                color: "#FFFFFB",
-                border: "1px solid rgba(255,255,255,0.25)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {lang === "zh" ? "项目详情" : "View Program"}
-              <ExternalLink className="h-3 w-3" />
-            </Link>
+            <div className="flex flex-shrink-0 items-center gap-2">
+              {desc && <EditButton resource="programs" id={desc.lid} label={`Edit ${displayName}`} />}
+              <Link
+                href={`/dashboard/program/${group.programSlug}`}
+                className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+                style={{
+                  background: "rgba(255,255,255,0.18)",
+                  color: "#FFFFFB",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {lang === "zh" ? "项目详情" : "View Program"}
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -310,36 +334,47 @@ function ProgramEssaysView({
       </p>
 
       {/* Prompts + essays */}
-      <div className="space-y-8">
-        {group.prompts.map((prompt, promptIdx) => (
-          <div key={prompt.id}>
+      <SortableList
+        items={group.prompts}
+        layout="list"
+        className="space-y-8"
+        onReorder={onReorderPrompts}
+        renderItem={(prompt, promptIdx, handle) => (
+          <div>
             {/* Prompt header */}
             <div
-              className="mb-3 px-4 py-3 rounded-xl border"
+              className="mb-3 px-4 py-3 rounded-xl border flex items-start gap-3"
               style={{ background: "#F8F7FD", borderColor: "var(--color-brand-100)" }}
             >
-              <p
-                className="text-xs font-semibold uppercase tracking-wider mb-1"
-                style={{ color: "var(--color-brand-500)" }}
-              >
-                {lang === "zh" ? `题目 ${promptIdx + 1}` : `Prompt ${promptIdx + 1}`}
-              </p>
-              <p
-                className="text-sm font-medium leading-snug"
-                style={{ color: "var(--color-brand-700)" }}
-              >
-                {lang === "zh" && prompt.prompt_zh ? prompt.prompt_zh : prompt.prompt_en}
-              </p>
+              {handle}
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-xs font-semibold uppercase tracking-wider mb-1"
+                  style={{ color: "var(--color-brand-500)" }}
+                >
+                  {lang === "zh" ? `题目 ${promptIdx + 1}` : `Prompt ${promptIdx + 1}`}
+                </p>
+                <p
+                  className="text-sm font-medium leading-snug"
+                  style={{ color: "var(--color-brand-700)" }}
+                >
+                  {lang === "zh" && prompt.prompt_zh ? prompt.prompt_zh : prompt.prompt_en}
+                </p>
+              </div>
+              <div className="flex flex-shrink-0 items-center gap-2">
+                <DraftBadge published={prompt.is_published} />
+                <EditButton resource="prompts" id={prompt.id} label="Edit prompt" />
+              </div>
             </div>
 
             {/* Essay accordions */}
             <div className="space-y-3 pl-2">
-              {prompt.program_example_essays
+              {[...prompt.program_example_essays]
                 .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
                 .map((essay, essayIdx) => {
                   const isOpen = openIds.has(essay.id);
                   return (
-                    <Card key={essay.id} outlined className="overflow-hidden">
+                    <Card key={essay.id} outlined className="relative overflow-hidden">
                       <button
                         onClick={() => toggle(essay.id)}
                         className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 hover:bg-slate-50 transition-colors"
@@ -358,6 +393,7 @@ function ProgramEssaysView({
                             {essay.year && (
                               <Badge variant="default" size="sm">{essay.year}</Badge>
                             )}
+                            <DraftBadge published={essay.is_published} />
                           </div>
                         </div>
                         {isOpen ? (
@@ -366,6 +402,12 @@ function ProgramEssaysView({
                           <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
                         )}
                       </button>
+                      <EditButton
+                        resource="essays"
+                        id={essay.id}
+                        label="Edit example essay"
+                        className="absolute right-12 top-2 z-10"
+                      />
 
                       {isOpen && (
                         <div className="px-5 pb-6 border-t border-slate-100">
@@ -394,10 +436,21 @@ function ProgramEssaysView({
                     </Card>
                   );
                 })}
+              <AddButton
+                resource="essays"
+                presets={{ prompt_id: prompt.id }}
+                label="Add example essay"
+              />
             </div>
           </div>
-        ))}
-      </div>
+        )}
+      />
+      <AddButton
+        resource="prompts"
+        presets={{ program_slug: group.programSlug }}
+        label="Add essay prompt"
+        className="mt-8"
+      />
     </div>
   );
 }
@@ -405,7 +458,7 @@ function ProgramEssaysView({
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function EssaysClientView({
-  prompts,
+  prompts: serverPrompts,
   programDescriptions,
   userEmail,
 }: {
@@ -414,9 +467,49 @@ export function EssaysClientView({
   userEmail: string | null;
 }) {
   const { lang } = useLanguage();
+  const router = useRouter();
+  const { notify } = useAdmin();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [, startSaving] = useTransition();
+
+  // Local copy so drag-and-drop feels instant; resynced whenever the server sends new data.
+  const [prompts, setPrompts] = useState(serverPrompts);
+  const [seenServerPrompts, setSeenServerPrompts] = useState(serverPrompts);
+  if (seenServerPrompts !== serverPrompts) {
+    setSeenServerPrompts(serverPrompts);
+    setPrompts(serverPrompts);
+  }
 
   const groups = buildProgramGroups(prompts);
+
+  /** Shows the new order immediately, saves it, and rolls back if saving fails. */
+  function persistOrder(next: SummerProgramPromptWithEssays[]) {
+    const previous = prompts;
+    setPrompts(next);
+    const arrangement = buildProgramGroups(next).map((g) => ({
+      id: g.programSlug,
+      itemIds: g.prompts.map((p) => p.id),
+    }));
+    startSaving(async () => {
+      try {
+        const res = await saveArrangement("essays", arrangement);
+        if (!res.ok) {
+          setPrompts(previous);
+          notify(res.error ?? "Could not save the new order.", false);
+          return;
+        }
+        notify("Order saved.");
+        router.refresh();
+      } catch {
+        setPrompts(previous);
+        notify("Couldn't reach the server. The order was not saved.", false);
+      }
+    });
+  }
+
+  const reorderPrograms = (next: ProgramGroup[]) => persistOrder(next.flatMap((g) => g.prompts));
+  const reorderPrompts = (slug: string, nextPrompts: SummerProgramPromptWithEssays[]) =>
+    persistOrder(groups.flatMap((g) => (g.programSlug === slug ? nextPrompts : g.prompts)));
   const grandTotalEssays = prompts.reduce((s, p) => s + p.program_example_essays.length, 0);
 
   const selectedGroup = selectedSlug
@@ -432,6 +525,7 @@ export function EssaysClientView({
         lang={lang}
         userEmail={userEmail}
         onBack={() => setSelectedSlug(null)}
+        onReorderPrompts={(next) => reorderPrompts(selectedGroup.programSlug, next)}
       />
     );
   }
@@ -483,17 +577,22 @@ export function EssaysClientView({
       </div>
 
       {/* Program cards grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {groups.map((group) => (
+      <SortableList
+        items={groups}
+        layout="grid"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+        onReorder={reorderPrograms}
+        renderItem={(group, _i, handle) => (
           <ProgramCard
-            key={group.programSlug}
             group={group}
             desc={programDescriptions[group.programSlug]}
             lang={lang}
             onSelect={() => setSelectedSlug(group.programSlug)}
+            handle={handle}
           />
-        ))}
-      </div>
+        )}
+      />
+      <AddButton resource="prompts" label="Add essay prompt" className="mt-5" />
     </div>
   );
 }

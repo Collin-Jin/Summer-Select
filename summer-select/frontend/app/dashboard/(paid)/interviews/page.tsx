@@ -1,6 +1,7 @@
 import { supabaseServer } from "@/utils/supabase/server";
 import { InterviewsClientView } from "./InterviewsClientView";
 import type { Metadata } from "next";
+import { getEditing } from "@/lib/admin/editMode";
 import type { InterviewGuideWithQuestions } from "@/lib/database.types";
 
 export const metadata: Metadata = {
@@ -15,11 +16,14 @@ export const metadata: Metadata = {
 export default async function InterviewsPage() {
   const supabase = await supabaseServer();
 
-  const { data: guides, error } = await supabase
-    .from("interview_guides")
-    .select("*, interview_questions(*)")
-    .eq("is_published", true)
-    .order("sort_order", { ascending: true });
+  // The admin sees drafts while Edit mode is on.
+  const editing = await getEditing();
+
+  let query = supabase.from("interview_guides").select("*, interview_questions(*)");
+  if (!editing) query = query.eq("is_published", true);
+  const { data: guides, error } = await query
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true });
 
   if (error || !guides) {
     return (
@@ -34,9 +38,9 @@ export default async function InterviewsPage() {
   // Sort questions within each guide by sort_order
   const sorted = (guides as InterviewGuideWithQuestions[]).map((g) => ({
     ...g,
-    interview_questions: [...g.interview_questions].sort(
-      (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-    ),
+    interview_questions: g.interview_questions
+      .filter((q) => editing || q.is_published !== false)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
   }));
 
   return <InterviewsClientView guides={sorted} />;
