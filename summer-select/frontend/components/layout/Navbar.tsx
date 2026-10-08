@@ -11,6 +11,7 @@ import {
   Sparkles,
   Info,
   Settings2,
+  FileLock2,
   Lock,
   LogIn,
   LogOut,
@@ -45,6 +46,7 @@ const navLinks: NavLink[] = [
   { href: "/dashboard/essays", label: "Essays", labelZh: "文书", icon: BookOpen, paid: true },
   { href: "/dashboard/evaluate", label: "Evaluate", labelZh: "文书评估", icon: Sparkles, paid: true },
   { href: "/dashboard/interviews", label: "Interviews", labelZh: "面试", icon: MessageSquare, paid: true },
+  { href: "/dashboard/originals", label: "Originals", labelZh: "原文", icon: FileLock2, adminOnly: true },
   { href: "/admin", label: "Admin", labelZh: "管理", icon: Settings2, adminOnly: true },
 ];
 
