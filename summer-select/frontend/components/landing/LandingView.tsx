@@ -22,8 +22,19 @@ function useReveal(
   useEffect(() => {
     if (!el) return;
     const io = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); io.disconnect(); } },
-      { threshold, rootMargin }
+      ([entry]) => {
+        // A block taller than the viewport (e.g. stacked cards on a phone) can
+        // never reach a high intersection ratio, so also accept "at least half
+        // of the visible area is filled by this element".
+        const fillsViewport =
+          !!entry.rootBounds && entry.intersectionRect.height >= entry.rootBounds.height * 0.5;
+        if (entry.isIntersecting && (entry.intersectionRatio >= threshold || fillsViewport)) {
+          setVisible(true);
+          io.disconnect();
+        }
+      },
+      // Fine-grained thresholds so the callback keeps firing as the element scrolls.
+      { threshold: Array.from({ length: 21 }, (_, n) => n / 20), rootMargin }
     );
     io.observe(el);
     return () => io.disconnect();
