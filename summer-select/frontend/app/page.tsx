@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { LandingView } from "@/components/landing/LandingView";
 import { getViewer } from "@/lib/viewer";
+import { getAllPrograms } from "@/lib/programs";
 
 export const metadata: Metadata = {
   title: "Find Your Summer Program",
@@ -15,13 +16,13 @@ export const metadata: Metadata = {
  * have no use for the pitch, so they go straight to the Program Directory.
  */
 export default async function Home() {
-  const { user, isPaid } = await getViewer();
+  const [{ user, isPaid }, programs] = await Promise.all([getViewer(), getAllPrograms()]);
 
   if (isPaid) redirect("/dashboard");
 
   return (
     <SiteShell fullBleed>
-      <LandingView isSignedIn={!!user} />
+      <LandingView isSignedIn={!!user} programCount={programs.length} />
     </SiteShell>
   );
 }
