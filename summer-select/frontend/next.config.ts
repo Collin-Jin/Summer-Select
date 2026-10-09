@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Don't generate an agent-instructions file in the project root during dev.
+  agentRules: false,
   turbopack: {
     // Prevent Next from accidentally picking a different workspace root
     // (e.g. due to multiple lockfiles on the machine), which can slow down dev.
