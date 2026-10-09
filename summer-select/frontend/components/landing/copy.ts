@@ -8,14 +8,16 @@ export type Bi = { en: string; zh: string };
 
 export { CONTACT } from "@/lib/contact";
 
-/** Programs Collin has coached students into. Shown in the hero marquee. */
+/** Programs Collin has coached students into. Shown in the banner under the hero. */
 export const COACHED_PROGRAMS = [
-  "UCSB RMP",
-  "UCSB SRA",
-  "UCSC SIP",
-  "UChicago RIBS",
-  "The Summer Science Program",
-  "Pioneer Academics",
+  { name: "UCSB RMP", tag: "RMP" },
+  { name: "UCSB SRA", tag: "SRA" },
+  { name: "UCSC SIP", tag: "SIP" },
+  { name: "UChicago RIBS", tag: "RIBS" },
+  { name: "The Summer Science Program", tag: "SSP" },
+  { name: "Pioneer Academics", tag: "PA" },
+  { name: "SSTP Iowa", tag: "SSTP" },
+  { name: "Yale Young Global Scholars", tag: "YYGS" },
 ] as const;
 
 export const copy = {
@@ -33,6 +35,8 @@ export const copy = {
   heroPillEssays: { en: "example essays", zh: "篇范文" },
   heroPillBilingual: { en: "EN / 中文", zh: "中 / EN" },
   marqueeLabel: { en: "Students coached into", zh: "辅导学生成功录取" },
+  marqueeTitle: { en: "Where our students got in", zh: "我们的学生被这些项目录取" },
+  marqueeAdmitted: { en: "Admitted", zh: "已录取" },
 
   founderEyebrow: { en: "A Note from the Founder", zh: "创始人寄语" },
 

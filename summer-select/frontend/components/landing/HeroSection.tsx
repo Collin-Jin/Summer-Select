@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LogIn, ArrowRight, ChevronDown, Sparkles, Languages, FileText, Layers } from "lucide-react";
+import { LogIn, ArrowRight, ChevronDown, Sparkles, Languages, FileText, Layers, BadgeCheck } from "lucide-react";
 import { Starfield, trackPointer } from "./effects";
 import { useCountUp, useT } from "./hooks";
 import { COACHED_PROGRAMS, copy } from "./copy";
@@ -234,36 +234,130 @@ function Pill({ icon, children }: { icon: React.ReactNode; children: React.React
   );
 }
 
-/** Infinite marquee of programs Collin has coached students into. */
-export function ProgramMarquee() {
-  const { t } = useT();
-  const items = [...COACHED_PROGRAMS, ...COACHED_PROGRAMS, ...COACHED_PROGRAMS, ...COACHED_PROGRAMS];
+/** One scrolling row of program cards. The list is repeated so the loop never shows a gap. */
+function MarqueeRow({
+  programs,
+  reverse = false,
+  seconds,
+  admitted,
+}: {
+  programs: readonly { name: string; tag: string }[];
+  reverse?: boolean;
+  seconds: number;
+  admitted: string;
+}) {
+  const items = [...programs, ...programs, ...programs, ...programs];
   return (
     <div
-      className="marquee-wrap relative overflow-hidden py-5"
-      style={{ background: "#3a3d6e", borderTop: "1px solid rgba(255,255,255,0.08)" }}
+      className="flex"
+      style={{
+        maskImage: "linear-gradient(90deg, transparent, black 8%, black 92%, transparent)",
+        WebkitMaskImage: "linear-gradient(90deg, transparent, black 8%, black 92%, transparent)",
+      }}
     >
-      <p className="text-center text-[11px] font-bold uppercase tracking-[0.3em] mb-3"
-        style={{ color: "var(--color-brand-accent)" }}>
-        {t(copy.marqueeLabel)}
-      </p>
       <div
-        className="flex"
-        style={{
-          maskImage: "linear-gradient(90deg, transparent, black 10%, black 90%, transparent)",
-          WebkitMaskImage: "linear-gradient(90deg, transparent, black 10%, black 90%, transparent)",
-        }}
+        className={`${reverse ? "animate-marquee-reverse" : "animate-marquee"} flex shrink-0 items-center gap-5 pr-5 py-2 whitespace-nowrap`}
+        style={{ animationDuration: `${seconds}s` }}
       >
-        <div className="animate-marquee flex shrink-0 items-center gap-10 pr-10 whitespace-nowrap">
-          {items.map((name, i) => (
-            <span key={i} className="inline-flex items-center gap-10 text-lg sm:text-xl font-extrabold text-white/90"
-              style={{ fontFamily: "var(--font-syne, sans-serif)" }}>
-              {name}
-              <Sparkles className="h-4 w-4" style={{ color: "var(--color-brand-accent)" }} />
+        {items.map((p, i) => (
+          <div
+            key={i}
+            className="group flex items-center gap-4 rounded-2xl px-5 py-4 sm:px-6 sm:py-5 transition-all duration-300 hover:-translate-y-1"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03))",
+              border: "1px solid rgba(255,255,255,0.14)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
+              backdropFilter: "blur(6px)",
+            }}
+          >
+            <span
+              className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl text-[11px] sm:text-xs font-extrabold tracking-wide transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
+              style={{
+                background: "linear-gradient(135deg, var(--color-brand-accent), var(--color-brand-coral))",
+                color: "#2d3061",
+                fontFamily: "var(--font-syne, sans-serif)",
+              }}
+            >
+              {p.tag}
             </span>
-          ))}
-        </div>
+            <span className="flex flex-col">
+              <span
+                className="text-lg sm:text-2xl font-extrabold leading-tight text-white"
+                style={{ fontFamily: "var(--font-syne, sans-serif)" }}
+              >
+                {p.name}
+              </span>
+              <span
+                className="mt-1 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em]"
+                style={{ color: "var(--color-brand-accent)" }}
+              >
+                <BadgeCheck className="h-3.5 w-3.5" />
+                {admitted}
+              </span>
+            </span>
+          </div>
+        ))}
       </div>
     </div>
+  );
+}
+
+/** Two counter-scrolling rows of the programs Collin has coached students into. */
+export function ProgramMarquee() {
+  const { t } = useT();
+  const admitted = t(copy.marqueeAdmitted);
+  const first = COACHED_PROGRAMS;
+  // The second row starts from the middle of the list so the rows never line up.
+  const second = [...COACHED_PROGRAMS.slice(4), ...COACHED_PROGRAMS.slice(0, 4)];
+
+  return (
+    <section
+      aria-label={t(copy.marqueeLabel)}
+      className="marquee-wrap relative overflow-hidden py-14 sm:py-20"
+      style={{ background: "linear-gradient(180deg, #3a3d6e 0%, #2d3061 100%)" }}
+    >
+      {/* Glow and grid backdrop */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute -top-24 left-1/4 h-72 w-72 rounded-full opacity-25 blur-3xl animate-blob-a"
+          style={{ background: "var(--color-brand-accent)" }}
+        />
+        <div
+          className="absolute -bottom-24 right-1/4 h-72 w-72 rounded-full opacity-20 blur-3xl animate-blob-b"
+          style={{ background: "var(--color-brand-coral)" }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+      </div>
+
+      <div className="relative mb-9 sm:mb-12 px-4 text-center">
+        <p
+          className="inline-flex items-center gap-3 text-xs font-bold uppercase tracking-[0.32em]"
+          style={{ color: "var(--color-brand-accent)" }}
+        >
+          <span aria-hidden className="h-px w-8 sm:w-14" style={{ background: "linear-gradient(90deg, transparent, var(--color-brand-accent))" }} />
+          <Sparkles className="h-4 w-4" />
+          {t(copy.marqueeLabel)}
+          <Sparkles className="h-4 w-4" />
+          <span aria-hidden className="h-px w-8 sm:w-14" style={{ background: "linear-gradient(270deg, transparent, var(--color-brand-accent))" }} />
+        </p>
+        <h2
+          className="mt-3 text-3xl sm:text-5xl font-extrabold text-white"
+          style={{ fontFamily: "var(--font-syne, sans-serif)" }}
+        >
+          {t(copy.marqueeTitle)}
+        </h2>
+      </div>
+
+      <div className="relative space-y-4">
+        <MarqueeRow programs={first} seconds={55} admitted={admitted} />
+        <MarqueeRow programs={second} reverse seconds={65} admitted={admitted} />
+      </div>
+    </section>
   );
 }
