@@ -22,8 +22,11 @@ export function SessionWatcher({ intervalMs = 60_000 }: { intervalMs?: number })
         const data: { valid: boolean; reason?: string } = await res.json();
         if (!data.valid) {
           // Hard navigation to the force-signout Route Handler so the
-          // signOut + cookie clearing happens in the correct context.
-          window.location.href = `/api/auth/force-signout?reason=${data.reason ?? ""}`;
+          // signOut + cookie clearing happens in the correct context. A client
+          // transition (router.push) would not run the handler in the browser.
+          const reason = encodeURIComponent(data.reason ?? "");
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.href = `/api/auth/force-signout?reason=${reason}`;
         }
       } catch {
         // Network error — fail open, do not log the user out.

@@ -57,6 +57,8 @@ export function LanguageProvider({
   useEffect(() => {
     const stored = localStorage.getItem("lang") as Lang | null;
     if (stored === "en" || stored === "zh") {
+      // localStorage is unavailable during SSR, so this can only run after mount.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLangState(stored);
     }
   }, []);

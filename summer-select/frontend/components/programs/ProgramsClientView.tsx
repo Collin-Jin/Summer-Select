@@ -6,7 +6,7 @@ import { FilterPanel, ActiveFilterChips, DEFAULT_FILTERS } from "./FilterPanel";
 import type { ProgramFilters } from "./FilterPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
-import { fetchFavorites, addFavorite, removeFavorite } from "@/lib/favorites";
+import { fetchFavorites } from "@/lib/favorites";
 import { useLanguage } from "@/context/LanguageContext";
 import type { SummerProgram } from "@/lib/database.types";
 import type { FormatOption, CategoryOption } from "@/lib/programs";
@@ -36,7 +36,7 @@ export function ProgramsClientView({
   formats,
   access,
 }: ProgramsClientViewProps) {
-  const { t, lang } = useLanguage();
+  const { lang } = useLanguage();
   const [filters, setFilters] = useState<ProgramFilters>(DEFAULT_FILTERS);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [favoritesLoading, setFavoritesLoading] = useState(access === "paid");

@@ -20,6 +20,7 @@ export async function GET(request: Request) {
   const supabase = await supabaseServer();
   await supabase.auth.signOut({ scope: "local" });
 
-  const dest = reason ? `/login?reason=${reason}` : "/login";
-  return NextResponse.redirect(new URL(dest, origin));
+  const dest = new URL("/login", origin);
+  if (reason) dest.searchParams.set("reason", reason);
+  return NextResponse.redirect(dest);
 }

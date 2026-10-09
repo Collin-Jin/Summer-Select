@@ -2,7 +2,6 @@
 
 import { X, SlidersHorizontal } from "lucide-react";
 import { clsx } from "clsx";
-import { Badge } from "@/components/ui/Badge";
 import { useLanguage } from "@/context/LanguageContext";
 import type { FormatOption, CategoryOption } from "@/lib/programs";
 

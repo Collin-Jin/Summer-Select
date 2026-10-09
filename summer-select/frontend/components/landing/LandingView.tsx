@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -13,11 +13,13 @@ import { useLanguage } from "@/context/LanguageContext";
 // ─────────────────────────────────────────────────────────────────────────────
 // Scroll-reveal hook — fires once when element enters viewport
 // ─────────────────────────────────────────────────────────────────────────────
-function useReveal(threshold = 0.12, rootMargin = "0px 0px -80px 0px") {
-  const ref = useRef<HTMLDivElement>(null);
+function useReveal(
+  threshold = 0.12,
+  rootMargin = "0px 0px -80px 0px"
+): [ref: (el: HTMLDivElement | null) => void, visible: boolean] {
+  const [el, setEl] = useState<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setVisible(true); io.disconnect(); } },
@@ -25,8 +27,8 @@ function useReveal(threshold = 0.12, rootMargin = "0px 0px -80px 0px") {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
-  return { ref, visible };
+  }, [el, threshold, rootMargin]);
+  return [setEl, visible];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,7 +38,6 @@ function useCountUp(target: number, duration = 1400, trigger: boolean) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!trigger) return;
-    setValue(0);
     const start = performance.now();
     let raf: number;
     const tick = (now: number) => {
@@ -56,20 +57,23 @@ function useCountUp(target: number, duration = 1400, trigger: boolean) {
 // Typewriter hook — reveals text char by char, variable speed, blinking cursor
 // ─────────────────────────────────────────────────────────────────────────────
 function useTypewriter(text: string, trigger: boolean, speed = 18) {
-  const [displayed, setDisplayed] = useState("");
-  const [done, setDone] = useState(false);
+  const [shown, setShown] = useState(0);
+  const [prevText, setPrevText] = useState(text);
+  // Restart from the beginning when the text changes (e.g. language toggle).
+  if (prevText !== text) {
+    setPrevText(text);
+    setShown(0);
+  }
 
   useEffect(() => {
     if (!trigger) return;
-    setDisplayed("");
-    setDone(false);
     let i = 0;
     let timer: ReturnType<typeof setTimeout>;
 
     const type = () => {
-      if (i >= text.length) { setDone(true); return; }
+      if (i >= text.length) return;
       i++;
-      setDisplayed(text.slice(0, i));
+      setShown(i);
       const ch = text[i - 1];
       const delay = /[.!?。！？]/.test(ch) ? speed * 12
         : /[,;:，；：]/.test(ch)            ? speed * 5
@@ -82,25 +86,7 @@ function useTypewriter(text: string, trigger: boolean, speed = 18) {
     return () => clearTimeout(timer);
   }, [trigger, text, speed]);
 
-  return { displayed, done };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Inline credential badge
-// ─────────────────────────────────────────────────────────────────────────────
-function Cred({ children, gold }: { children: React.ReactNode; gold?: boolean }) {
-  return (
-    <span
-      className="inline-block mx-0.5 px-2 py-0.5 rounded-md text-xs font-bold align-middle whitespace-nowrap"
-      style={
-        gold
-          ? { background: "#FFF3CC", color: "#92600A", border: "1px solid #FFD97D" }
-          : { background: "#EEEEF7", color: "#3a3d6e", border: "1px solid #B8B8D1" }
-      }
-    >
-      {children}
-    </span>
-  );
+  return { displayed: text.slice(0, shown), done: trigger && shown >= text.length };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -226,23 +212,25 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
   const { lang } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
+  // Flip after first paint so the hero entrance transitions actually run.
   useEffect(() => {
-    setMounted(true);
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
   }, []);
 
   const t = (obj: { en: string; zh: string }) => obj[lang];
 
   // Reveal refs
-  const founder   = useReveal();
+  const [founderRef, founderVisible] = useReveal();
   // stats: 50% visible + 120px into viewport — numbers only count when user genuinely sees them
-  const stats     = useReveal(0.5, "0px 0px -120px 0px");
-  const valueGrid = useReveal(0.06);
-  const adCta     = useReveal(0.12);
+  const [statsRef, statsVisible] = useReveal(0.5, "0px 0px -120px 0px");
+  const [valueGridRef, valueGridVisible] = useReveal(0.06);
+  const [adCtaRef, adCtaVisible] = useReveal(0.12);
 
   // Count-up values — slightly slower so the animation is readable
-  const count1 = useCountUp(6,  2200, stats.visible);
-  const count2 = useCountUp(12, 2600, stats.visible);
-  const count3 = useCountUp(60, 3200, stats.visible);
+  const count1 = useCountUp(6,  2200, statsVisible);
+  const count2 = useCountUp(12, 2600, statsVisible);
+  const count3 = useCountUp(60, 3200, statsVisible);
 
   // Typewriter — composes both paragraphs into one flowing block
   const founderText = lang === "en"
@@ -251,7 +239,7 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
 
   const { displayed: typedText, done: typingDone } = useTypewriter(
     founderText,
-    founder.visible,
+    founderVisible,
     lang === "zh" ? 30 : 18
   );
 
@@ -374,14 +362,14 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
           2. FOUNDER STORY
       ══════════════════════════════════════════════════════════════════════ */}
       <section className="py-20 px-6" style={{ background: "#FFFFFB" }}>
-        <div className="max-w-3xl mx-auto" ref={founder.ref}>
+        <div className="max-w-3xl mx-auto" ref={founderRef}>
 
           {/* Eyebrow */}
           <p
             className="text-xs font-bold uppercase tracking-widest mb-6 text-center"
             style={{
               color: "var(--color-brand-500)",
-              opacity: founder.visible ? 1 : 0,
+              opacity: founderVisible ? 1 : 0,
               transition: "opacity 0.5s ease",
             }}
           >
@@ -395,8 +383,8 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
               background: "#fff",
               border: "1px solid #E4E4F0",
               boxShadow: "0 4px 24px rgba(91,95,151,0.08)",
-              opacity: founder.visible ? 1 : 0,
-              transform: founder.visible ? "translateY(0)" : "translateY(28px)",
+              opacity: founderVisible ? 1 : 0,
+              transform: founderVisible ? "translateY(0)" : "translateY(28px)",
               transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s",
             }}
           >
@@ -491,11 +479,11 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
         className="py-20 px-6"
         style={{ background: "linear-gradient(135deg, #3a3d6e 0%, #5B5F97 100%)" }}
       >
-        <div className="max-w-3xl mx-auto" ref={stats.ref}>
+        <div className="max-w-3xl mx-auto" ref={statsRef}>
           {/* Heading */}
           <div
             className="text-center mb-10"
-            style={{ opacity: stats.visible ? 1 : 0, transition: "opacity 0.5s ease" }}
+            style={{ opacity: statsVisible ? 1 : 0, transition: "opacity 0.5s ease" }}
           >
             <p className="text-xs font-bold uppercase tracking-widest mb-2"
               style={{ color: "var(--color-brand-accent)" }}>
@@ -515,8 +503,8 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
               style={{
                 background: "rgba(255,255,255,0.08)",
                 border: "1px solid rgba(255,255,255,0.14)",
-                opacity: stats.visible ? 1 : 0,
-                transform: stats.visible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.92)",
+                opacity: statsVisible ? 1 : 0,
+                transform: statsVisible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.92)",
                 transition: "opacity 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.1s, transform 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.1s",
               }}
             >
@@ -545,8 +533,8 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
               style={{
                 background: "rgba(255,255,255,0.08)",
                 border: "1px solid rgba(255,255,255,0.14)",
-                opacity: stats.visible ? 1 : 0,
-                transform: stats.visible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.92)",
+                opacity: statsVisible ? 1 : 0,
+                transform: statsVisible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.92)",
                 transition: "opacity 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.25s, transform 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.25s",
               }}
             >
@@ -575,8 +563,8 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
               style={{
                 background: "rgba(255,255,255,0.08)",
                 border: "1px solid rgba(255,255,255,0.14)",
-                opacity: stats.visible ? 1 : 0,
-                transform: stats.visible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.92)",
+                opacity: statsVisible ? 1 : 0,
+                transform: statsVisible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.92)",
                 transition: "opacity 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.4s, transform 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.4s",
               }}
             >
@@ -605,7 +593,7 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
             className="text-center text-sm sm:text-base leading-relaxed max-w-2xl mx-auto"
             style={{
               color: "rgba(255,255,255,0.68)",
-              opacity: stats.visible ? 1 : 0,
+              opacity: statsVisible ? 1 : 0,
               transition: "opacity 0.6s ease 0.5s",
             }}
           >
@@ -630,11 +618,11 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
       <section className="py-20 px-6" style={{ background: "#FFFFFB" }}>
         <div className="max-w-3xl mx-auto">
           <div
-            ref={valueGrid.ref}
+            ref={valueGridRef}
             className="text-center mb-10"
             style={{
-              opacity: valueGrid.visible ? 1 : 0,
-              transform: valueGrid.visible ? "translateY(0)" : "translateY(20px)",
+              opacity: valueGridVisible ? 1 : 0,
+              transform: valueGridVisible ? "translateY(0)" : "translateY(20px)",
               transition: "opacity 0.55s ease, transform 0.55s ease",
             }}
           >
@@ -660,8 +648,8 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
                   background: "#fff",
                   border: "1px solid #E4E4F0",
                   boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                  opacity: valueGrid.visible ? 1 : 0,
-                  transform: valueGrid.visible ? "translateY(0)" : "translateY(28px)",
+                  opacity: valueGridVisible ? 1 : 0,
+                  transform: valueGridVisible ? "translateY(0)" : "translateY(28px)",
                   transition: `opacity 0.6s cubic-bezier(0.16,1,0.3,1) ${0.1 + i * 0.13}s, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${0.1 + i * 0.13}s`,
                 }}
                 onMouseEnter={(e) => {
@@ -697,11 +685,11 @@ export function LandingView({ isSignedIn }: { isSignedIn: boolean }) {
         style={{ background: "linear-gradient(160deg, #EEEEF7 0%, #FFFFFB 100%)", borderTop: "1px solid #E4E4F0" }}
       >
         <div
-          ref={adCta.ref}
+          ref={adCtaRef}
           className="max-w-xl mx-auto"
           style={{
-            opacity: adCta.visible ? 1 : 0,
-            transform: adCta.visible ? "translateY(0)" : "translateY(20px)",
+            opacity: adCtaVisible ? 1 : 0,
+            transform: adCtaVisible ? "translateY(0)" : "translateY(20px)",
             transition: "opacity 0.65s ease, transform 0.65s cubic-bezier(0.16,1,0.3,1)",
           }}
         >
