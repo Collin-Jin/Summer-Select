@@ -2,7 +2,7 @@
  * Who may use the /admin content editor.
  *
  * IMPORTANT: keep this in sync with the `public.is_admin()` SQL function in
- * Supabase (supabase/migrations/20261007_admin_cms_access.sql). The database is
+ * Supabase (supabase/migrations/20261007223619_admin_cms_access.sql). The database is
  * the real gatekeeper — row-level security refuses admin writes from anyone
  * else — and this list only decides what the UI shows.
  */

@@ -8,8 +8,9 @@
 -- members, so a column there would leak the originals. This table has RLS with
 -- a single admin-only policy and no grants to anon, so nobody else can read it.
 --
--- The admin email is defined in public.is_admin() (see 20261007_admin_cms_access.sql).
--- Already applied to the production project as migration "essay_originals".
+-- The admin email is defined in public.is_admin() (see 20261007223619_admin_cms_access.sql).
+-- Applied to production as migrations "essay_originals" and
+-- "essay_originals_tighten_grants" (the grant tightening is folded in below).
 
 create table if not exists public.essay_originals (
   essay_id      uuid primary key
