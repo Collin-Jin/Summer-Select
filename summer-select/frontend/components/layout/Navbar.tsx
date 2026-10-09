@@ -10,7 +10,6 @@ import {
   MessageSquare,
   Sparkles,
   Info,
-  Settings2,
   FileLock2,
   Lock,
   LogIn,
@@ -49,7 +48,6 @@ const navLinks: NavLink[] = [
   { href: "/dashboard/evaluate", label: "Evaluate", labelZh: "文书评估", icon: Sparkles, paid: true },
   { href: "/dashboard/interviews", label: "Interviews", labelZh: "面试", icon: MessageSquare, paid: true },
   { href: "/dashboard/originals", label: "Originals", labelZh: "原文", icon: FileLock2, adminOnly: true },
-  { href: "/admin", label: "Admin", labelZh: "管理", icon: Settings2, adminOnly: true },
 ];
 
 /** Exact-match tabs, so "/" and "/dashboard" don't light up on every sub-page. */
