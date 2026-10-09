@@ -74,8 +74,7 @@ function LoginRequiredAlert() {
         color: "var(--color-brand-700)",
       }}
     >
-      Please log in to continue. My List, Essays, Evaluate and Interviews are
-      members-only features. New here? Create an account first.
+      Please log in to continue. New here? Create a free account first.
     </div>
   );
 }
@@ -232,7 +231,17 @@ function AlreadyRegisteredCallout({
  * Redesigned with Summer Select brand colors.
  */
 export default function LoginPage() {
-  const [tab, setTab] = useState<Tab>("signin");
+  // useSearchParams needs a Suspense boundary during static rendering.
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
+  const initialParams = useSearchParams();
+  const [tab, setTab] = useState<Tab>(initialParams.get("tab") === "signup" ? "signup" : "signin");
   const [error, setError] = useState<string | null>(null);
   const [deviceLocked, setDeviceLocked] = useState(false);
   const [duplicateEmail, setDuplicateEmail] = useState<string | null>(null);

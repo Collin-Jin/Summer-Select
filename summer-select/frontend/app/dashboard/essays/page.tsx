@@ -1,4 +1,6 @@
 import { supabaseServer } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/viewer";
+import { LockedFeature } from "@/components/paywall/LockedFeature";
 import { EssaysClientView } from "./EssaysClientView";
 import type { Metadata } from "next";
 import { getEditing } from "@/lib/admin/editMode";
@@ -27,6 +29,11 @@ export type EmptyProgram = {
 };
 
 export default async function EssaysPage() {
+  const viewer = await getViewer();
+  if (!viewer.isPaid) {
+    return <LockedFeature feature="essays" access={viewer.access} nextPath="/dashboard/essays" />;
+  }
+
   const supabase = await supabaseServer();
 
   // The admin sees drafts and empty prompts while Edit mode is on.

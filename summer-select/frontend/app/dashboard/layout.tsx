@@ -8,9 +8,12 @@ export const metadata: Metadata = {
 /**
  * Layout for /dashboard/*.
  *
- * The Program Directory (/dashboard and /dashboard/program/[slug]) is public,
- * so this layout does NOT require a session. The members-only pages live in the
- * `(paid)` route group, whose own layout enforces sign-in and payment.
+ * This layout does NOT require a session: the Program Directory
+ * (/dashboard and /dashboard/program/[slug]) is public. Each page decides what
+ * to show for the visitor's tier:
+ *  - My List needs a free account (guests are redirected to log in).
+ *  - Essays, Evaluate and Interviews need payment; everyone else sees a blurred
+ *    preview with a sign-up or upgrade prompt (see `LockedFeature`).
  */
 export default function DashboardLayout({
   children,

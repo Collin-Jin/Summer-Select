@@ -16,10 +16,10 @@ interface ProgramDetailFavoriteButtonProps {
  */
 export function ProgramDetailFavoriteButton({ programId, access }: ProgramDetailFavoriteButtonProps) {
   const [isFavorited, setIsFavorited] = useState(false);
-  const [loaded, setLoaded] = useState(access !== "paid");
+  const [loaded, setLoaded] = useState(access === "guest");
 
   useEffect(() => {
-    if (access !== "paid") return;
+    if (access === "guest") return;
     fetchFavorites().then((favs) => {
       setIsFavorited(favs.some((f) => f.program_id === programId));
       setLoaded(true);

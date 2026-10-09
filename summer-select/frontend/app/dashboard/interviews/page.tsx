@@ -1,4 +1,6 @@
 import { supabaseServer } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/viewer";
+import { LockedFeature } from "@/components/paywall/LockedFeature";
 import { InterviewsClientView } from "./InterviewsClientView";
 import type { Metadata } from "next";
 import { getEditing } from "@/lib/admin/editMode";
@@ -14,6 +16,11 @@ export const metadata: Metadata = {
  * then passes to the interactive accordion client component.
  */
 export default async function InterviewsPage() {
+  const viewer = await getViewer();
+  if (!viewer.isPaid) {
+    return <LockedFeature feature="interviews" access={viewer.access} nextPath="/dashboard/interviews" />;
+  }
+
   const supabase = await supabaseServer();
 
   // The admin sees drafts while Edit mode is on.

@@ -17,7 +17,7 @@ interface SiteShellProps {
 }
 
 /**
- * Shared chrome for every page that shows the main navigation bar — the public
+ * Shared chrome for every page that shows the main navigation bar: the public
  * landing page, the public Program Directory, and the members-only pages.
  *
  * Responsibilities:

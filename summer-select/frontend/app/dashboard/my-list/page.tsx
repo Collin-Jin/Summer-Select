@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getProgramsByIds } from "@/lib/programs";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { loginUrl } from "@/lib/access";
 import type { Lang } from "@/lib/database.types";
 import { MyListClientView } from "./MyListClientView";
 
@@ -23,7 +25,8 @@ export default async function MyListPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return null;
+  // The proxy redirects guests first; this is the server-side backstop.
+  if (!user) redirect(loginUrl("/dashboard/my-list"));
 
   // Fetch all favorite rows for this user
   const { data: favRows } = await supabase

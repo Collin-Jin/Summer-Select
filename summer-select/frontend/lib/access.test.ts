@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSafeNextPath, loginUrl, requiresLogin } from "./access";
+import { isRegistered, isSafeNextPath, loginUrl, requiresLogin, signinUrl, signupUrl } from "./access";
 
 describe("isSafeNextPath", () => {
   it("accepts same-site relative paths", () => {
@@ -37,18 +37,49 @@ describe("loginUrl", () => {
 });
 
 describe("requiresLogin", () => {
-  it.each(["/admin", "/admin/users", "/dashboard/essays", "/dashboard/my-list", "/dashboard/originals"])(
+  it.each(["/admin", "/admin/users", "/dashboard/my-list", "/dashboard/originals"])(
     "protects %s",
     (path) => expect(requiresLogin(path)).toBe(true)
   );
 
-  it.each(["/", "/login", "/dashboard", "/dashboard/program/ucsb-rmp", "/terms"])(
-    "leaves %s public",
-    (path) => expect(requiresLogin(path)).toBe(false)
-  );
+  // Paid-only pages show a blurred preview to guests instead of redirecting.
+  it.each([
+    "/",
+    "/login",
+    "/dashboard",
+    "/dashboard/program/ucsb-rmp",
+    "/dashboard/essays",
+    "/dashboard/evaluate",
+    "/dashboard/interviews",
+    "/terms",
+  ])("leaves %s public", (path) => expect(requiresLogin(path)).toBe(false));
 
   it("does not match look-alike prefixes", () => {
     expect(requiresLogin("/administrator")).toBe(false);
-    expect(requiresLogin("/dashboard/essays-archive")).toBe(false);
+    expect(requiresLogin("/dashboard/my-list-archive")).toBe(false);
+  });
+});
+
+describe("signupUrl / signinUrl", () => {
+  it("opens the sign-up tab and keeps a safe next path", () => {
+    expect(signupUrl("/dashboard/essays")).toBe("/login?tab=signup&next=%2Fdashboard%2Fessays");
+    expect(signupUrl()).toBe("/login?tab=signup");
+  });
+
+  it("drops an unsafe next path", () => {
+    expect(signupUrl("https://evil.example")).toBe("/login?tab=signup");
+    expect(signinUrl("//evil.example")).toBe("/login");
+  });
+
+  it("builds a plain sign-in link", () => {
+    expect(signinUrl("/dashboard/essays")).toBe("/login?next=%2Fdashboard%2Fessays");
+  });
+});
+
+describe("isRegistered", () => {
+  it("is true for free and paid accounts only", () => {
+    expect(isRegistered("guest")).toBe(false);
+    expect(isRegistered("unpaid")).toBe(true);
+    expect(isRegistered("paid")).toBe(true);
   });
 });

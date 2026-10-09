@@ -185,9 +185,9 @@ const programs: ResourceDef = {
     { name: "essays_required_zh", label: "文书要求 (中文)", type: "textarea", rows: 4 },
     { name: "has_interview", label: "Has an interview", type: "tribool" },
     { name: "collin_rec_index", label: "Collin Index (1–10)", type: "int", min: 1, max: 10, help: "Public: shown on every program card. 8–10 = Tier 1, 6–7 = Tier 2, 1–5 = Tier 3." },
-    { name: "collin_rationale_en", label: "Collin's analysis (English)", type: "textarea", rows: 6, help: "Members only." },
+    { name: "collin_rationale_en", label: "Collin's analysis (English)", type: "textarea", rows: 6, help: "Visible to signed-in users (free and paid)." },
     { name: "collin_rationale_zh", label: "Collin 的评价 (中文)", type: "textarea", rows: 6 },
-    { name: "collin_strategy_en", label: "Application strategy (English)", type: "textarea", rows: 6, help: "Members only." },
+    { name: "collin_strategy_en", label: "Application strategy (English)", type: "textarea", rows: 6, help: "Visible to signed-in users (free and paid)." },
     { name: "collin_strategy_zh", label: "申请策略 (中文)", type: "textarea", rows: 6 },
   ],
   sections: [
@@ -196,7 +196,7 @@ const programs: ResourceDef = {
     { title: "Timeline", rows: ["application_open_date", "priority_deadline", "regular_deadline", "is_rolling_admission", "program_start_date", "program_end_date"] },
     { title: "Costs & funding", rows: ["application_fee", "tuition_cost", "financial_aid_available", "is_paid_stipend", "stipend_amount"] },
     { title: "Requirements", rows: ["eligible_grades", "international_eligible", "minimum_gpa", "acceptance_rate", "requires_essay", ["essays_required_en", "essays_required_zh"], "has_interview"] },
-    { title: "Collin's analysis", description: "The Collin Index is public. The analysis and strategy text is visible to paid members only.", rows: ["collin_rec_index", ["collin_rationale_en", "collin_rationale_zh"], ["collin_strategy_en", "collin_strategy_zh"]] },
+    { title: "Collin's analysis", description: "The Collin Index is public. The analysis and strategy text is visible to signed-in users (free and paid); guests see a blurred preview.", rows: ["collin_rec_index", ["collin_rationale_en", "collin_rationale_zh"], ["collin_strategy_en", "collin_strategy_zh"]] },
   ],
   columns: [
     { key: "name_en", label: "Program" },

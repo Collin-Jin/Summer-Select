@@ -18,7 +18,7 @@ interface ProgramsClientViewProps {
   programs: SummerProgram[];
   categories: CategoryOption[];
   formats: FormatOption[];
-  /** Who is viewing — My List favorites are members-only. */
+  /** Who is viewing. My List favorites need a free account. */
   access: ViewerAccess;
 }
 
@@ -39,12 +39,12 @@ export function ProgramsClientView({
   const { lang } = useLanguage();
   const [filters, setFilters] = useState<ProgramFilters>(DEFAULT_FILTERS);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
-  const [favoritesLoading, setFavoritesLoading] = useState(access === "paid");
+  const [favoritesLoading, setFavoritesLoading] = useState(access !== "guest");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Load favorites on mount (paid members only; others have no My List)
+  // Load favorites on mount (signed-in users only; guests have no My List)
   useEffect(() => {
-    if (access !== "paid") return;
+    if (access === "guest") return;
     fetchFavorites().then((favs) => {
       setFavoritedIds(new Set(favs.map((f) => f.program_id)));
       setFavoritesLoading(false);

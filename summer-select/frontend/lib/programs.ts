@@ -7,10 +7,11 @@ export type FormatOption = { en: string; zh: string | null };
 export type CategoryOption = { en: string; zh: string | null };
 
 /**
- * Paid members read the full `summer_programs` table (including Collin's
- * rationale and strategy). Everyone else — guests and unpaid accounts — reads
- * `public_summer_programs`, a view of published programs without those paid
- * columns. The database enforces this split; see the view migration.
+ * Which relation to read programs from, by access tier (the database enforces
+ * the split; see the view migrations):
+ *  - guests            -> `public_summer_programs`: no analysis text
+ *  - registered users  -> `member_summer_programs`: adds Collin's analysis
+ *  - paid members      -> `summer_programs`: the base table
  *
  * The admin can read drafts too, but only sees them while Edit mode is on, so
  * the rest of the time the site looks exactly like it does to members.
@@ -21,11 +22,15 @@ async function programsSource() {
     getViewer(),
     getEditing(),
   ]);
-  const table = viewer.isPaid ? "summer_programs" : "public_summer_programs";
+  const table = viewer.isPaid
+    ? "summer_programs"
+    : viewer.user
+      ? "member_summer_programs"
+      : "public_summer_programs";
   return { builder: supabase.from(table), publishedOnly: viewer.isAdmin && !editing };
 }
 
-/** Fills the paid-only fields with null so public rows match `SummerProgram`. */
+/** Fills the analysis fields with null for guests so every row matches `SummerProgram`. */
 function toProgram(row: Record<string, unknown>): SummerProgram {
   return {
     collin_rationale_en: null,

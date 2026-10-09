@@ -1,13 +1,14 @@
 # Summer Select
 
-A bilingual (English / 中文) web app for finding, comparing and preparing applications to competitive high-school summer programs. A public Program Directory is open to everyone; essay examples, interview guides, a saved list and an AI essay evaluator are available to paid members. The site owner can edit all content directly on the live site.
+A bilingual (English / 中文) web app for finding, comparing and preparing applications to competitive high-school summer programs. A public Program Directory is open to everyone, a free account adds Collin's application analysis and a saved list, and paid members also get example essays, interview guides and an AI essay evaluator. The site owner can edit all content directly on the live site.
 
 ## What it does
 
-- **Program Directory** (public): search, filter and sort summer programs by category, format, grade, cost, financial aid, stipend and deadline. Each program has a detail page and a "Collin Index" selectivity score. Paid analysis fields are not exposed to non-members.
-- **Members area** (paid): saved programs ("My List"), example essays grouped by program and prompt, interview guides with tips, and an AI essay evaluator.
+- **Program Directory** (public): search, filter and sort summer programs by category, format, grade, cost, financial aid, stipend and deadline. Each program has a detail page and a "Collin Index" selectivity score. Collin's written analysis and strategy are shown to signed-in users; guests see a blurred preview.
+- **Free account**: Collin's analysis and application strategy on every program, and saved programs ("My List").
+- **Full access** (paid): example essays grouped by program and prompt, interview guides with tips, and an AI essay evaluator. Guests and free accounts who open these pages see a blurred preview with a sign-up or upgrade prompt.
 - **AI essay evaluator**: embeds the student's draft with OpenAI, retrieves the three most similar reference essays from a pgvector table, and asks a chat model for structured feedback grounded in them.
-- **Accounts**: e-mail and password sign-up with verification and password reset (Supabase Auth). Access is `guest`, `unpaid` or `paid`; an optional one-device-per-account lock is enforced for members.
+- **Accounts**: e-mail and password sign-up with verification and password reset (Supabase Auth). Access is `guest`, `unpaid` (a free account) or `paid`; an optional one-device-per-account lock is enforced for members.
 - **Owner tools**:
   - **Edit mode**: a floating toggle that adds edit, add, delete and drag-to-reorder controls to the real pages, with an in-page editor drawer.
   - **`/admin`**: table views for programs, essay prompts, example essays, interview guides and questions, AI reference essays, and member access management.
@@ -40,8 +41,8 @@ Browser ──► proxy.ts ──► Server Components / Server Actions / Route 
 Security is layered, and the database is the source of truth:
 
 1. **`proxy.ts`** refreshes the Supabase session on every request (Server Components cannot write cookies) and redirects guests away from members-only routes.
-2. **Layouts** enforce the next level: `app/dashboard/(paid)/layout.tsx` requires a paid account, `app/admin/layout.tsx` requires the admin.
-3. **Row-Level Security** is what actually protects the data. Members-only tables are readable only by paid users, admin writes require `public.is_admin()`, and the originals table is admin-only. The admin e-mail in `lib/admin/config.ts` must match `public.is_admin()` in the database.
+2. **Pages** enforce the next level: My List redirects guests to log in, Essays, Evaluate and Interviews render a blurred `LockedFeature` preview unless the viewer has paid, and `app/admin/layout.tsx` requires the admin.
+3. **Row-Level Security** is what actually protects the data. Essay and interview tables are readable only by paid users, program analysis is exposed to signed-in users through a read-only view, admin writes require `public.is_admin()`, and the originals table is admin-only. The admin e-mail in `lib/admin/config.ts` must match `public.is_admin()` in the database.
 
 The admin area is registry-driven: `lib/admin/resources.ts` describes each editable table once (fields, form layout, list columns, relations), and the lists, forms, validation and server actions are generated from it. Adding a column means adding one field entry.
 
@@ -55,11 +56,11 @@ The admin area is registry-driven: `lib/admin/resources.ts` describes each edita
     │   ├── page.tsx                  Landing page (guests)
     │   ├── login/, reset-password/,  Auth pages and server actions
     │   │   auth/
-    │   ├── dashboard/                Program Directory (public)
-    │   │   └── (paid)/               Members-only: essays, interviews, my-list, evaluate, originals
+    │   ├── dashboard/                Program Directory (public), plus my-list (free account),
+    │   │                             essays / interviews / evaluate (paid, blurred preview otherwise), originals (admin)
     │   ├── admin/                    Owner content editor and member management
     │   └── api/                      evaluate, session-validate, force-signout
-    ├── components/                 UI by feature: admin, auth, landing, layout, programs, ui
+    ├── components/                 UI by feature: admin, auth, landing, layout, paywall, programs, ui
     ├── context/                    Language (EN/ZH) context
     ├── lib/                        Server and shared logic
     │   ├── admin/                    Resource registry, validation, auth, data access

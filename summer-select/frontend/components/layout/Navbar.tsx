@@ -30,7 +30,9 @@ interface NavLink {
   label: string;
   labelZh: string;
   icon: React.ElementType;
-  /** Members-only feature: needs a paid account. */
+  /** Needs a free account (guests see a lock). */
+  member?: boolean;
+  /** Needs a paid account (guests and free accounts see a lock). */
   paid?: boolean;
   /** Only shown to people who haven't paid (guests and unpaid accounts). */
   hideWhenPaid?: boolean;
@@ -42,7 +44,7 @@ const navLinks: NavLink[] = [
   // The pitch for Summer Select. It disappears once someone has paid.
   { href: "/", label: "About", labelZh: "关于我们", icon: Info, hideWhenPaid: true },
   { href: "/dashboard", label: "Programs", labelZh: "项目库", icon: LayoutDashboard },
-  { href: "/dashboard/my-list", label: "My List", labelZh: "收藏", icon: Bookmark, paid: true },
+  { href: "/dashboard/my-list", label: "My List", labelZh: "收藏", icon: Bookmark, member: true },
   { href: "/dashboard/essays", label: "Essays", labelZh: "文书", icon: BookOpen, paid: true },
   { href: "/dashboard/evaluate", label: "Evaluate", labelZh: "文书评估", icon: Sparkles, paid: true },
   { href: "/dashboard/interviews", label: "Interviews", labelZh: "面试", icon: MessageSquare, paid: true },
@@ -91,7 +93,7 @@ export function Navbar({
         <div className="flex items-center justify-between h-16">
           {/* Brand wordmark */}
           <Link
-            href={isPaid ? "/dashboard" : "/"}
+            href={isSignedIn ? "/dashboard" : "/"}
             className="flex items-center gap-2.5 group"
           >
             <div className="flex flex-col leading-none">
@@ -116,7 +118,7 @@ export function Navbar({
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
-            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid }) => {
+            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid, member }) => {
               const isActive = isLinkActive(href, pathname);
               return (
                 <Link
@@ -137,7 +139,7 @@ export function Navbar({
                   )}
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
-                  {paid && !isPaid && (
+                  {((paid && !isPaid) || (member && !isSignedIn)) && (
                     <Lock className="h-3 w-3 opacity-60" aria-label="Members only" />
                   )}
                 </Link>
@@ -216,7 +218,7 @@ export function Navbar({
           }}
         >
           <div className="px-4 pt-3 pb-4 space-y-1">
-            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid }) => {
+            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid, member }) => {
               const isActive = isLinkActive(href, pathname);
               return (
                 <Link
@@ -233,7 +235,7 @@ export function Navbar({
                 >
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
-                  {paid && !isPaid && (
+                  {((paid && !isPaid) || (member && !isSignedIn)) && (
                     <Lock className="h-3 w-3 opacity-60" aria-label="Members only" />
                   )}
                 </Link>

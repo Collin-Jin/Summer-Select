@@ -6,7 +6,7 @@ The app expects a Supabase project with the objects below. Row-Level Security is
 
 | Table | Purpose | Who can read | Who can write |
 |---|---|---|---|
-| `summer_programs` | Program directory (bilingual columns, `lid` primary key, `slug` URL key) | Paid users | Admin |
+| `summer_programs` | Program directory (bilingual columns, `lid` primary key, `slug` URL key) | Paid users; signed-in users through `member_summer_programs`, everyone through `public_summer_programs` | Admin |
 | `profiles` | One row per user: `is_paid`, `enforce_device_lock`, `active_session_id`, `notes` | The user (own row) | The user (own row, with trigger guards on `is_paid` and `enforce_device_lock`); admin via RPC |
 | `favorites` | Saved programs per user | The user | The user |
 | `summer_program_prompts` | Essay prompts per program (`program_slug`, ordering columns) | Paid users | Admin |
@@ -15,7 +15,15 @@ The app expects a Supabase project with the objects below. Row-Level Security is
 | `interview_guides`, `interview_questions` | Interview preparation content | Paid users | Admin |
 | `program_documents` | AI reference essays with a pgvector `embedding` | Nobody directly; searched through `match_documents` | Admin |
 
-`public_summer_programs` is a view of published programs that omits the paid analysis columns, so the Program Directory can be public. It runs with the owner's privileges and is granted to `anon` and `authenticated`.
+Program data is exposed in three tiers:
+
+| Reader | Relation | Analysis text (`collin_rationale_*`, `collin_strategy_*`) |
+|---|---|---|
+| Guest (`anon`) | `public_summer_programs` | Hidden |
+| Signed-in user, paid or not | `member_summer_programs` | Included |
+| Paid user, admin | `summer_programs` (base table) | Included |
+
+Both views list published programs only and run with the owner's privileges so they can read the base table. They are **SELECT-only** for API roles: a simple view is auto-updatable, so any write privilege would bypass the base table's RLS. `member_summer_programs` is granted to `authenticated` only and also requires `auth.uid() is not null`.
 
 ## Functions
 
@@ -39,8 +47,10 @@ Extension: `vector` (pgvector).
 | `20261007223619` | `admin_cms_access` |
 | `20261007232911` | `admin_reorder_rpcs` |
 | `20261008003409` | `essay_originals` (includes the later `essay_originals_tighten_grants`) |
+| `20261009211213` | `member_summer_programs_view` |
+| `20261009211234` | `public_summer_programs_read_only_grants` (revokes write privileges the view had inherited from default privileges) |
 
-All four are already applied to the production project. Do not re-run them there.
+All six are already applied to the production project. Do not re-run them there.
 
 ### Known gap
 

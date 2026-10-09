@@ -34,14 +34,14 @@ function getAuthFields(formData: FormData) {
 
 /**
  * Where to send someone after they authenticate: the page they originally
- * wanted (if it's a safe same-site path), otherwise the Program Directory for
- * paid members and the landing page for everyone else.
+ * wanted (if it's a safe same-site path), otherwise the Program Directory.
+ * Free accounts get real features there too (Collin's analysis and My List).
  */
-function postAuthDestination(formData: FormData, isPaid: boolean) {
+function postAuthDestination(formData: FormData) {
   const next = formData.get("next");
   const requested = typeof next === "string" ? next : null;
   if (isSafeNextPath(requested)) return requested;
-  return isPaid ? "/dashboard" : "/";
+  return "/dashboard";
 }
 
 /**
@@ -79,19 +79,15 @@ export async function handleSignIn(formData: FormData) {
     return { error: error.message };
   }
 
-  let isPaid = false;
-
   if (data.user) {
     const cookieStore = await cookies();
     const cookieSessionId = cookieStore.get(DEVICE_SESSION_COOKIE)?.value;
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("active_session_id, enforce_device_lock, is_paid")
+      .select("active_session_id, enforce_device_lock")
       .eq("id", data.user.id)
       .single();
-
-    isPaid = profile?.is_paid === true;
 
     const deviceLockEnabled = profile?.enforce_device_lock !== false;
 
@@ -109,7 +105,7 @@ export async function handleSignIn(formData: FormData) {
     }
   }
 
-  redirect(postAuthDestination(formData, isPaid));
+  redirect(postAuthDestination(formData));
 }
 
 export async function handleSignUp(formData: FormData) {
@@ -150,23 +146,19 @@ export async function handleSignUp(formData: FormData) {
     return { success: "verify_email" as const, email };
   }
 
-  let isPaid = false;
-
   if (data.user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("enforce_device_lock, is_paid")
+      .select("enforce_device_lock")
       .eq("id", data.user.id)
       .single();
-
-    isPaid = profile?.is_paid === true;
 
     if (profile?.enforce_device_lock !== false) {
       await writeSessionId(supabase, data.user.id);
     }
   }
 
-  redirect(postAuthDestination(formData, isPaid));
+  redirect(postAuthDestination(formData));
 }
 
 export async function handleForgotPassword(email: string) {

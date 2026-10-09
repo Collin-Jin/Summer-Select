@@ -14,8 +14,8 @@ interface FavoriteButtonProps {
   size?: "sm" | "md";
   onToggle?: (nowFavorited: boolean) => void;
   /**
-   * Saving to My List is a members-only feature. Guests are sent to log in and
-   * unpaid accounts to the landing page instead of toggling the heart.
+   * Saving to My List needs a free account. Guests are sent to log in instead
+   * of toggling the heart.
    */
   access?: ViewerAccess;
 }
@@ -48,10 +48,6 @@ export function FavoriteButton({
       router.push(loginUrl(pathname));
       return;
     }
-    if (access === "unpaid") {
-      router.push("/");
-      return;
-    }
 
     const next = !favorited;
     // Optimistic update
@@ -78,11 +74,9 @@ export function FavoriteButton({
       title={
         access === "guest"
           ? "Log in to save to My List"
-          : access === "unpaid"
-            ? "My List is a members-only feature"
-            : favorited
-              ? "Remove from My List"
-              : "Save to My List"
+          : favorited
+            ? "Remove from My List"
+            : "Save to My List"
       }
       aria-label={favorited ? "Remove from My List" : "Save to My List"}
       className={clsx(
