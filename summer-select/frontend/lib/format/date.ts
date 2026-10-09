@@ -87,10 +87,7 @@ export function formatDateRange(
   if (!start) return `Ends ${formatProgramDate(end)}`;
   if (!end) return `Starts ${formatProgramDate(start)}`;
   try {
-    const s = parseISO(start);
-    const e = parseISO(end);
-    const sameYear = s.getFullYear() === e.getFullYear();
-    return `${format(s, "MMM d")} – ${format(e, sameYear ? "MMM d, yyyy" : "MMM d, yyyy")}`;
+    return `${format(parseISO(start), "MMM d")} – ${format(parseISO(end), "MMM d, yyyy")}`;
   } catch {
     return "—";
   }
