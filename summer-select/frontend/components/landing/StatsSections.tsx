@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, ShieldOff, Languages, Layers, FileText, ListChecks, MessagesSquare } from "lucide-react";
+import { BadgeCheck, Layers, FileText, ListChecks, MessagesSquare } from "lucide-react";
 import { Reveal, Starfield, tiltOnMove, tiltReset, trackPointer } from "./effects";
 import { useCountUp, useReveal, useT } from "./hooks";
 import { copy } from "./copy";
@@ -12,9 +12,9 @@ export function CoachingStats() {
   const { lang, t } = useT();
   // 50% visible, so numbers only count when the visitor genuinely sees them.
   const [ref, visible] = useReveal(0.5, "0px 0px -120px 0px");
-  const c1 = useCountUp(6, 2200, visible);
-  const c2 = useCountUp(12, 2600, visible);
-  const c3 = useCountUp(60, 3200, visible);
+  const c1 = useCountUp(7, 2200, visible);
+  const c2 = useCountUp(30, 2600, visible);
+  const c3 = useCountUp(80, 3200, visible);
 
   const cards = [
     { value: `${c1}`,  color: "var(--color-brand-accent)", title: copy.stat1Title, body: copy.stat1Body },
@@ -132,11 +132,7 @@ export function PlatformStats({ programCount }: { programCount: number }) {
     { icon: MessagesSquare, value: `${interview}+`, label: copy.platformStats.interview, accent: "#5B5F97", bg: "#EEEEF7" },
   ];
 
-  const strip = [
-    { icon: BadgeCheck, label: copy.platformStrip.manual },
-    { icon: ShieldOff, label: copy.platformStrip.scraped },
-    { icon: Languages, label: copy.platformStrip.bilingual },
-  ];
+  const strip = [{ icon: BadgeCheck, label: copy.platformStrip.manual }];
 
   return (
     <section className="relative py-20 px-6 overflow-hidden" style={{ background: "#F8F8FC" }}>

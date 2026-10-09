@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  GraduationCap, LogIn, Compass, ArrowRight, ChevronDown, Sparkles, Languages, FileText, Layers,
-} from "lucide-react";
+import { LogIn, ArrowRight, ChevronDown, Sparkles, Languages, FileText, Layers } from "lucide-react";
 import { Starfield, trackPointer } from "./effects";
 import { useCountUp, useT } from "./hooks";
 import { COACHED_PROGRAMS, copy } from "./copy";
@@ -46,7 +44,7 @@ export function HeroSection({
   return (
     <section
       onMouseMove={trackPointer}
-      className="relative flex flex-col items-center justify-center text-center px-6 pt-14 pb-14 sm:pt-16 sm:pb-16 overflow-hidden"
+      className="relative flex flex-col items-center justify-center text-center px-6 pt-16 pb-14 sm:pt-20 sm:pb-16 overflow-hidden"
       style={{ background: "linear-gradient(160deg, #EEEEF7 0%, #FFFFFB 58%, #FFF8EC 100%)" }}
     >
       {/* Dot grid */}
@@ -101,17 +99,6 @@ export function HeroSection({
       ))}
 
       <div className="relative z-10 flex w-full max-w-full flex-col items-center">
-        {/* Floating icon with ping rings */}
-        <div className="relative mb-5" style={enter(0, -10)}>
-          <span className="animate-ring-ping absolute inset-0 rounded-2xl" style={{ background: "var(--color-brand-500)" }} aria-hidden />
-          <div
-            className="animate-float relative rounded-2xl flex items-center justify-center shadow-xl"
-            style={{ background: "linear-gradient(135deg, #5B5F97, #3a3d6e)", height: 64, width: 64 }}
-          >
-            <GraduationCap className="h-8 w-8 text-white" />
-          </div>
-        </div>
-
         <p
           className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.12em] sm:tracking-[0.25em] mb-4 inline-flex max-w-full items-center gap-2 rounded-full px-3.5 sm:px-4 py-1.5"
           style={{
@@ -159,18 +146,27 @@ export function HeroSection({
         <div className="mt-8 flex flex-col items-center gap-4" style={enter(0.4, 16)}>
           <div className="flex flex-col items-center gap-2">
             <div className="relative">
+              {/* Soft glow behind the button */}
+              <span
+                aria-hidden
+                className="absolute -inset-1.5 rounded-full opacity-50 blur-lg"
+                style={{ background: "linear-gradient(135deg, #FFC145, #FF6B6C)" }}
+              />
               <Link
                 href="/dashboard"
-                className="btn-shine animate-cta-pulse group relative inline-flex items-center gap-2.5 sm:gap-3 whitespace-nowrap rounded-2xl px-5 py-4 sm:px-11 sm:py-5 text-[15px] sm:text-xl font-extrabold shadow-xl transition-transform duration-200 hover:scale-[1.06] active:scale-95"
+                className="group relative inline-flex items-center gap-3 sm:gap-5 whitespace-nowrap rounded-full py-2 pl-6 pr-2 sm:py-2.5 sm:pl-9 sm:pr-2.5 text-[15px] sm:text-lg font-bold text-white transition-all duration-300 hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]"
                 style={{
-                  background: "linear-gradient(135deg, #FFC145 0%, #FFD36E 100%)",
-                  color: "var(--color-brand-700)",
-                  border: "2px solid rgba(58,61,110,0.12)",
+                  background: "linear-gradient(135deg, #5B5F97 0%, #3a3d6e 100%)",
+                  boxShadow: "0 14px 34px -10px rgba(58,61,110,0.7), inset 0 1px 0 rgba(255,255,255,0.18)",
                 }}
               >
-                <Compass className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
-                {t(copy.ctaBrowse)}
-                <ArrowRight className="animate-arrow h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span>{t(copy.ctaBrowse)}</span>
+                <span
+                  className="animate-cta-pulse flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110"
+                  style={{ background: "#FFC145", color: "#3a3d6e" }}
+                >
+                  <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                </span>
               </Link>
             </div>
             <span className="text-xs font-semibold tracking-wide" style={{ color: "var(--color-brand-500)" }}>

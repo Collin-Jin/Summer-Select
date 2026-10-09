@@ -6,12 +6,7 @@ import {
 
 export type Bi = { en: string; zh: string };
 
-export const CONTACT = {
-  wechat: "collinxuezhang",
-  instagram: "collin.jin",
-  instagramUrl: "https://instagram.com/collin.jin",
-  email: "CollinJin2029@u.northwestern.edu",
-} as const;
+export { CONTACT } from "@/lib/contact";
 
 /** Programs Collin has coached students into. Shown in the hero marquee. */
 export const COACHED_PROGRAMS = [
@@ -64,8 +59,6 @@ export const copy = {
   },
   platformStrip: {
     manual: { en: "100% manually reviewed", zh: "100% 人工审核" },
-    scraped: { en: "0 AI-scraped listings", zh: "0 条 AI 抓取数据" },
-    bilingual: { en: "Fully bilingual EN / 中文", zh: "中英双语全覆盖" },
   },
 
   valueEyebrow: { en: "Why SUMMER SELECT", zh: "为何选择 SUMMER SELECT" },
@@ -76,10 +69,10 @@ export const copy = {
   },
 
   reasonsEyebrow: { en: "6 reasons to register", zh: "注册的 6 大理由" },
-  reasonsH2: { en: "What full access actually unlocks", zh: "完整访问权限，究竟能解锁什么" },
+  reasonsH2: { en: "What you unlock, step by step", zh: "逐级解锁，你能获得什么" },
   reasonsSub: {
-    en: "Browsing is free. Registering and upgrading turns the directory into a complete application toolkit.",
-    zh: "浏览免费。注册并升级后，项目库将变成一套完整的申请工具包。",
+    en: "Browsing is free. A free account adds Collin's analysis and My List. Full access adds essays, the evaluator and interview prep.",
+    zh: "浏览免费。免费账户可查看 Collin 的分析并使用“我的列表”。完整权限再解锁范文、文书评估与面试准备。",
   },
 
   stepsEyebrow: { en: "How it works", zh: "使用流程" },
@@ -102,11 +95,11 @@ export const copy = {
     { en: "Browse the full Program Directory", zh: "浏览完整项目库" },
     { en: "Advanced search & filters", zh: "高级搜索与筛选" },
     { en: "Collin Index scores", zh: "Collin 指数评分" },
+    { en: "Collin's analysis & application strategy (free account)", zh: "Collin 的分析与申请策略（免费账户）" },
+    { en: "Save programs to My List (free account)", zh: "收藏项目到我的列表（免费账户）" },
     { en: "Bilingual content (EN / 中文)", zh: "中英双语内容" },
   ] as Bi[],
   paidFeatures: [
-    { en: "Collin's analysis & application strategy", zh: "Collin 的分析与申请策略" },
-    { en: "Save programs to My List", zh: "收藏项目到我的列表" },
     { en: "Example essays (60+ essays)", zh: "范文参考（60+ 篇）" },
     { en: "AI essay evaluator", zh: "AI 文书评估" },
     { en: "Interview Q&A guides", zh: "面试问答指南" },
@@ -115,13 +108,13 @@ export const copy = {
   contactBadge: { en: "Get full access", zh: "获取完整权限" },
   contactH2: { en: "Ready to get full access?", zh: "准备好获取完整访问权限了吗？" },
   contactLead: {
-    en: "Message Collin directly on WeChat, Instagram or email. Tell me the email you signed up with and I'll upgrade your account.",
-    zh: "直接通过微信、Instagram 或邮箱联系 Collin。告诉我你的注册邮箱，我会为你升级账户。",
+    en: "Want the example essays, the AI evaluator and interview prep? Message Collin directly on WeChat, Instagram or email. Tell me the email you signed up with and I'll upgrade your account.",
+    zh: "想要范文、AI 文书评估和面试准备？直接通过微信、Instagram 或邮箱联系 Collin。告诉我你的注册邮箱，我会为你升级账户。",
   },
   contactSteps: [
     { en: "Create your free account", zh: "创建免费账户" },
     { en: "Message Collin on WeChat, Instagram or email", zh: "通过微信、Instagram 或邮箱联系 Collin" },
-    { en: "Get your account upgraded", zh: "账户升级，立即解锁" },
+    { en: "Get upgraded to full access", zh: "升级为完整权限" },
   ] as Bi[],
   wechatLabel: { en: "WeChat", zh: "微信" },
   emailLabel: { en: "Email", zh: "邮箱" },
@@ -145,7 +138,7 @@ export const reasons: Reason[] = [
       en: "Every program is scored from 1–10 and sorted into Tier 1, 2 or 3, so you instantly see how selective it is and where to aim.",
       zh: "每个项目都有 1–10 的评分，并划分为第一、二、三梯队，让你一眼看清竞争程度与申请方向。",
     },
-    chip: { en: "Free to see", zh: "免费查看" },
+    chip: { en: "Free for everyone", zh: "人人免费" },
     accent: "#5B5F97", bg: "#EEEEF7",
   },
   {
@@ -155,7 +148,7 @@ export const reasons: Reason[] = [
       en: "Why a program is worth it and how to approach the application — the rationale and strategy behind every listing.",
       zh: "每个项目为什么值得申请、该如何准备——每条项目背后的分析与申请策略。",
     },
-    chip: { en: "Every program", zh: "每个项目" },
+    chip: { en: "Free account", zh: "免费账户" },
     accent: "#FFC145", bg: "#FFF8EC",
   },
   {
@@ -165,7 +158,7 @@ export const reasons: Reason[] = [
       en: "Real essays across 30 prompts, edited to protect student privacy, so you can see what a strong answer looks like before you write yours.",
       zh: "涵盖 30 个题目的真实文书，经编辑以保护学生隐私，写作之前先看看优秀答案长什么样。",
     },
-    chip: { en: "30 prompts covered", zh: "覆盖 30 个题目" },
+    chip: { en: "Full access", zh: "完整权限" },
     accent: "#FF6B6C", bg: "#FFF0F0",
   },
   {
@@ -175,7 +168,7 @@ export const reasons: Reason[] = [
       en: "Paste your draft and get feedback grounded in the example essays, so you can iterate at midnight without waiting on anyone.",
       zh: "粘贴你的草稿，获得基于范文库的反馈——深夜也能反复打磨，无需等待任何人。",
     },
-    chip: { en: "On-demand feedback", zh: "随时反馈" },
+    chip: { en: "Full access", zh: "完整权限" },
     accent: "#5B5F97", bg: "#EEEEF7",
   },
   {
@@ -185,7 +178,7 @@ export const reasons: Reason[] = [
       en: "Interview Q&A guides so a program interview is something you've already practiced, not something that surprises you.",
       zh: "面试问答指南，让项目面试成为你早已练习过的场景，而非临场惊吓。",
     },
-    chip: { en: "Practice-ready", zh: "即刻练习" },
+    chip: { en: "Full access", zh: "完整权限" },
     accent: "#FFC145", bg: "#FFF8EC",
   },
   {
@@ -195,7 +188,7 @@ export const reasons: Reason[] = [
       en: "Save programs to My List and keep your whole summer plan in one place instead of 40 browser tabs.",
       zh: "把项目收藏到“我的列表”，整个暑期计划集中管理，告别 40 个浏览器标签页。",
     },
-    chip: { en: "One place", zh: "集中管理" },
+    chip: { en: "Free account", zh: "免费账户" },
     accent: "#FF6B6C", bg: "#FFF0F0",
   },
 ];
@@ -231,13 +224,13 @@ export const steps: { icon: LucideIcon; title: Bi; body: Bi }[] = [
   },
   {
     icon: UserPlus,
-    title: { en: "Create an account", zh: "创建账户" },
-    body: { en: "Sign up with your email so your account is ready to be upgraded.", zh: "使用邮箱注册，让账户随时可以升级。" },
+    title: { en: "Create a free account", zh: "创建免费账户" },
+    body: { en: "Instantly unlock Collin's analysis and strategy for every program, and save programs to My List.", zh: "立即解锁每个项目的 Collin 分析与申请策略，并可收藏项目到“我的列表”。" },
   },
   {
     icon: Unlock,
-    title: { en: "Unlock everything", zh: "解锁全部内容" },
-    body: { en: "Message Collin, get upgraded, and open strategy, essays, the evaluator and interview guides.", zh: "联系 Collin 升级账户，即可解锁策略、范文、评估工具与面试指南。" },
+    title: { en: "Upgrade for full access", zh: "升级解锁全部" },
+    body: { en: "Message Collin to get upgraded and open the example essays, the evaluator and interview guides.", zh: "联系 Collin 升级账户，即可解锁范文、文书评估与面试指南。" },
   },
 ];
 

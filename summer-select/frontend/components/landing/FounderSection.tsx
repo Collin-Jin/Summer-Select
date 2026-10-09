@@ -111,7 +111,6 @@ export function FounderSection() {
                   background: "#F8F7FD",
                   border: "1px solid #E8E7F5",
                   color: "#374151",
-                  minHeight: "7rem",
                   whiteSpace: "pre-wrap",
                 }}
               >
@@ -124,6 +123,11 @@ export function FounderSection() {
                     opacity: done ? 0 : 1,
                   }}
                 />
+                {/* The not-yet-typed remainder is laid out but invisible, so the box
+                    is always its final height and the text never reflows or jumps. */}
+                <span aria-hidden style={{ visibility: "hidden" }}>
+                  {founderText[lang].slice(displayed.length)}
+                </span>
               </div>
             </div>
           </div>
