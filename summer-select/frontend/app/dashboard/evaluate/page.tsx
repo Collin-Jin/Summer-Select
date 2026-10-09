@@ -11,7 +11,12 @@ export const metadata: Metadata = {
 export default async function EvaluatePage() {
   const viewer = await getViewer();
 
-  // Not released yet: everyone sees the blurred preview with an "in development" notice.
+  // Guests and free accounts see the members-only preview. /api/evaluate also checks payment.
+  if (!viewer.isPaid) {
+    return <LockedFeature feature="evaluate" access={viewer.access} nextPath="/dashboard/evaluate" />;
+  }
+
+  // Paid members get an "in development" notice until the evaluator is released.
   if (EVALUATOR_IN_DEVELOPMENT) {
     return (
       <LockedFeature
@@ -21,11 +26,6 @@ export default async function EvaluatePage() {
         inDevelopment
       />
     );
-  }
-
-  // Free accounts and guests see a blurred preview. /api/evaluate also checks payment.
-  if (!viewer.isPaid) {
-    return <LockedFeature feature="evaluate" access={viewer.access} nextPath="/dashboard/evaluate" />;
   }
 
   return <EvaluateClientView />;

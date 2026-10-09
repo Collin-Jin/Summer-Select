@@ -41,7 +41,7 @@ Browser ──► proxy.ts ──► Server Components / Server Actions / Route 
 Security is layered, and the database is the source of truth:
 
 1. **`proxy.ts`** refreshes the Supabase session on every request (Server Components cannot write cookies) and redirects guests away from members-only routes.
-2. **Pages** enforce the next level: My List redirects guests to log in, Essays and Interviews render a blurred `LockedFeature` preview unless the viewer has paid, Evaluate shows the same preview with an "in development" notice to everyone while `EVALUATOR_IN_DEVELOPMENT` in `lib/features.ts` is true (the `/api/evaluate` route returns 503 too), and `app/admin/layout.tsx` requires the admin.
+2. **Pages** enforce the next level: My List redirects guests to log in, Essays, Evaluate and Interviews render a blurred `LockedFeature` preview unless the viewer has paid, paid members see an "in development" notice on Evaluate while `EVALUATOR_IN_DEVELOPMENT` in `lib/features.ts` is true (the `/api/evaluate` route returns 503 too), and `app/admin/layout.tsx` requires the admin.
 3. **Row-Level Security** is what actually protects the data. Essay and interview tables are readable only by paid users, program analysis is exposed to signed-in users through a read-only view, admin writes require `public.is_admin()`, and the originals table is admin-only. The admin e-mail in `lib/admin/config.ts` must match `public.is_admin()` in the database.
 
 The admin area is registry-driven: `lib/admin/resources.ts` describes each editable table once (fields, form layout, list columns, relations), and the lists, forms, validation and server actions are generated from it. Adding a column means adding one field entry.
