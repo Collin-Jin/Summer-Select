@@ -23,6 +23,7 @@ import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { supabaseClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import type { ViewerAccess } from "@/lib/access";
+import { EVALUATOR_IN_DEVELOPMENT } from "@/lib/features";
 
 interface NavLink {
   href: string;
@@ -33,6 +34,8 @@ interface NavLink {
   member?: boolean;
   /** Needs a paid account (guests and free accounts see a lock). */
   paid?: boolean;
+  /** Not released yet: shown with a lock for everyone. */
+  development?: boolean;
   /** Only shown to people who haven't paid (guests and unpaid accounts). */
   hideWhenPaid?: boolean;
   /** Only shown to the site admin. */
@@ -45,7 +48,7 @@ const navLinks: NavLink[] = [
   { href: "/dashboard", label: "Programs", labelZh: "项目库", icon: LayoutDashboard },
   { href: "/dashboard/my-list", label: "My List", labelZh: "收藏", icon: Bookmark, member: true },
   { href: "/dashboard/essays", label: "Essays", labelZh: "文书", icon: BookOpen, paid: true },
-  { href: "/dashboard/evaluate", label: "Evaluate", labelZh: "文书评估", icon: Sparkles, paid: true },
+  { href: "/dashboard/evaluate", label: "Evaluate", labelZh: "文书评估", icon: Sparkles, paid: true, development: EVALUATOR_IN_DEVELOPMENT },
   { href: "/dashboard/interviews", label: "Interviews", labelZh: "面试", icon: MessageSquare, paid: true },
   { href: "/dashboard/originals", label: "Originals", labelZh: "原文", icon: FileLock2, adminOnly: true },
 ];
@@ -116,7 +119,7 @@ export function Navbar({
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
-            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid, member }) => {
+            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid, member, development }) => {
               const isActive = isLinkActive(href, pathname);
               return (
                 <Link
@@ -137,7 +140,7 @@ export function Navbar({
                   )}
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
-                  {((paid && !isPaid) || (member && !isSignedIn)) && (
+                  {((paid && !isPaid) || (member && !isSignedIn) || development) && (
                     <Lock className="h-3 w-3 opacity-60" aria-label="Members only" />
                   )}
                 </Link>
@@ -216,7 +219,7 @@ export function Navbar({
           }}
         >
           <div className="px-4 pt-3 pb-4 space-y-1">
-            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid, member }) => {
+            {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid, member, development }) => {
               const isActive = isLinkActive(href, pathname);
               return (
                 <Link
@@ -233,7 +236,7 @@ export function Navbar({
                 >
                   <Icon className="h-4 w-4" />
                   {lang === "zh" ? labelZh : label}
-                  {((paid && !isPaid) || (member && !isSignedIn)) && (
+                  {((paid && !isPaid) || (member && !isSignedIn) || development) && (
                     <Lock className="h-3 w-3 opacity-60" aria-label="Members only" />
                   )}
                 </Link>

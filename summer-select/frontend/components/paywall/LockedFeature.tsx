@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Camera, Check, Copy, Lock, Mail, MessageCircle, Sparkles } from "lucide-react";
+import { Camera, Check, Copy, Lock, Mail, MessageCircle, Sparkles, Wrench } from "lucide-react";
 import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { CONTACT } from "@/lib/contact";
@@ -53,11 +53,14 @@ export function LockedFeature({
   feature,
   access,
   nextPath,
+  inDevelopment = false,
 }: {
   feature: LockedFeatureKey;
   access: ViewerAccess;
   /** Where to return after signing in. */
   nextPath: string;
+  /** The feature is not released yet: show a notice instead of sign-in or upgrade prompts. */
+  inDevelopment?: boolean;
 }) {
   const { lang } = useLanguage();
   const t = (b: { en: string; zh: string }) => b[lang];
@@ -89,7 +92,7 @@ export function LockedFeature({
             className="mx-auto mb-4 h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg"
             style={{ background: "linear-gradient(135deg,#5B5F97,#3a3d6e)" }}
           >
-            <Lock className="h-6 w-6 text-white" />
+            {inDevelopment ? <Wrench className="h-6 w-6 text-white" /> : <Lock className="h-6 w-6 text-white" />}
           </div>
 
           <span
@@ -97,15 +100,27 @@ export function LockedFeature({
             style={{ background: "#FFF3CC", color: "#92600A" }}
           >
             <Sparkles className="h-3 w-3" />
-            {lang === "zh" ? "完整会员专享" : "Full access"}
+            {inDevelopment
+              ? lang === "zh"
+                ? "开发中"
+                : "In development"
+              : lang === "zh"
+                ? "完整会员专享"
+                : "Full access"}
           </span>
 
           <h2 className="text-2xl font-extrabold mb-2" style={{ color: "#3a3d6e", fontFamily: "var(--font-syne, sans-serif)" }}>
             {t(name)}
           </h2>
-          <p className="text-sm text-slate-500 leading-relaxed mb-6">{t(pitch)}</p>
+          <p className="text-sm text-slate-500 leading-relaxed mb-6">
+            {inDevelopment
+              ? lang === "zh"
+                ? "这个功能目前还在开发中，暂时无法使用。我们会在准备好后尽快上线，敬请期待。"
+                : "This feature is currently in development and isn't available yet. We'll open it as soon as it's ready, so check back soon."
+              : t(pitch)}
+          </p>
 
-          {isGuest ? (
+          {inDevelopment ? null : isGuest ? (
             <GuestActions nextPath={nextPath} />
           ) : (
             <UpgradeActions />

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getViewer } from "@/lib/viewer";
 import { supabaseServer } from "@/lib/supabase/server";
+import { EVALUATOR_IN_DEVELOPMENT } from "@/lib/features";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -27,6 +28,13 @@ Bulleted, ordered by impact. For each, explain the problem and exactly how to fi
 A short numbered list of concrete revisions to make in the next draft.`;
 
 export async function POST(req: Request) {
+  if (EVALUATOR_IN_DEVELOPMENT) {
+    return NextResponse.json(
+      { error: "The essay evaluator is currently in development." },
+      { status: 503 }
+    );
+  }
+
   try {
     const openaiKey = process.env.OPENAI_API_KEY;
 
