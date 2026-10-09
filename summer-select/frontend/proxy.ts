@@ -1,22 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { loginUrl, requiresLogin } from "@/lib/access";
 
-/**
- * Members-only features. Guests are sent to the login page; the payment check
- * happens server-side in app/dashboard/(paid)/layout.tsx.
- *
- * Everything else — the landing page, the Program Directory (/dashboard and
- * /dashboard/program/*) and the auth pages — is public.
- */
-const PAID_FEATURE_PREFIXES = [
-  "/dashboard/my-list",
-  "/dashboard/essays",
-  "/dashboard/evaluate",
-  "/dashboard/interviews",
-  // Admin area: the real admin check happens in app/admin/layout.tsx and in the
-  // database (RLS); this just sends guests to the login page.
-  "/admin",
-];
+function redirectToLogin(req: NextRequest) {
+  return NextResponse.redirect(new URL(loginUrl(req.nextUrl.pathname), req.url));
+}
 
 /**
  * Two jobs:
@@ -25,16 +13,11 @@ const PAID_FEATURE_PREFIXES = [
  *     cookies, so without this a public page (e.g. the Program Directory) that
  *     reads the signed-in user would try to refresh mid-render and fail.
  *  2. On members-only routes, send guests to the login page.
- *
- * Note: This runs in the Edge Runtime.
  */
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   let res = NextResponse.next({ request: req });
 
-  const path = req.nextUrl.pathname;
-  const isProtected = PAID_FEATURE_PREFIXES.some(
-    (p) => path === p || path.startsWith(`${p}/`)
-  );
+  const isProtected = requiresLogin(req.nextUrl.pathname);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
@@ -43,12 +26,7 @@ export async function middleware(req: NextRequest) {
   // login); public routes just render.
   if (!supabaseUrl || !supabaseAnonKey) {
     if (!isProtected) return res;
-    const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = "/login";
-    redirectUrl.search = "";
-    redirectUrl.searchParams.set("reason", "login_required");
-    redirectUrl.searchParams.set("next", req.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
+    return redirectToLogin(req);
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -74,12 +52,7 @@ export async function middleware(req: NextRequest) {
   } = await supabase.auth.getSession();
 
   if (!session && isProtected) {
-    const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = "/login";
-    redirectUrl.search = "";
-    redirectUrl.searchParams.set("reason", "login_required");
-    redirectUrl.searchParams.set("next", req.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
+    return redirectToLogin(req);
   }
 
   return res;

@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { supabaseServer } from "@/utils/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import type { User } from "@supabase/supabase-js";
 import type { ViewerAccess } from "@/lib/access";
 import { isAdminEmail } from "@/lib/admin/config";

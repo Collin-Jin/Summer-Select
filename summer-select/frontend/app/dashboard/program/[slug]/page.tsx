@@ -11,13 +11,13 @@ import type { Lang, SummerProgram } from "@/lib/database.types";
 import { Badge, categoryVariant, deadlineTierVariant } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { CollinIndexBadge } from "@/components/programs/CollinIndexBadge";
-import { getCollinSelectivityTier } from "@/utils/collinIndex";
+import { getCollinSelectivityTier } from "@/lib/collinIndex";
 import { ProgramDetailFavoriteButton } from "./ProgramDetailFavoriteButton";
 import {
   formatProgramDate,
   formatDateRange,
   getDeadlineLabel,
-} from "@/utils/formatDate";
+} from "@/lib/format/date";
 import {
   formatCost,
   formatAppFee,
@@ -25,7 +25,7 @@ import {
   formatAcceptanceRate,
   formatGpa,
   formatEligibleGrades,
-} from "@/utils/formatFinancial";
+} from "@/lib/format/financial";
 import {
   ArrowLeft,
   ExternalLink,

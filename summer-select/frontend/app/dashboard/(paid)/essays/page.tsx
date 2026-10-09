@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/utils/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import { EssaysClientView } from "./EssaysClientView";
 import type { Metadata } from "next";
 import { getEditing } from "@/lib/admin/editMode";

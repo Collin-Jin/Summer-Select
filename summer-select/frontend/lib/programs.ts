@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/utils/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
 import { getEditing } from "@/lib/admin/editMode";
 import type { SummerProgram } from "@/lib/database.types";

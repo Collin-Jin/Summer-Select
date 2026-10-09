@@ -7,8 +7,8 @@ import { Badge, deadlineTierVariant, categoryVariant } from "@/components/ui/Bad
 import { Card } from "@/components/ui/Card";
 import { CollinIndexBadge } from "./CollinIndexBadge";
 import { FavoriteButton } from "./FavoriteButton";
-import { getDeadlineLabel } from "@/utils/formatDate";
-import { formatCost } from "@/utils/formatFinancial";
+import { getDeadlineLabel } from "@/lib/format/date";
+import { formatCost } from "@/lib/format/financial";
 import { useLanguage } from "@/context/LanguageContext";
 import { EditButton, DraftBadge } from "@/components/admin/inline/EditControls";
 import type { SummerProgram } from "@/lib/database.types";

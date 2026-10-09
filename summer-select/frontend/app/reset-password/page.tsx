@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseClient } from "@/utils/supabase/client";
+import { supabaseClient } from "@/lib/supabase/client";
 import { KeyRound, Eye, EyeOff } from "lucide-react";
 import { AuthCardShell } from "@/components/auth/AuthCardShell";
 

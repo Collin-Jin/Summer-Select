@@ -1,4 +1,4 @@
-import { supabaseClient } from "@/utils/supabase/client";
+import { supabaseClient } from "@/lib/supabase/client";
 import type { Favorite } from "@/lib/database.types";
 
 /**

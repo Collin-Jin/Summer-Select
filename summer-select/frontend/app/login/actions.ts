@@ -1,6 +1,6 @@
 "use server";
 
-import { supabaseServer } from "@/utils/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";

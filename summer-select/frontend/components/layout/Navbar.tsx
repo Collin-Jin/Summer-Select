@@ -21,7 +21,7 @@ import {
 import { clsx } from "clsx";
 import { useLanguage } from "@/context/LanguageContext";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
-import { supabaseClient } from "@/utils/supabase/client";
+import { supabaseClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import type { ViewerAccess } from "@/lib/access";
 

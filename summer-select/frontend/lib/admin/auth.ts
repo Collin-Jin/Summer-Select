@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { supabaseServer } from "@/utils/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
 import { loginUrl } from "@/lib/access";
 import { isAdminEmail } from "./config";

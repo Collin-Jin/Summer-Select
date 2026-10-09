@@ -27,3 +27,23 @@ export function loginUrl(next?: string | null): string {
   if (isSafeNextPath(next)) params.set("next", next);
   return `/login?${params.toString()}`;
 }
+
+/**
+ * Routes that need a signed-in user. The payment check for members-only
+ * features happens in `app/dashboard/(paid)/layout.tsx`, and the admin check in
+ * `app/admin/layout.tsx` and in the database (RLS). Everything else, such as
+ * the landing page, the Program Directory and the auth pages, is public.
+ */
+const LOGIN_REQUIRED_PREFIXES = [
+  "/dashboard/my-list",
+  "/dashboard/essays",
+  "/dashboard/evaluate",
+  "/dashboard/interviews",
+  "/dashboard/originals",
+  "/admin",
+] as const;
+
+/** True when a guest must be sent to the login page for this pathname. */
+export function requiresLogin(pathname: string): boolean {
+  return LOGIN_REQUIRED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}

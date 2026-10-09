@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { supabaseServer } from "@/utils/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import { getProgramsByIds } from "@/lib/programs";
 import { cookies } from "next/headers";
 import type { Lang } from "@/lib/database.types";

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { supabaseServer } from "@/utils/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { SessionWatcher } from "@/app/dashboard/_components/SessionWatcher";

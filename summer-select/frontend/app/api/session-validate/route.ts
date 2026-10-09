@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/utils/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { DEVICE_SESSION_COOKIE } from "@/lib/session";
 
