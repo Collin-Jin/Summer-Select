@@ -8,7 +8,7 @@ The app expects a Supabase project with the objects below. Row-Level Security is
 |---|---|---|---|
 | `summer_programs` | Program directory (bilingual columns, `lid` primary key, `slug` URL key) | Paid users; signed-in users through `member_summer_programs`, everyone through `public_summer_programs` | Admin |
 | `profiles` | One row per user: `is_paid`, `enforce_device_lock`, `active_session_id`, `notes` | The user (own row) | The user (own row, with trigger guards on `is_paid` and `enforce_device_lock`); admin via RPC |
-| `favorites` | Saved programs per user | The user | The user |
+| `favorites` | Saved programs per user, with the user's `rating` (1–5), private `notes` (max 5,000 characters) and application `status` | The user | The user |
 | `summer_program_prompts` | Essay prompts per program (`program_slug`, ordering columns) | Paid users | Admin |
 | `program_example_essays` | Edited example essays for a prompt | Paid users | Admin |
 | `essay_originals` | Untouched originals of example essays (admin-only, cascades on delete) | Admin | Admin |
@@ -49,8 +49,9 @@ Extension: `vector` (pgvector).
 | `20261008003409` | `essay_originals` (includes the later `essay_originals_tighten_grants`) |
 | `20261009211213` | `member_summer_programs_view` |
 | `20261009211234` | `public_summer_programs_read_only_grants` (revokes write privileges the view had inherited from default privileges) |
+| `20261009214149` | `favorites_planner` (rating, notes, status and `updated_at` on `favorites`, with a touch trigger and tighter grants) |
 
-All six are already applied to the production project. Do not re-run them there.
+All seven are already applied to the production project. Do not re-run them there.
 
 ### Known gap
 

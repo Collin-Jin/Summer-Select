@@ -14,6 +14,15 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+/** Application progress for a saved program (matches the `favorites_status_values` check). */
+export type FavoriteStatus =
+  | "considering"
+  | "applying"
+  | "submitted"
+  | "accepted"
+  | "waitlisted"
+  | "rejected";
+
 export interface Database {
   public: {
     Views: Record<string, never>;
@@ -360,18 +369,31 @@ export interface Database {
           /** References summer_programs.lid */
           program_id: string;
           created_at: string | null;
+          /** 1–5 stars, or null when not rated yet. */
+          rating: number | null;
+          /** Private notes (max 5,000 characters). */
+          notes: string | null;
+          /** Where the user is in the application process. */
+          status: FavoriteStatus;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
           program_id: string;
           created_at?: string | null;
+          rating?: number | null;
+          notes?: string | null;
+          status?: FavoriteStatus;
         };
         Update: {
           id?: string;
           user_id?: string;
           program_id?: string;
           created_at?: string | null;
+          rating?: number | null;
+          notes?: string | null;
+          status?: FavoriteStatus;
         };
         Relationships: [];
       };

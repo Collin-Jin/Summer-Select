@@ -92,3 +92,43 @@ export async function removeFavorite(programId: string): Promise<boolean> {
 
   return true;
 }
+
+/** Fields a user can edit on a saved program. */
+export type FavoritePatch = Partial<
+  Pick<Favorite, "rating" | "notes" | "status">
+>;
+
+/**
+ * Updates the rating, notes or application status of a saved program.
+ * RLS limits the update to the current user's own row.
+ *
+ * @param programId - The `lid` UUID of the saved program.
+ * @param patch - Fields to change. `rating` is 1–5 or null to clear.
+ * @returns True on success, false on error.
+ */
+export async function updateFavorite(
+  programId: string,
+  patch: FavoritePatch
+): Promise<boolean> {
+  const supabase = supabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return false;
+
+  const { data, error } = await supabase
+    .from("favorites")
+    .update(patch)
+    .eq("user_id", user.id)
+    .eq("program_id", programId)
+    .select("id");
+
+  if (error) {
+    console.error("[updateFavorite] Supabase error:", error.message);
+    return false;
+  }
+
+  // Zero rows means the program is no longer saved (e.g. removed in another tab).
+  return (data?.length ?? 0) > 0;
+}
