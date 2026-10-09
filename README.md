@@ -5,7 +5,7 @@ A bilingual (English / 中文) web app for finding, comparing and preparing appl
 ## What it does
 
 - **Program Directory** (public): search, filter and sort summer programs by category, format, grade, cost, financial aid, stipend and deadline. Each program has a detail page and a "Collin Index" selectivity score. Collin's written analysis and strategy are shown to signed-in users; guests see a blurred preview.
-- **Free account**: Collin's analysis and application strategy on every program, and saved programs ("My List").
+- **Free account**: Collin's analysis and application strategy on every program, and "My List", an application planner: a timeline of every saved program's deadlines for the current admission cycle (August to August), the closest deadline with a countdown, star ratings, private notes that autosave, an application status tracker, and calendar (.ics) export with reminders. Removing a program asks for confirmation because it also deletes the rating and notes.
 - **Full access** (paid): example essays grouped by program and prompt, interview guides with tips, and an AI essay evaluator. Guests and free accounts who open these pages see a blurred preview with a sign-up or upgrade prompt.
 - **AI essay evaluator**: embeds the student's draft with OpenAI, retrieves the three most similar reference essays from a pgvector table, and asks a chat model for structured feedback grounded in them.
 - **Accounts**: e-mail and password sign-up with verification and password reset (Supabase Auth). Access is `guest`, `unpaid` (a free account) or `paid`; an optional one-device-per-account lock is enforced for members.
