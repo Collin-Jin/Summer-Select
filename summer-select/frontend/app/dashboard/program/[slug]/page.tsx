@@ -223,7 +223,7 @@ export default async function ProgramDetailPage({ params }: Props) {
               </div>
 
               <div className="flex items-center gap-3 flex-shrink-0">
-                <ProgramDetailFavoriteButton programId={program.lid} access={viewer.access} />
+                <ProgramDetailFavoriteButton programId={program.lid} access={viewer.access} programName={program.name_en} />
                 {program.program_url && (
                   <a
                     href={program.program_url}

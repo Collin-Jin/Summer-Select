@@ -8,13 +8,14 @@ import type { ViewerAccess } from "@/lib/access";
 interface ProgramDetailFavoriteButtonProps {
   programId: string;
   access: ViewerAccess;
+  programName?: string;
 }
 
 /**
  * Wrapper that loads the initial favorited state client-side
  * and renders the FavoriteButton at the "md" size for the detail page header.
  */
-export function ProgramDetailFavoriteButton({ programId, access }: ProgramDetailFavoriteButtonProps) {
+export function ProgramDetailFavoriteButton({ programId, access, programName }: ProgramDetailFavoriteButtonProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [loaded, setLoaded] = useState(access === "guest");
 
@@ -34,6 +35,7 @@ export function ProgramDetailFavoriteButton({ programId, access }: ProgramDetail
       initialFavorited={isFavorited}
       size="md"
       access={access}
+      programName={programName}
       onToggle={setIsFavorited}
     />
   );

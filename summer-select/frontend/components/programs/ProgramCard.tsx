@@ -126,6 +126,7 @@ export function ProgramCard({
               programId={program.lid}
               initialFavorited={isFavorited}
               access={access}
+              programName={name}
               onToggle={(nowFavorited) => onToggleFavorite(program.lid, nowFavorited)}
             />
           </div>
