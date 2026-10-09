@@ -295,7 +295,7 @@ export function MyListClientView({ entries: initialEntries, todayKey }: MyListCl
         {visibleEntries.length === 0 ? (
           <p className="rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">{copy.noMatches}</p>
         ) : (
-          <div className="grid items-start gap-5 xl:grid-cols-2">
+          <div className="flex flex-col gap-5">
             {visibleEntries.map(({ entry }) => (
               <PlannerCard
                 key={entry.program.lid}
