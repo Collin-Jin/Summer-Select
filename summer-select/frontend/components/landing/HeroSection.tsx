@@ -234,15 +234,13 @@ function Pill({ icon, children }: { icon: React.ReactNode; children: React.React
   );
 }
 
-/** One scrolling row of program cards. The list is repeated so the loop never shows a gap. */
+/** The scrolling row of program cards. The list is repeated so the loop never shows a gap. */
 function MarqueeRow({
   programs,
-  reverse = false,
   seconds,
   admitted,
 }: {
   programs: readonly { name: string; tag: string }[];
-  reverse?: boolean;
   seconds: number;
   admitted: string;
 }) {
@@ -256,7 +254,7 @@ function MarqueeRow({
       }}
     >
       <div
-        className={`${reverse ? "animate-marquee-reverse" : "animate-marquee"} flex shrink-0 items-center gap-5 pr-5 py-2 whitespace-nowrap`}
+        className="animate-marquee flex shrink-0 items-center gap-5 pr-5 py-2 whitespace-nowrap"
         style={{ animationDuration: `${seconds}s` }}
       >
         {items.map((p, i) => (
@@ -302,18 +300,15 @@ function MarqueeRow({
   );
 }
 
-/** Two counter-scrolling rows of the programs Collin has coached students into. */
+/** A single scrolling row of the programs Collin has coached students into. */
 export function ProgramMarquee() {
   const { t } = useT();
   const admitted = t(copy.marqueeAdmitted);
-  const first = COACHED_PROGRAMS;
-  // The second row starts from the middle of the list so the rows never line up.
-  const second = [...COACHED_PROGRAMS.slice(4), ...COACHED_PROGRAMS.slice(0, 4)];
 
   return (
     <section
       aria-label={t(copy.marqueeLabel)}
-      className="marquee-wrap relative overflow-hidden py-14 sm:py-20"
+      className="relative overflow-hidden py-14 sm:py-20"
       style={{ background: "linear-gradient(180deg, #3a3d6e 0%, #2d3061 100%)" }}
     >
       {/* Glow and grid backdrop */}
@@ -354,9 +349,8 @@ export function ProgramMarquee() {
         </h2>
       </div>
 
-      <div className="relative space-y-4">
-        <MarqueeRow programs={first} seconds={55} admitted={admitted} />
-        <MarqueeRow programs={second} reverse seconds={65} admitted={admitted} />
+      <div className="relative">
+        <MarqueeRow programs={COACHED_PROGRAMS} seconds={55} admitted={admitted} />
       </div>
     </section>
   );

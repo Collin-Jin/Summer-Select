@@ -186,10 +186,6 @@ input, textarea, [contenteditable] {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
-@keyframes marqueeScrollReverse {
-  from { transform: translateX(-50%); }
-  to   { transform: translateX(0); }
-}
 @keyframes shineSweep {
   0%        { transform: translateX(-120%) skewX(-20deg); }
   55%, 100% { transform: translateX(260%) skewX(-20deg); }
@@ -226,16 +222,12 @@ input, textarea, [contenteditable] {
 .animate-blob-a   { animation: blobDriftA 16s ease-in-out infinite; }
 .animate-blob-b   { animation: blobDriftB 19s ease-in-out infinite; }
 .animate-marquee  { animation: marqueeScroll 38s linear infinite; }
-.animate-marquee-reverse { animation: marqueeScrollReverse 38s linear infinite; }
 .animate-arrow    { animation: arrowNudge 1.2s ease-in-out infinite; }
 .animate-spin-slow { animation: spinSlow 22s linear infinite; }
 .animate-rise-float { animation: riseFloat 6s ease-in-out infinite; }
 .animate-twinkle  { animation: twinkle 3.4s ease-in-out infinite; }
 .animate-ring-ping { animation: ringPing 2.2s ease-out infinite; }
 .animate-pop-in   { animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-
-.marquee-wrap:hover .animate-marquee,
-.marquee-wrap:hover .animate-marquee-reverse { animation-play-state: paused; }
 
 .text-shimmer {
   background-image: linear-gradient(90deg, #5B5F97 0%, #9090BC 25%, #FFC145 50%, #9090BC 75%, #5B5F97 100%);
@@ -285,7 +277,7 @@ input, textarea, [contenteditable] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-blob-a, .animate-blob-b, .animate-marquee, .animate-marquee-reverse, .animate-arrow,
+  .animate-blob-a, .animate-blob-b, .animate-marquee, .animate-arrow,
   .animate-spin-slow, .animate-rise-float, .animate-twinkle, .animate-ring-ping,
   .animate-pop-in, .animate-float, .animate-bounce-slow, .animate-cta-pulse,
   .text-shimmer, .btn-shine::after {
