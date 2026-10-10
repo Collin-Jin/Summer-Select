@@ -28,10 +28,25 @@ export type EmptyProgram = {
   is_published: boolean | null;
 };
 
-export default async function EssaysPage() {
+export default async function EssaysPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ program?: string | string[] }>;
+}) {
+  // `?program=<slug>` opens that program's essays directly (linked from the program page).
+  const { program } = await searchParams;
+  const requested = Array.isArray(program) ? program[0] : program;
+  const initialSlug = requested && /^[a-z0-9-]{1,100}$/.test(requested) ? requested : null;
+
   const viewer = await getViewer();
   if (!viewer.isPaid) {
-    return <LockedFeature feature="essays" access={viewer.access} nextPath="/dashboard/essays" />;
+    return (
+      <LockedFeature
+        feature="essays"
+        access={viewer.access}
+        nextPath={initialSlug ? `/dashboard/essays?program=${initialSlug}` : "/dashboard/essays"}
+      />
+    );
   }
 
   const supabase = await supabaseServer();
@@ -101,6 +116,7 @@ export default async function EssaysPage() {
       prompts={publishedPrompts}
       programDescriptions={programDescriptions}
       emptyPrograms={emptyPrograms}
+      initialSlug={initialSlug}
       userEmail={user?.email ?? null}
     />
   );

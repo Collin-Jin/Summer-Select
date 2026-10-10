@@ -82,6 +82,32 @@ export async function getProgramBySlug(
   return toProgram(data);
 }
 
+export interface ProgramEssaySummary {
+  promptCount: number;
+  essayCount: number;
+}
+
+/**
+ * How many published example essays (and prompts) a program has, or null when
+ * it has none. Only counts are returned, so this is safe to show to everyone:
+ * the essays themselves stay members-only.
+ */
+export async function getProgramEssaySummary(
+  slug: string
+): Promise<ProgramEssaySummary | null> {
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase.rpc("programs_with_essays");
+  if (error) {
+    console.error("[getProgramEssaySummary] Supabase error:", error.message);
+    return null;
+  }
+  const row = ((data ?? []) as { program_slug: string; prompt_count: number; essay_count: number }[]).find(
+    (r) => r.program_slug === slug
+  );
+  if (!row || row.essay_count < 1) return null;
+  return { promptCount: row.prompt_count, essayCount: row.essay_count };
+}
+
 /**
  * Fetches a batch of programs by their `lid` primary keys.
  */

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { getProgramBySlug } from "@/lib/programs";
+import { getProgramBySlug, getProgramEssaySummary } from "@/lib/programs";
 import { getViewer } from "@/lib/viewer";
 import { AnalysisTeaser } from "./AnalysisTeaser";
 import { EditButton, DraftBadge } from "@/components/admin/inline/EditControls";
@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/Card";
 import { CollinIndexBadge } from "@/components/programs/CollinIndexBadge";
 import { getCollinSelectivityTier } from "@/lib/collinIndex";
 import { ProgramDetailFavoriteButton } from "./ProgramDetailFavoriteButton";
+import { SuccessfulEssaysLink } from "./SuccessfulEssaysLink";
 import {
   formatProgramDate,
   formatDateRange,
@@ -125,7 +126,11 @@ function BooleanIndicator({ value, trueLabel, falseLabel }: { value: boolean | n
  */
 export default async function ProgramDetailPage({ params }: Props) {
   const { slug } = await params;
-  const [program, viewer] = await Promise.all([getProgramBySlug(slug), getViewer()]);
+  const [program, viewer, essaySummary] = await Promise.all([
+    getProgramBySlug(slug),
+    getViewer(),
+    getProgramEssaySummary(slug),
+  ]);
 
   if (!program) notFound();
 
@@ -368,6 +373,16 @@ export default async function ProgramDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ── Successful essays (only when the program has some) ─────────────── */}
+      {essaySummary && (
+        <SuccessfulEssaysLink
+          lang={lang}
+          slug={slug}
+          summary={essaySummary}
+          canRead={viewer.isPaid}
+        />
+      )}
 
       {/* ── Data grid ───────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">

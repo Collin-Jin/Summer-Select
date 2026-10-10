@@ -461,18 +461,21 @@ export function EssaysClientView({
   prompts: serverPrompts,
   programDescriptions,
   emptyPrograms = [],
+  initialSlug = null,
   userEmail,
 }: {
   prompts: SummerProgramPromptWithEssays[];
   programDescriptions: Record<string, ProgramDescription>;
   /** Edit mode only: directory programs that have no prompts yet. */
   emptyPrograms?: EmptyProgram[];
+  /** Program to open straight away (from a `?program=` link). */
+  initialSlug?: string | null;
   userEmail: string | null;
 }) {
   const { lang } = useLanguage();
   const router = useRouter();
   const { notify, editing } = useAdmin();
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(initialSlug);
   const [, startSaving] = useTransition();
 
   // Local copy so drag-and-drop feels instant; resynced whenever the server sends new data.
