@@ -393,6 +393,37 @@ export interface Database {
         };
         Relationships: [];
       };
+      /**
+       * Problem reports from visitors. Anyone can insert; only the admin can
+       * read, update or delete (RLS).
+       */
+      error_reports: {
+        Row: {
+          id: string;
+          created_at: string;
+          message: string;
+          /** Path (and query) of the page the visitor was on. */
+          page_url: string | null;
+          reporter_email: string | null;
+          user_id: string | null;
+          /** Hash used only to rate-limit one visitor. */
+          client_id: string | null;
+          status: "open" | "resolved";
+          resolved_at: string | null;
+        };
+        Insert: {
+          message: string;
+          page_url?: string | null;
+          reporter_email?: string | null;
+          user_id?: string | null;
+          client_id?: string | null;
+        };
+        Update: {
+          status?: "open" | "resolved";
+          resolved_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
   };
 }
@@ -408,6 +439,9 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 /** A row from the `favorites` table. */
 export type Favorite = Database["public"]["Tables"]["favorites"]["Row"];
+
+/** A row from the `error_reports` table. */
+export type ErrorReport = Database["public"]["Tables"]["error_reports"]["Row"];
 
 /** A row from the `example_essays` table. */
 export type ExampleEssay = Database["public"]["Tables"]["example_essays"]["Row"];
