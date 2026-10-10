@@ -24,11 +24,12 @@ export async function GET() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("active_session_id, enforce_device_lock")
+      .select("active_session_id, enforce_device_lock, is_paid")
       .eq("id", user.id)
       .single();
 
-    if (profile?.enforce_device_lock === false) {
+    // Only paid members are tied to one device.
+    if (profile?.is_paid !== true || profile.enforce_device_lock === false) {
       return NextResponse.json({ valid: true });
     }
 

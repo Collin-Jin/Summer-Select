@@ -46,14 +46,15 @@ function postAuthDestination(formData: FormData) {
 }
 
 /**
- * After a successful sign-in, generate a session ID, store it in `profiles`,
- * and set it as a cookie. This enables single-device enforcement: when a
- * second device logs in the session ID changes, kicking out the first device.
+ * After a paid member signs in, generate a session ID, store it in `profiles`,
+ * and set it as a cookie. This enables single-device enforcement: another
+ * browser without the cookie is turned away at sign-in. Free accounts are not
+ * tied to a device, so this is never called for them.
  */
 async function writeSessionId(supabase: Awaited<ReturnType<typeof supabaseServer>>, userId: string) {
   const sessionId = randomUUID();
 
-  // Store in profiles (UPDATE — profile row already exists via trigger)
+  // Store in profiles (UPDATE — paid members always have a profile row)
   await supabase
     .from("profiles")
     .update({ active_session_id: sessionId })
@@ -118,11 +119,12 @@ export async function handleSignIn(formData: FormData) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("active_session_id, enforce_device_lock")
+      .select("active_session_id, enforce_device_lock, is_paid")
       .eq("id", data.user.id)
       .single();
 
-    const deviceLockEnabled = profile?.enforce_device_lock !== false;
+    // The one-device rule is for paid members only; free accounts can sign in anywhere.
+    const deviceLockEnabled = profile?.is_paid === true && profile.enforce_device_lock !== false;
 
     if (deviceLockEnabled) {
       const registeredId = profile?.active_session_id;
@@ -186,18 +188,7 @@ export async function handleSignUp(formData: FormData) {
     return { success: "verify_email" as const, email };
   }
 
-  if (data.user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("enforce_device_lock")
-      .eq("id", data.user.id)
-      .single();
-
-    if (profile?.enforce_device_lock !== false) {
-      await writeSessionId(supabase, data.user.id);
-    }
-  }
-
+  // New accounts are free, and free accounts are not tied to a device.
   redirect(postAuthDestination(formData));
 }
 

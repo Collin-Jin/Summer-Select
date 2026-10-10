@@ -249,7 +249,7 @@ function UserRow({
             </Pill>
           )}
           {!user.email_confirmed && <Pill tone="amber">Unconfirmed</Pill>}
-          {user.has_active_session && <Pill tone="slate">Signed in on a device</Pill>}
+          {user.has_active_session && user.is_paid && <Pill tone="slate">Signed in on a device</Pill>}
           <Pill tone={user.is_paid ? "green" : "slate"}>{user.is_paid ? "Paid" : "Not paid"}</Pill>
         </div>
         <ChevronDown className={clsx("h-4 w-4 flex-shrink-0 text-slate-400 transition", open && "rotate-180")} />
@@ -266,7 +266,16 @@ function UserRow({
             </div>
             <div>
               <p className="mb-1.5 text-sm font-semibold text-slate-800">One-device sign-in</p>
-              <Toggle checked={deviceLock} onChange={setDeviceLock} label={deviceLock ? "Enforced" : "Off (can use several devices)"} />
+              <Toggle
+                checked={deviceLock}
+                onChange={setDeviceLock}
+                label={deviceLock ? "Enforced" : "Off (can use several devices)"}
+              />
+              {!isPaid && (
+                <p className="mt-1.5 text-xs text-slate-500">
+                  Only applies to paid members. Free accounts can sign in on any device.
+                </p>
+              )}
             </div>
           </div>
 

@@ -30,11 +30,12 @@ export async function GET(request: Request) {
     if (!error && data.user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("enforce_device_lock")
+        .select("enforce_device_lock, is_paid")
         .eq("id", data.user.id)
         .single();
 
-      if (profile?.enforce_device_lock !== false) {
+      // The one-device rule is for paid members only.
+      if (profile?.is_paid === true && profile.enforce_device_lock !== false) {
         // Register this device as the active session so single-device
         // enforcement applies to users arriving via email links too.
         const sessionId = randomUUID();
