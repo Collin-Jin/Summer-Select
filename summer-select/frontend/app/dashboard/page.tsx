@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAllPrograms, getProgramCategories, getProgramFormats } from "@/lib/programs";
+import { getAllPrograms, getProgramFormats } from "@/lib/programs";
 import { ProgramsClientView } from "@/components/programs/ProgramsClientView";
 import { getViewer } from "@/lib/viewer";
 
@@ -21,9 +21,8 @@ export const metadata: Metadata = {
  * and equally performant compared to server-side pagination.
  */
 export default async function DashboardPage() {
-  const [programs, categories, formats, viewer] = await Promise.all([
+  const [programs, formats, viewer] = await Promise.all([
     getAllPrograms(),
-    getProgramCategories(),
     getProgramFormats(),
     getViewer(),
   ]);
@@ -31,7 +30,6 @@ export default async function DashboardPage() {
   return (
     <ProgramsClientView
       programs={programs}
-      categories={categories}
       formats={formats}
       access={viewer.access}
     />

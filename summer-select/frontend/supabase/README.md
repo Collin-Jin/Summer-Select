@@ -50,8 +50,9 @@ Extension: `vector` (pgvector).
 | `20261009211213` | `member_summer_programs_view` |
 | `20261009211234` | `public_summer_programs_read_only_grants` (revokes write privileges the view had inherited from default privileges) |
 | `20261009214149` | `favorites_planner` (rating, notes, status and `updated_at` on `favorites`, with a touch trigger and tighter grants) |
+| `20261010043303` | `remove_program_category` (drops `primary_category_en/zh` from `summer_programs` and recreates both program views without them) |
 
-All seven are already applied to the production project. Do not re-run them there.
+All eight are already applied to the production project. Do not re-run them there.
 
 ### Known gap
 

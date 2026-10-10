@@ -8,7 +8,7 @@ import { AnalysisTeaser } from "./AnalysisTeaser";
 import { EditButton, DraftBadge } from "@/components/admin/inline/EditControls";
 import { cookies } from "next/headers";
 import type { Lang, SummerProgram } from "@/lib/database.types";
-import { Badge, categoryVariant, deadlineTierVariant } from "@/components/ui/Badge";
+import { Badge, deadlineTierVariant } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { CollinIndexBadge } from "@/components/programs/CollinIndexBadge";
 import { getCollinSelectivityTier } from "@/lib/collinIndex";
@@ -146,7 +146,6 @@ export default async function ProgramDetailPage({ params }: Props) {
   const name = l("name") ?? program.name_en;
   const institution = l("host_institution");
   const city = l("location_city");
-  const category = l("primary_category");
   const format = l("format");
   const rationale = l("collin_rationale");
   const strategy = l("collin_strategy");
@@ -241,9 +240,6 @@ export default async function ProgramDetailPage({ params }: Props) {
 
             {/* Meta badges */}
             <div className="flex flex-wrap gap-2 mt-4">
-              {category && (
-                <Badge variant={categoryVariant(category)}>{category}</Badge>
-              )}
               {format && <Badge variant="format">{format}</Badge>}
               {program.duration_weeks && (
                 <Badge variant="default">

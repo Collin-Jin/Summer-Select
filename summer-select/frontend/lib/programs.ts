@@ -4,7 +4,6 @@ import { getEditing } from "@/lib/admin/editMode";
 import type { SummerProgram } from "@/lib/database.types";
 
 export type FormatOption = { en: string; zh: string | null };
-export type CategoryOption = { en: string; zh: string | null };
 
 /**
  * Which relation to read programs from, by access tier (the database enforces
@@ -102,31 +101,6 @@ export async function getProgramsByIds(
   }
 
   return (data ?? []).map(toProgram);
-}
-
-/**
- * Fetches all unique category values for the filter UI, in both EN and ZH.
- * Returns deduplicated pairs keyed on the English value.
- */
-export async function getProgramCategories(): Promise<CategoryOption[]> {
-  const { builder, publishedOnly } = await programsSource();
-  let query = builder.select("primary_category_en, primary_category_zh");
-  if (publishedOnly) query = query.eq("is_published", true);
-  const { data, error } = await query;
-
-  if (error || !data) return [];
-
-  const seen = new Set<string>();
-  const result: CategoryOption[] = [];
-
-  for (const row of data) {
-    const en = row.primary_category_en;
-    if (!en || seen.has(en)) continue;
-    seen.add(en);
-    result.push({ en, zh: row.primary_category_zh ?? null });
-  }
-
-  return result.sort((a, b) => a.en.localeCompare(b.en));
 }
 
 /**

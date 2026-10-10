@@ -9,14 +9,13 @@ import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { fetchFavorites } from "@/lib/favorites";
 import { useLanguage } from "@/context/LanguageContext";
 import type { SummerProgram } from "@/lib/database.types";
-import type { FormatOption, CategoryOption } from "@/lib/programs";
+import type { FormatOption } from "@/lib/programs";
 import type { ViewerAccess } from "@/lib/access";
 import { Search, LayoutGrid } from "lucide-react";
 import { AddButton } from "@/components/admin/inline/EditControls";
 
 interface ProgramsClientViewProps {
   programs: SummerProgram[];
-  categories: CategoryOption[];
   formats: FormatOption[];
   /** Who is viewing. My List favorites need a free account. */
   access: ViewerAccess;
@@ -25,14 +24,13 @@ interface ProgramsClientViewProps {
 /**
  * Client-side view for the main dashboard.
  * Receives all programs from the Server Component parent and handles:
- * - Filtering by category, format, grade, attributes
+ * - Filtering by format, grade, attributes
  * - Sorting by Collin Index, deadline, cost, acceptance rate
  * - Full-text search against the name and institution fields
  * - Favorites state loaded from Supabase on mount, with optimistic updates
  */
 export function ProgramsClientView({
   programs,
-  categories,
   formats,
   access,
 }: ProgramsClientViewProps) {
@@ -71,14 +69,6 @@ export function ProgramsClientView({
         [p.name_en, p.name_zh, p.host_institution_en, p.host_institution_zh]
           .filter(Boolean)
           .some((s) => s!.toLowerCase().includes(q))
-      );
-    }
-
-    if (filters.category) {
-      result = result.filter(
-        (p) =>
-          p.primary_category_en === filters.category ||
-          p.primary_category_zh === filters.category
       );
     }
 
@@ -147,7 +137,6 @@ export function ProgramsClientView({
           <FilterPanel
             filters={filters}
             onChange={setFilters}
-            categories={categories}
             formats={formats}
             totalCount={programs.length}
             filteredCount={sorted.length}
@@ -188,8 +177,7 @@ export function ProgramsClientView({
             <FilterPanel
               filters={filters}
               onChange={setFilters}
-              categories={categories}
-              formats={formats}
+                formats={formats}
               totalCount={programs.length}
               filteredCount={sorted.length}
             />
@@ -201,7 +189,6 @@ export function ProgramsClientView({
           filters={filters}
           onChange={setFilters}
           formats={formats}
-          categories={categories}
         />
 
         {/* Results */}

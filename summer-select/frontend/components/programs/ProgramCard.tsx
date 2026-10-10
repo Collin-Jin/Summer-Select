@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Clock, Users, GraduationCap } from "lucide-react";
-import { Badge, deadlineTierVariant, categoryVariant } from "@/components/ui/Badge";
+import { Badge, deadlineTierVariant } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { CollinIndexBadge } from "./CollinIndexBadge";
 import { FavoriteButton } from "./FavoriteButton";
@@ -36,9 +36,6 @@ export function ProgramCard({
   const city =
     (program[t("location_city") as keyof SummerProgram] as string | null) ||
     program.location_city_en;
-  const category =
-    (program[t("primary_category") as keyof SummerProgram] as string | null) ||
-    program.primary_category_en;
   const format =
     (program[t("format") as keyof SummerProgram] as string | null) ||
     program.format_en;
@@ -135,9 +132,6 @@ export function ProgramCard({
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5 mb-4">
           <DraftBadge published={program.is_published} />
-          {category && (
-            <Badge variant={categoryVariant(category)} size="sm">{category}</Badge>
-          )}
           {format && (
             <Badge variant="format" size="sm">{format}</Badge>
           )}

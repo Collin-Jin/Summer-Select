@@ -3,11 +3,10 @@
 import { X, SlidersHorizontal } from "lucide-react";
 import { clsx } from "clsx";
 import { useLanguage } from "@/context/LanguageContext";
-import type { FormatOption, CategoryOption } from "@/lib/programs";
+import type { FormatOption } from "@/lib/programs";
 
 export interface ProgramFilters {
   search: string;
-  category: string;
   format: string;
   grade: string;
   financialAid: boolean;
@@ -18,7 +17,6 @@ export interface ProgramFilters {
 
 export const DEFAULT_FILTERS: ProgramFilters = {
   search: "",
-  category: "",
   format: "",
   grade: "",
   financialAid: false,
@@ -30,7 +28,6 @@ export const DEFAULT_FILTERS: ProgramFilters = {
 interface FilterPanelProps {
   filters: ProgramFilters;
   onChange: (filters: ProgramFilters) => void;
-  categories: CategoryOption[];
   formats: FormatOption[];
   totalCount: number;
   filteredCount: number;
@@ -52,7 +49,6 @@ const SORT_OPTIONS: { value: ProgramFilters["sortBy"]; label: string; labelZh: s
 export function FilterPanel({
   filters,
   onChange,
-  categories,
   formats,
   totalCount,
   filteredCount,
@@ -65,7 +61,6 @@ export function FilterPanel({
   const resetAll = () => onChange(DEFAULT_FILTERS);
 
   const hasActiveFilters =
-    filters.category ||
     filters.format ||
     filters.grade ||
     filters.financialAid ||
@@ -105,27 +100,6 @@ export function FilterPanel({
           ))}
         </select>
       </div>
-
-      {/* Category */}
-      {categories.length > 0 && (
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            {lang === "zh" ? "类别" : "Category"}
-          </label>
-          <select
-            value={filters.category}
-            onChange={(e) => set("category", e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">{lang === "zh" ? "全部类别" : "All categories"}</option>
-            {categories.map((c) => (
-              <option key={c.en} value={c.en}>
-                {lang === "zh" ? (c.zh ?? c.en) : c.en}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* Format */}
       {formats.length > 0 && (
@@ -228,21 +202,14 @@ export function ActiveFilterChips({
   filters,
   onChange,
   formats,
-  categories,
 }: {
   filters: ProgramFilters;
   onChange: (f: ProgramFilters) => void;
   formats: FormatOption[];
-  categories: CategoryOption[];
 }) {
   const { lang } = useLanguage();
   const chips: { label: string; onRemove: () => void }[] = [];
 
-  if (filters.category) {
-    const cat = categories.find((c) => c.en === filters.category);
-    const label = lang === "zh" ? (cat?.zh ?? filters.category) : filters.category;
-    chips.push({ label, onRemove: () => onChange({ ...filters, category: "" }) });
-  }
   if (filters.format) {
     const fmt = formats.find((f) => f.en === filters.format);
     const label = lang === "zh" ? (fmt?.zh ?? filters.format) : filters.format;

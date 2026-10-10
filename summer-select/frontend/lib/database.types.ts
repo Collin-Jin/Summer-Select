@@ -55,9 +55,7 @@ export interface Database {
           program_url: string | null;
           logo_url: string | null;
 
-          // ── Logistics & Categorization ─────────────────────────────────
-          primary_category_en: string | null;
-          primary_category_zh: string | null;
+          // ── Logistics ─────────────────────────────────
           offered_disciplines_en: string[] | null;
           offered_disciplines_zh: string[] | null;
           format_en: string | null;
@@ -109,8 +107,6 @@ export interface Database {
           location_state?: string | null;
           program_url?: string | null;
           logo_url?: string | null;
-          primary_category_en?: string | null;
-          primary_category_zh?: string | null;
           offered_disciplines_en?: string[] | null;
           offered_disciplines_zh?: string[] | null;
           format_en?: string | null;
