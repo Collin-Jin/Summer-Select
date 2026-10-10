@@ -2,16 +2,20 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Search, ShieldAlert } from "lucide-react";
 import { clsx } from "clsx";
-import { updateUserAccess } from "@/app/admin/actions";
+import { clearBlockedSignIns, updateUserAccess } from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "./ResourceForm";
+import { describeDevice, describeLocation } from "@/lib/device";
+import { fullName } from "@/lib/names";
 import { inputClass } from "./styles";
 
 export interface AdminUser {
   id: string;
   email: string | null;
+  first_name: string | null;
+  last_name: string | null;
   created_at: string | null;
   last_sign_in_at: string | null;
   email_confirmed: boolean;
@@ -22,7 +26,24 @@ export interface AdminUser {
   notes: string | null;
 }
 
-type Filter = "all" | "paid" | "unpaid";
+/** A sign-in that was turned away because the account is registered to another device. */
+export interface BlockedSignIn {
+  id: string;
+  user_id: string;
+  created_at: string;
+  user_agent: string | null;
+  country: string | null;
+  city: string | null;
+}
+
+type Filter = "all" | "paid" | "unpaid" | "blocked";
+
+function fmtDateTime(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
 
 function fmtDate(iso: string | null): string {
   if (!iso) return "—";
@@ -32,18 +53,30 @@ function fmtDate(iso: string | null): string {
     : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-export function UsersManager({ users }: { users: AdminUser[] }) {
+export function UsersManager({ users, blocked }: { users: AdminUser[]; blocked: BlockedSignIn[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+
+  // Blocked attempts per member, newest first (the page loads them newest first).
+  const attemptsByUser = useMemo(() => {
+    const map = new Map<string, BlockedSignIn[]>();
+    for (const b of blocked) {
+      const list = map.get(b.user_id);
+      if (list) list.push(b);
+      else map.set(b.user_id, [b]);
+    }
+    return map;
+  }, [blocked]);
 
   const counts = useMemo(
     () => ({
       all: users.length,
       paid: users.filter((u) => u.is_paid).length,
       unpaid: users.filter((u) => !u.is_paid).length,
+      blocked: users.filter((u) => attemptsByUser.has(u.id)).length,
     }),
-    [users]
+    [users, attemptsByUser]
   );
 
   const visible = useMemo(() => {
@@ -51,16 +84,23 @@ export function UsersManager({ users }: { users: AdminUser[] }) {
     return users.filter((u) => {
       if (filter === "paid" && !u.is_paid) return false;
       if (filter === "unpaid" && u.is_paid) return false;
-      if (q && !(u.email ?? "").toLowerCase().includes(q) && !(u.notes ?? "").toLowerCase().includes(q)) return false;
+      if (filter === "blocked" && !attemptsByUser.has(u.id)) return false;
+      if (
+        q &&
+        !(u.email ?? "").toLowerCase().includes(q) &&
+        !(fullName(u.first_name, u.last_name) ?? "").toLowerCase().includes(q) &&
+        !(u.notes ?? "").toLowerCase().includes(q)
+      )
+        return false;
       return true;
     });
-  }, [users, filter, query]);
+  }, [users, filter, query, attemptsByUser]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <div className="inline-flex overflow-hidden rounded-lg border border-slate-300 bg-white text-sm shadow-sm">
-          {(["all", "paid", "unpaid"] as const).map((f) => (
+          {(["all", "paid", "unpaid", "blocked"] as const).map((f) => (
             <button
               key={f}
               type="button"
@@ -70,7 +110,7 @@ export function UsersManager({ users }: { users: AdminUser[] }) {
                 filter === f ? "bg-[var(--color-brand-500)] text-white" : "text-slate-600 hover:bg-slate-50"
               )}
             >
-              {f} <span className="opacity-70">({counts[f]})</span>
+              {f === "blocked" ? "Blocked sign-ins" : f} <span className="opacity-70">({counts[f]})</span>
             </button>
           ))}
         </div>
@@ -79,7 +119,7 @@ export function UsersManager({ users }: { users: AdminUser[] }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by email or note"
+            placeholder="Search by name, email or note"
             className={clsx(inputClass, "pl-9")}
           />
         </div>
@@ -94,6 +134,7 @@ export function UsersManager({ users }: { users: AdminUser[] }) {
               <UserRow
                 key={u.id}
                 user={u}
+                attempts={attemptsByUser.get(u.id) ?? []}
                 open={openId === u.id}
                 onToggle={() => setOpenId(openId === u.id ? null : u.id)}
               />
@@ -105,7 +146,17 @@ export function UsersManager({ users }: { users: AdminUser[] }) {
   );
 }
 
-function UserRow({ user, open, onToggle }: { user: AdminUser; open: boolean; onToggle: () => void }) {
+function UserRow({
+  user,
+  attempts,
+  open,
+  onToggle,
+}: {
+  user: AdminUser;
+  attempts: BlockedSignIn[];
+  open: boolean;
+  onToggle: () => void;
+}) {
   const router = useRouter();
   const [isPaid, setIsPaid] = useState(user.is_paid);
   const [deviceLock, setDeviceLock] = useState(user.enforce_device_lock);
@@ -144,6 +195,8 @@ function UserRow({ user, open, onToggle }: { user: AdminUser; open: boolean; onT
     });
   }
 
+  const name = fullName(user.first_name, user.last_name);
+
   return (
     <li>
       <button
@@ -153,12 +206,18 @@ function UserRow({ user, open, onToggle }: { user: AdminUser; open: boolean; onT
         className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition hover:bg-slate-50"
       >
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-slate-900">{user.email ?? "(no email)"}</p>
+          <p className="truncate text-sm font-semibold text-slate-900">{name ?? user.email ?? "(no email)"}</p>
+          {name && <p className="truncate text-xs text-slate-600">{user.email ?? "(no email)"}</p>}
           <p className="text-xs text-slate-500">
             Joined {fmtDate(user.created_at)} · Last sign-in {fmtDate(user.last_sign_in_at)}
           </p>
         </div>
         <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-1.5">
+          {attempts.length > 0 && (
+            <Pill tone="red">
+              {attempts.length} blocked sign-in{attempts.length === 1 ? "" : "s"}
+            </Pill>
+          )}
           {!user.email_confirmed && <Pill tone="amber">Unconfirmed</Pill>}
           {user.has_active_session && <Pill tone="slate">Signed in on a device</Pill>}
           <Pill tone={user.is_paid ? "green" : "slate"}>{user.is_paid ? "Paid" : "Not paid"}</Pill>
@@ -168,6 +227,8 @@ function UserRow({ user, open, onToggle }: { user: AdminUser; open: boolean; onT
 
       {open && (
         <div className="space-y-5 border-t border-slate-100 bg-slate-50/60 px-5 py-5">
+          {attempts.length > 0 && <BlockedAttempts userId={user.id} attempts={attempts} />}
+
           <div className="grid gap-5 md:grid-cols-2">
             <div>
               <p className="mb-1.5 text-sm font-semibold text-slate-800">Paid member</p>
@@ -230,17 +291,87 @@ function UserRow({ user, open, onToggle }: { user: AdminUser; open: boolean; onT
   );
 }
 
-function Pill({ tone, children }: { tone: "green" | "slate" | "amber"; children: React.ReactNode }) {
+function Pill({ tone, children }: { tone: "green" | "slate" | "amber" | "red"; children: React.ReactNode }) {
   return (
     <span
       className={clsx(
         "rounded-full px-2.5 py-0.5 text-xs font-semibold",
         tone === "green" && "bg-emerald-100 text-emerald-700",
         tone === "slate" && "bg-slate-100 text-slate-600",
-        tone === "amber" && "bg-amber-100 text-amber-700"
+        tone === "amber" && "bg-amber-100 text-amber-700",
+        tone === "red" && "bg-red-100 text-red-700"
       )}
     >
       {children}
     </span>
+  );
+}
+
+const VISIBLE_ATTEMPTS = 10;
+
+/** The times this member was turned away from a device that isn't their registered one. */
+function BlockedAttempts({ userId, attempts }: { userId: string; attempts: BlockedSignIn[] }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function clear() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const res = await clearBlockedSignIns(userId);
+        if (!res.ok) {
+          setError(res.error ?? "Could not clear.");
+          return;
+        }
+        router.refresh();
+      } catch {
+        setError("Couldn't reach the server. Try again.");
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50/60 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="inline-flex items-center gap-2 text-sm font-semibold text-red-800">
+          <ShieldAlert className="h-4 w-4" aria-hidden />
+          Blocked sign-ins ({attempts.length})
+        </p>
+        <button
+          type="button"
+          onClick={clear}
+          disabled={pending}
+          className="rounded-md px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-red-200 transition hover:bg-red-100 disabled:opacity-60"
+        >
+          {pending ? "Clearing…" : "Clear history"}
+        </button>
+      </div>
+      <p className="mt-1 text-xs text-red-700/80">
+        Each time this member entered the right password on a different browser and was told their account is
+        registered to another device.
+      </p>
+      <ul className="mt-3 divide-y divide-red-100 text-sm text-slate-700">
+        {attempts.slice(0, VISIBLE_ATTEMPTS).map((a) => (
+          <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-1.5">
+            <span className="font-medium text-slate-800">{describeDevice(a.user_agent)}</span>
+            <span className="text-xs text-slate-500">
+              {describeLocation(a.city, a.country) && <>{describeLocation(a.city, a.country)} · </>}
+              <time dateTime={a.created_at} suppressHydrationWarning>
+                {fmtDateTime(a.created_at)}
+              </time>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {attempts.length > VISIBLE_ATTEMPTS && (
+        <p className="mt-2 text-xs text-slate-500">Showing the latest {VISIBLE_ATTEMPTS} of {attempts.length}.</p>
+      )}
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-red-700">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

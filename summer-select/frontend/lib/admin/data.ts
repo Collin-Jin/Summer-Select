@@ -288,3 +288,13 @@ export async function parentHref(
     ? `/admin/${parent.key}/${pk}`
     : fallback;
 }
+
+/** How many sign-ins were turned away by the one-device rule in the last 7 days. */
+export async function countRecentBlockedSignIns(supabase: SupabaseClient): Promise<number> {
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { count } = await supabase
+    .from("blocked_sign_ins")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", since);
+  return count ?? 0;
+}

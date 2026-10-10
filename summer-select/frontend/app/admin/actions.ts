@@ -353,6 +353,19 @@ export async function updateUserAccess(input: UserAccessInput): Promise<ActionRe
   return { ok: true, message: "Member updated." };
 }
 
+/** Clears a member's blocked sign-in history (for example after sorting out their device). */
+export async function clearBlockedSignIns(userId: string): Promise<ActionResult> {
+  const ctx = await getAdminContext();
+  if (!ctx) return NOT_ADMIN;
+  if (!UUID_RE.test(userId)) return { ok: false, error: "Invalid user." };
+
+  const { error } = await ctx.supabase.from("blocked_sign_ins").delete().eq("user_id", userId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin", "layout");
+  return { ok: true, message: "History cleared." };
+}
+
 /** Marks a problem report as resolved, or reopens it. */
 export async function setReportStatus(id: string, status: "open" | "resolved"): Promise<ActionResult> {
   const ctx = await getAdminContext();

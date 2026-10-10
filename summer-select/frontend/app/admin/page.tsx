@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { ArrowRight, Plus } from "lucide-react";
 import { requireAdmin } from "@/lib/admin/auth";
-import { getResourceCounts } from "@/lib/admin/data";
+import { countRecentBlockedSignIns, getResourceCounts } from "@/lib/admin/data";
 import { NAV_RESOURCE_KEYS, RESOURCES } from "@/lib/admin/resources";
 import { PageHeader } from "@/components/admin/PageHeader";
 
 export default async function AdminOverviewPage() {
   const { supabase } = await requireAdmin();
-  const [counts, usersRes, openReportsRes, allReportsRes] = await Promise.all([
+  const [counts, usersRes, openReportsRes, allReportsRes, recentBlocked] = await Promise.all([
     getResourceCounts(supabase),
     supabase.rpc("admin_list_users"),
     supabase.from("error_reports").select("id", { count: "exact", head: true }).eq("status", "open"),
     supabase.from("error_reports").select("id", { count: "exact", head: true }),
+    countRecentBlockedSignIns(supabase),
   ]);
   const openReports = openReportsRes.count ?? 0;
   const totalReports = allReportsRes.count ?? 0;
@@ -61,9 +62,17 @@ export default async function AdminOverviewPage() {
         <section className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-500">Members</h2>
           <p className="mt-1 text-3xl font-extrabold tabular-nums text-slate-900">{users.length}</p>
-          <p className="mt-0.5 text-xs text-slate-500">{paidCount} paid</p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            {paidCount} paid
+            {recentBlocked > 0 && (
+              <span className="font-semibold text-red-600">
+                {" "}
+                · {recentBlocked} blocked sign-in{recentBlocked === 1 ? "" : "s"} this week
+              </span>
+            )}
+          </p>
           <p className="mt-3 flex-1 text-sm text-slate-600">
-            Mark who has paid, reset a locked device, and keep private notes.
+            See each member&apos;s name, mark who has paid, reset a locked device, review blocked sign-ins, and keep private notes.
           </p>
           <Link
             href="/admin/users"

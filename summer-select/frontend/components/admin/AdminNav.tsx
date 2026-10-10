@@ -28,8 +28,17 @@ const items = [
   { href: "/admin/reports", label: "Problem reports", icon: Flag },
 ];
 
-export function AdminNav({ openReports = 0 }: { openReports?: number }) {
+export function AdminNav({
+  openReports = 0,
+  recentBlocked = 0,
+}: {
+  openReports?: number;
+  /** Blocked sign-ins in the last 7 days. */
+  recentBlocked?: number;
+}) {
   const pathname = usePathname();
+  const badgeFor = (href: string) =>
+    href === "/admin/reports" ? openReports : href === "/admin/users" ? recentBlocked : 0;
   return (
     <nav aria-label="Admin sections" className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
       {items.map(({ href, label, icon: Icon, exact }) => {
@@ -53,15 +62,15 @@ export function AdminNav({ openReports = 0 }: { openReports?: number }) {
           >
             <Icon className="h-4 w-4" />
             {label}
-            {href === "/admin/reports" && openReports > 0 && (
+            {badgeFor(href) > 0 && (
               <span
-                aria-label={`${openReports} open`}
+                aria-label={`${badgeFor(href)} ${href === "/admin/users" ? "blocked sign-ins this week" : "open"}`}
                 className={clsx(
                   "ml-auto rounded-full px-1.5 py-0.5 text-[0.7rem] font-bold leading-none tabular-nums",
                   active ? "bg-white/25 text-white" : "bg-[var(--color-brand-coral)] text-white"
                 )}
               >
-                {openReports}
+                {badgeFor(href)}
               </span>
             )}
           </Link>
