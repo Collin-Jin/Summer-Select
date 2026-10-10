@@ -353,6 +353,24 @@ export async function updateUserAccess(input: UserAccessInput): Promise<ActionRe
   return { ok: true, message: "Member updated." };
 }
 
+/** Permanently deletes a member's account and everything stored under it. */
+export async function deleteUser(userId: string): Promise<ActionResult> {
+  const ctx = await getAdminContext();
+  if (!ctx) return NOT_ADMIN;
+  if (!UUID_RE.test(userId)) return { ok: false, error: "Invalid user." };
+  if (userId === ctx.user.id) return { ok: false, error: "You can't delete your own account." };
+
+  const { error } = await ctx.supabase.rpc("admin_delete_user", { p_user_id: userId });
+  if (error) {
+    if (error.code === "P0002") return { ok: false, error: "That user no longer exists." };
+    if (error.code === "42501" && error.message === "Not authorized") return NOT_ADMIN;
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/admin", "layout");
+  return { ok: true, message: "Member deleted." };
+}
+
 /** Clears a member's blocked sign-in history (for example after sorting out their device). */
 export async function clearBlockedSignIns(userId: string): Promise<ActionResult> {
   const ctx = await getAdminContext();

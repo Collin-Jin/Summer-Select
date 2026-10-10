@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { UsersManager, type AdminUser, type BlockedSignIn } from "@/components/admin/UsersManager";
 
 export default async function AdminUsersPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase, user: admin } = await requireAdmin();
   const [{ data, error }, blockedRes] = await Promise.all([
     supabase.rpc("admin_list_users"),
     supabase
@@ -32,7 +32,7 @@ export default async function AdminUsersPage() {
         description="Everyone with an account, with the name they signed up with. Turn on “Paid” to give a member access to My List, Essays, Evaluate and Interviews. Members who tried to sign in from another device are flagged."
         crumbs={[{ label: "Admin", href: "/admin" }, { label: "Members" }]}
       />
-      <UsersManager users={users} blocked={(blockedRes.data ?? []) as BlockedSignIn[]} />
+      <UsersManager currentUserId={admin.id} users={users} blocked={(blockedRes.data ?? []) as BlockedSignIn[]} />
     </>
   );
 }

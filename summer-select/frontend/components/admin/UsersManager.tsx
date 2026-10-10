@@ -2,10 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, Search, ShieldAlert } from "lucide-react";
+import { Check, ChevronDown, Search, ShieldAlert, Trash2 } from "lucide-react";
 import { clsx } from "clsx";
-import { clearBlockedSignIns, updateUserAccess } from "@/app/admin/actions";
+import { clearBlockedSignIns, deleteUser, updateUserAccess } from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Toggle } from "./ResourceForm";
 import { describeDevice, describeLocation } from "@/lib/device";
 import { fullName } from "@/lib/names";
@@ -53,7 +54,16 @@ function fmtDate(iso: string | null): string {
     : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-export function UsersManager({ users, blocked }: { users: AdminUser[]; blocked: BlockedSignIn[] }) {
+export function UsersManager({
+  users,
+  blocked,
+  currentUserId,
+}: {
+  users: AdminUser[];
+  blocked: BlockedSignIn[];
+  /** The signed-in admin; their own account cannot be deleted from here. */
+  currentUserId: string;
+}) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -135,6 +145,7 @@ export function UsersManager({ users, blocked }: { users: AdminUser[]; blocked: 
                 key={u.id}
                 user={u}
                 attempts={attemptsByUser.get(u.id) ?? []}
+                canDelete={u.id !== currentUserId}
                 open={openId === u.id}
                 onToggle={() => setOpenId(openId === u.id ? null : u.id)}
               />
@@ -149,11 +160,13 @@ export function UsersManager({ users, blocked }: { users: AdminUser[]; blocked: 
 function UserRow({
   user,
   attempts,
+  canDelete,
   open,
   onToggle,
 }: {
   user: AdminUser;
   attempts: BlockedSignIn[];
+  canDelete: boolean;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -164,6 +177,7 @@ function UserRow({
   const [resetSession, setResetSession] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const dirty =
     isPaid !== user.is_paid ||
@@ -196,6 +210,22 @@ function UserRow({
   }
 
   const name = fullName(user.first_name, user.last_name);
+
+  function remove() {
+    setMessage(null);
+    startTransition(async () => {
+      try {
+        const res = await deleteUser(user.id);
+        if (!res.ok) {
+          setMessage({ ok: false, text: res.error ?? "Could not delete." });
+          return;
+        }
+        router.refresh();
+      } catch {
+        setMessage({ ok: false, text: "Couldn't reach the server. Try again." });
+      }
+    });
+  }
 
   return (
     <li>
@@ -284,9 +314,39 @@ function UserRow({
                 {message.text}
               </span>
             )}
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                disabled={pending}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-700 disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden /> Delete member
+              </button>
+            )}
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete this member?"
+        description={
+          <>
+            <strong className="text-slate-800">{name ? `${name} (${user.email})` : (user.email ?? "This account")}</strong>{" "}
+            will be removed permanently, along with their saved programs, notes and sign-in history. They will no
+            longer be able to sign in, and this can&apos;t be undone.
+            {user.is_paid && <> This member is marked as paid.</>}
+          </>
+        }
+        confirmLabel="Delete member"
+        cancelLabel="Cancel"
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => {
+          setConfirmDelete(false);
+          remove();
+        }}
+      />
     </li>
   );
 }
