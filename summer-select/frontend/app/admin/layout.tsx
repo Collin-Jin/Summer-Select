@@ -14,8 +14,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { supabase } = await requireAdmin();
-  const [{ count: openReports }, recentBlocked] = await Promise.all([
+  const [{ count: openReports }, { count: pendingRequests }, recentBlocked] = await Promise.all([
     supabase.from("error_reports").select("id", { count: "exact", head: true }).eq("status", "open"),
+    supabase.from("program_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
     countRecentBlockedSignIns(supabase),
   ]);
 
@@ -26,7 +27,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <p className="mb-2 hidden px-3 text-xs font-bold uppercase tracking-widest text-slate-400 lg:block">
             Admin
           </p>
-          <AdminNav openReports={openReports ?? 0} recentBlocked={recentBlocked} />
+          <AdminNav
+            openReports={openReports ?? 0}
+            pendingRequests={pendingRequests ?? 0}
+            recentBlocked={recentBlocked}
+          />
         </aside>
         <div className="min-w-0">{children}</div>
       </div>

@@ -7,15 +7,19 @@ import { PageHeader } from "@/components/admin/PageHeader";
 
 export default async function AdminOverviewPage() {
   const { supabase } = await requireAdmin();
-  const [counts, usersRes, openReportsRes, allReportsRes, recentBlocked] = await Promise.all([
+  const [counts, usersRes, openReportsRes, allReportsRes, pendingRequestsRes, allRequestsRes, recentBlocked] = await Promise.all([
     getResourceCounts(supabase),
     supabase.rpc("admin_list_users"),
     supabase.from("error_reports").select("id", { count: "exact", head: true }).eq("status", "open"),
     supabase.from("error_reports").select("id", { count: "exact", head: true }),
+    supabase.from("program_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("program_requests").select("id", { count: "exact", head: true }),
     countRecentBlockedSignIns(supabase),
   ]);
   const openReports = openReportsRes.count ?? 0;
   const totalReports = allReportsRes.count ?? 0;
+  const pendingRequests = pendingRequestsRes.count ?? 0;
+  const totalRequests = allRequestsRes.count ?? 0;
 
   const users = (usersRes.data ?? []) as { is_paid: boolean }[];
   const paidCount = users.filter((u) => u.is_paid).length;
@@ -79,6 +83,23 @@ export default async function AdminOverviewPage() {
             className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand-600)] hover:underline"
           >
             Manage <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </section>
+
+        <section className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-500">Program requests</h2>
+          <p className="mt-1 text-3xl font-extrabold tabular-nums text-slate-900">{pendingRequests}</p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            pending · {totalRequests - pendingRequests} handled
+          </p>
+          <p className="mt-3 flex-1 text-sm text-slate-600">
+            Programs visitors asked to have added. They&apos;re told you&apos;ll add each one within a week.
+          </p>
+          <Link
+            href="/admin/program-requests"
+            className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand-600)] hover:underline"
+          >
+            Review <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </section>
 

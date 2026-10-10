@@ -1,23 +1,12 @@
 "use server";
 
-import { createHash } from "node:crypto";
-import { headers } from "next/headers";
 import { supabaseServer } from "@/lib/supabase/server";
+import { clientFingerprint } from "@/lib/clientFingerprint";
 import { validateReport, type ReportInput } from "@/lib/reports";
 
 export type SubmitReportResult =
   | { ok: true }
   | { ok: false; error: string; field?: "message" | "email" };
-
-/** Hash of network address + browser; used only to rate-limit one visitor. */
-async function clientFingerprint(): Promise<string | null> {
-  const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "";
-  const agent = h.get("user-agent") ?? "";
-  if (!ip && !agent) return null;
-  const salt = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "summer-select";
-  return createHash("sha256").update(`${salt}|${ip}|${agent}`).digest("hex").slice(0, 32);
-}
 
 /**
  * Stores a problem report from a visitor. Anyone may call this, signed in or

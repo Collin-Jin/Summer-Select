@@ -446,6 +446,38 @@ export interface Database {
         };
         Relationships: [];
       };
+      /**
+       * Requests for a program to be added to the directory. Anyone can insert;
+       * only the admin can read, update or delete (RLS).
+       */
+      program_requests: {
+        Row: {
+          id: string;
+          created_at: string;
+          program_name: string;
+          program_url: string | null;
+          notes: string | null;
+          requester_email: string | null;
+          user_id: string | null;
+          /** Hash used only to rate-limit one visitor. */
+          client_id: string | null;
+          status: "pending" | "added" | "declined";
+          handled_at: string | null;
+        };
+        Insert: {
+          program_name: string;
+          program_url?: string | null;
+          notes?: string | null;
+          requester_email?: string | null;
+          user_id?: string | null;
+          client_id?: string | null;
+        };
+        Update: {
+          status?: "pending" | "added" | "declined";
+          handled_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
   };
 }
@@ -464,6 +496,9 @@ export type Favorite = Database["public"]["Tables"]["favorites"]["Row"];
 
 /** A row from the `error_reports` table. */
 export type ErrorReport = Database["public"]["Tables"]["error_reports"]["Row"];
+
+/** A row from the `program_requests` table. */
+export type ProgramRequest = Database["public"]["Tables"]["program_requests"]["Row"];
 
 /** A row from the `example_essays` table. */
 export type ExampleEssay = Database["public"]["Tables"]["example_essays"]["Row"];

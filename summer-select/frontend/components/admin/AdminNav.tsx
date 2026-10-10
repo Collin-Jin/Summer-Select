@@ -8,6 +8,7 @@ import {
   Flag,
   FileText,
   GraduationCap,
+  PlusCircle,
   LayoutGrid,
   MessageSquare,
   Users,
@@ -25,20 +26,30 @@ const items = [
   { href: "/admin/arrange/essays", label: "Arrange essays", icon: ArrowDownUp },
   { href: "/admin/arrange/interviews", label: "Arrange interviews", icon: ArrowDownUp },
   { href: "/admin/users", label: "Members", icon: Users },
+  { href: "/admin/program-requests", label: "Program requests", icon: PlusCircle },
   { href: "/admin/reports", label: "Problem reports", icon: Flag },
 ];
 
 export function AdminNav({
   openReports = 0,
+  pendingRequests = 0,
   recentBlocked = 0,
 }: {
   openReports?: number;
+  /** Program requests waiting to be researched. */
+  pendingRequests?: number;
   /** Blocked sign-ins in the last 7 days. */
   recentBlocked?: number;
 }) {
   const pathname = usePathname();
   const badgeFor = (href: string) =>
-    href === "/admin/reports" ? openReports : href === "/admin/users" ? recentBlocked : 0;
+    href === "/admin/reports"
+      ? openReports
+      : href === "/admin/program-requests"
+        ? pendingRequests
+        : href === "/admin/users"
+          ? recentBlocked
+          : 0;
   return (
     <nav aria-label="Admin sections" className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
       {items.map(({ href, label, icon: Icon, exact }) => {
@@ -64,7 +75,7 @@ export function AdminNav({
             {label}
             {badgeFor(href) > 0 && (
               <span
-                aria-label={`${badgeFor(href)} ${href === "/admin/users" ? "blocked sign-ins this week" : "open"}`}
+                aria-label={`${badgeFor(href)} ${href === "/admin/users" ? "blocked sign-ins this week" : href === "/admin/program-requests" ? "pending" : "open"}`}
                 className={clsx(
                   "ml-auto rounded-full px-1.5 py-0.5 text-[0.7rem] font-bold leading-none tabular-nums",
                   active ? "bg-white/25 text-white" : "bg-[var(--color-brand-coral)] text-white"

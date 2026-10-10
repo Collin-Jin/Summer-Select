@@ -416,6 +416,47 @@ export async function deleteReport(id: string): Promise<ActionResult> {
   return { ok: true, message: "Report deleted." };
 }
 
+/** Marks a program request as added to the directory or declined, or puts it back to pending. */
+export async function setProgramRequestStatus(
+  id: string,
+  status: "pending" | "added" | "declined"
+): Promise<ActionResult> {
+  const ctx = await getAdminContext();
+  if (!ctx) return NOT_ADMIN;
+  if (!UUID_RE.test(id)) return { ok: false, error: "Invalid request." };
+  if (status !== "pending" && status !== "added" && status !== "declined") {
+    return { ok: false, error: "Invalid status." };
+  }
+
+  const { data, error } = await ctx.supabase
+    .from("program_requests")
+    .update({ status, handled_at: status === "pending" ? null : new Date().toISOString() })
+    .eq("id", id)
+    .select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data || data.length === 0) return { ok: false, error: "That request no longer exists." };
+
+  revalidatePath("/admin", "layout");
+  return {
+    ok: true,
+    message:
+      status === "added" ? "Marked as added." : status === "declined" ? "Marked as declined." : "Moved back to pending.",
+  };
+}
+
+/** Permanently removes a program request (for example spam). */
+export async function deleteProgramRequest(id: string): Promise<ActionResult> {
+  const ctx = await getAdminContext();
+  if (!ctx) return NOT_ADMIN;
+  if (!UUID_RE.test(id)) return { ok: false, error: "Invalid request." };
+
+  const { error } = await ctx.supabase.from("program_requests").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin", "layout");
+  return { ok: true, message: "Request deleted." };
+}
+
 export interface ArrangementInput {
   id: string;
   itemIds: string[];

@@ -13,6 +13,7 @@ import type { FormatOption } from "@/lib/programs";
 import type { ViewerAccess } from "@/lib/access";
 import { Search, LayoutGrid } from "lucide-react";
 import { AddButton } from "@/components/admin/inline/EditControls";
+import { RequestProgram } from "./RequestProgram";
 
 interface ProgramsClientViewProps {
   programs: SummerProgram[];
@@ -160,7 +161,13 @@ export function ProgramsClientView({
               style={{ background: "var(--color-brand-accent)" }}
             />
           </div>
-          <AddButton resource="programs" label="Add program" className="ml-auto mr-3" />
+          <div className="ml-auto mr-3 flex items-center gap-3">
+            <AddButton resource="programs" label="Add program" />
+            {/* On phones the prompt under the list is used instead, to keep the toolbar uncrowded. */}
+            <div className="hidden sm:block">
+              <RequestProgram signedIn={access !== "guest"} />
+            </div>
+          </div>
           <button
             className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm border rounded-lg transition-colors duration-150"
             style={{ borderColor: "var(--color-brand-100)", color: "var(--color-brand-600)" }}
@@ -209,6 +216,7 @@ export function ProgramsClientView({
                 ? "请尝试清除筛选条件"
                 : "Try adjusting or clearing your filters to see more results."
             }
+            action={<RequestProgram signedIn={access !== "guest"} />}
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -222,6 +230,10 @@ export function ProgramsClientView({
               />
             ))}
           </div>
+        )}
+
+        {!favoritesLoading && sorted.length > 0 && (
+          <RequestProgram signedIn={access !== "guest"} variant="callout" className="mt-8" />
         )}
       </div>
     </div>

@@ -56,8 +56,9 @@ Extension: `vector` (pgvector).
 | `20261010045438` | `error_reports_and_essay_counts` (the `error_reports` table: anyone can insert, only the admin can read, update or delete, plus an insert throttle trigger; and `programs_with_essays()`) |
 | `20261010190538` | `member_names_and_blocked_sign_ins` (`admin_list_users()` returns first and last name; the `blocked_sign_ins` table records sign-ins turned away by the one-device rule, insertable only by the blocked account itself, readable and clearable only by the admin, with a per-account throttle) |
 | `20261010191704` | `admin_delete_user` (the function behind "Delete member" on the Members page) |
+| `20261010224703` | `program_requests` (the `program_requests` table: anyone can insert, only the admin can read, update or delete, plus a per-visitor daily throttle trigger) |
 
-All eleven are already applied to the production project. Do not re-run them there.
+All twelve are already applied to the production project. Do not re-run them there.
 
 ### Known gap
 
