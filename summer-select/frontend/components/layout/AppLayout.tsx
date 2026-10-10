@@ -1,4 +1,5 @@
 import { Navbar } from "./Navbar";
+import { ReportIssue } from "@/components/feedback/ReportIssue";
 import type { ViewerAccess } from "@/lib/access";
 
 interface AppLayoutProps {
@@ -43,6 +44,7 @@ export function AppLayout({
           {children}
         </main>
       )}
+      <ReportIssue userEmail={userEmail} />
     </div>
   );
 }

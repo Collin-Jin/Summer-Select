@@ -353,6 +353,38 @@ export async function updateUserAccess(input: UserAccessInput): Promise<ActionRe
   return { ok: true, message: "Member updated." };
 }
 
+/** Marks a problem report as resolved, or reopens it. */
+export async function setReportStatus(id: string, status: "open" | "resolved"): Promise<ActionResult> {
+  const ctx = await getAdminContext();
+  if (!ctx) return NOT_ADMIN;
+  if (!UUID_RE.test(id)) return { ok: false, error: "Invalid report." };
+  if (status !== "open" && status !== "resolved") return { ok: false, error: "Invalid status." };
+
+  const { data, error } = await ctx.supabase
+    .from("error_reports")
+    .update({ status, resolved_at: status === "resolved" ? new Date().toISOString() : null })
+    .eq("id", id)
+    .select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data || data.length === 0) return { ok: false, error: "That report no longer exists." };
+
+  revalidatePath("/admin", "layout");
+  return { ok: true, message: status === "resolved" ? "Marked as resolved." : "Reopened." };
+}
+
+/** Permanently removes a problem report (for example spam). */
+export async function deleteReport(id: string): Promise<ActionResult> {
+  const ctx = await getAdminContext();
+  if (!ctx) return NOT_ADMIN;
+  if (!UUID_RE.test(id)) return { ok: false, error: "Invalid report." };
+
+  const { error } = await ctx.supabase.from("error_reports").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin", "layout");
+  return { ok: true, message: "Report deleted." };
+}
+
 export interface ArrangementInput {
   id: string;
   itemIds: string[];

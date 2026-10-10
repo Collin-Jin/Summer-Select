@@ -7,10 +7,14 @@ import { PageHeader } from "@/components/admin/PageHeader";
 
 export default async function AdminOverviewPage() {
   const { supabase } = await requireAdmin();
-  const [counts, usersRes] = await Promise.all([
+  const [counts, usersRes, openReportsRes, allReportsRes] = await Promise.all([
     getResourceCounts(supabase),
     supabase.rpc("admin_list_users"),
+    supabase.from("error_reports").select("id", { count: "exact", head: true }).eq("status", "open"),
+    supabase.from("error_reports").select("id", { count: "exact", head: true }),
   ]);
+  const openReports = openReportsRes.count ?? 0;
+  const totalReports = allReportsRes.count ?? 0;
 
   const users = (usersRes.data ?? []) as { is_paid: boolean }[];
   const paidCount = users.filter((u) => u.is_paid).length;
@@ -66,6 +70,23 @@ export default async function AdminOverviewPage() {
             className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand-600)] hover:underline"
           >
             Manage <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </section>
+
+        <section className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-500">Problem reports</h2>
+          <p className="mt-1 text-3xl font-extrabold tabular-nums text-slate-900">{openReports}</p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            open · {totalReports - openReports} resolved
+          </p>
+          <p className="mt-3 flex-1 text-sm text-slate-600">
+            Mistakes and bugs visitors reported from the site. Mark them resolved once fixed.
+          </p>
+          <Link
+            href="/admin/reports"
+            className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand-600)] hover:underline"
+          >
+            Review <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </section>
       </div>

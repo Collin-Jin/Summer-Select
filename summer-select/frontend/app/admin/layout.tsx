@@ -12,7 +12,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await requireAdmin();
+  const { supabase } = await requireAdmin();
+  const { count: openReports } = await supabase
+    .from("error_reports")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "open");
 
   return (
     <SiteShell>
@@ -21,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <p className="mb-2 hidden px-3 text-xs font-bold uppercase tracking-widest text-slate-400 lg:block">
             Admin
           </p>
-          <AdminNav />
+          <AdminNav openReports={openReports ?? 0} />
         </aside>
         <div className="min-w-0">{children}</div>
       </div>

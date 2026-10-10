@@ -11,8 +11,9 @@ A bilingual (English / 中文) web app for finding, comparing and preparing appl
 - **Accounts**: e-mail and password sign-up with verification and password reset (Supabase Auth). Access is `guest`, `unpaid` (a free account) or `paid`; an optional one-device-per-account lock is enforced for members.
 - **Owner tools**:
   - **Edit mode**: a floating toggle that adds edit, add, delete and drag-to-reorder controls to the real pages, with an in-page editor drawer.
-  - **`/admin`**: table views for programs, essay prompts, example essays, interview guides and questions, AI reference essays, and member access management.
+  - **`/admin`**: table views for programs, essay prompts, example essays, interview guides and questions, AI reference essays, member access management, and a **Problem reports** inbox where you mark reported mistakes as resolved.
   - **Originals** (admin only): the untouched version of each example essay next to the privacy-edited one members see.
+- **Report a problem**: a button on every public page lets anyone (signed in or not) report a mistake or bug. Reports go to the admin inbox; visitors can never read them back, and submissions are rate-limited in the database.
 - **Bilingual UI**: language is cookie-backed so server components render the right language on first paint.
 
 ## Tech stack

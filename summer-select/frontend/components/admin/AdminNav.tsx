@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Brain,
+  Flag,
   FileText,
   GraduationCap,
   LayoutGrid,
@@ -24,9 +25,10 @@ const items = [
   { href: "/admin/arrange/essays", label: "Arrange essays", icon: ArrowDownUp },
   { href: "/admin/arrange/interviews", label: "Arrange interviews", icon: ArrowDownUp },
   { href: "/admin/users", label: "Members", icon: Users },
+  { href: "/admin/reports", label: "Problem reports", icon: Flag },
 ];
 
-export function AdminNav() {
+export function AdminNav({ openReports = 0 }: { openReports?: number }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Admin sections" className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
@@ -51,6 +53,17 @@ export function AdminNav() {
           >
             <Icon className="h-4 w-4" />
             {label}
+            {href === "/admin/reports" && openReports > 0 && (
+              <span
+                aria-label={`${openReports} open`}
+                className={clsx(
+                  "ml-auto rounded-full px-1.5 py-0.5 text-[0.7rem] font-bold leading-none tabular-nums",
+                  active ? "bg-white/25 text-white" : "bg-[var(--color-brand-coral)] text-white"
+                )}
+              >
+                {openReports}
+              </span>
+            )}
           </Link>
         );
       })}
