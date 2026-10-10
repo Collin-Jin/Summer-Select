@@ -239,6 +239,51 @@ export default function LoginPage() {
   );
 }
 
+function NameFields() {
+  const fields = [
+    { id: "firstName", label: "First name", autoComplete: "given-name", placeholder: "First name" },
+    { id: "lastName", label: "Last name", autoComplete: "family-name", placeholder: "Last name" },
+  ] as const;
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {fields.map((f) => (
+        <div key={f.id}>
+          <label
+            htmlFor={f.id}
+            className="block text-sm font-medium mb-1.5"
+            style={{ color: "var(--color-brand-700)" }}
+          >
+            {f.label}
+          </label>
+          <input
+            id={f.id}
+            name={f.id}
+            type="text"
+            autoComplete={f.autoComplete}
+            required
+            maxLength={60}
+            className="w-full px-4 py-2.5 text-sm rounded-xl bg-white placeholder:text-slate-400 transition focus:outline-none"
+            style={{
+              border: "1.5px solid var(--color-brand-100)",
+              color: "var(--color-brand-700)",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-brand-500)";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,95,151,0.12)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-brand-100)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+            placeholder={f.placeholder}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function LoginPageContent() {
   const initialParams = useSearchParams();
   const [tab, setTab] = useState<Tab>(initialParams.get("tab") === "signup" ? "signup" : "signin");
@@ -680,6 +725,8 @@ function LoginPageContent() {
                   <Suspense>
                     <NextField />
                   </Suspense>
+
+                  {tab === "signup" && <NameFields />}
 
                   <div>
                     <label

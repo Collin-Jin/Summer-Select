@@ -2,13 +2,14 @@
 
 import { supabaseServer } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { randomUUID } from "crypto";
 import {
   DEVICE_SESSION_COOKIE,
   deviceSessionCookieOptions,
 } from "@/lib/session";
 import { isSafeNextPath } from "@/lib/access";
+import { validateNames } from "@/lib/names";
 
 function getAppOrigin() {
   return (
@@ -63,6 +64,38 @@ async function writeSessionId(supabase: Awaited<ReturnType<typeof supabaseServer
   cookieStore.set(DEVICE_SESSION_COOKIE, sessionId, deviceSessionCookieOptions());
 }
 
+/**
+ * Records that this account was turned away from an unregistered device, so the
+ * admin can see it on the Members page. Must run while the user's session still
+ * exists (the database only lets an account add rows about itself). Never
+ * throws: failing to log must not change what the member sees.
+ */
+async function recordBlockedSignIn(
+  supabase: Awaited<ReturnType<typeof supabaseServer>>,
+  userId: string
+) {
+  try {
+    const h = await headers();
+    // Vercel supplies a coarse location; the IP address itself is not stored.
+    const decode = (value: string | null) => {
+      if (!value) return null;
+      try {
+        return decodeURIComponent(value).slice(0, 100);
+      } catch {
+        return value.slice(0, 100);
+      }
+    };
+    await supabase.from("blocked_sign_ins").insert({
+      user_id: userId,
+      user_agent: h.get("user-agent")?.slice(0, 300) ?? null,
+      country: decode(h.get("x-vercel-ip-country"))?.slice(0, 10) ?? null,
+      city: decode(h.get("x-vercel-ip-city")),
+    });
+  } catch (err) {
+    console.error("recordBlockedSignIn failed:", err);
+  }
+}
+
 export async function handleSignIn(formData: FormData) {
   const { email, password } = getAuthFields(formData);
   if (!email || !password) return { error: "Email and password are required." };
@@ -96,6 +129,7 @@ export async function handleSignIn(formData: FormData) {
 
       if (registeredId && cookieSessionId !== registeredId) {
         // Registered device cookie missing or from another browser — block login.
+        await recordBlockedSignIn(supabase, data.user.id);
         await supabase.auth.signOut({ scope: "local" });
         return { error: "device_locked" as const };
       }
@@ -110,6 +144,8 @@ export async function handleSignIn(formData: FormData) {
 
 export async function handleSignUp(formData: FormData) {
   const { email, password, confirmPassword } = getAuthFields(formData);
+  const names = validateNames(formData.get("firstName"), formData.get("lastName"));
+  if (!names.ok) return { error: names.error };
   if (!email || !password) return { error: "Email and password are required." as const };
   if (password.length < 8) return { error: "Password must be at least 8 characters." as const };
   if (password !== confirmPassword) {
@@ -121,7 +157,11 @@ export async function handleSignUp(formData: FormData) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: getEmailConfirmRedirect() },
+    options: {
+      emailRedirectTo: getEmailConfirmRedirect(),
+      // Kept on the account itself so it survives until the e-mail is confirmed.
+      data: { first_name: names.firstName, last_name: names.lastName },
+    },
   });
 
   if (error) {
