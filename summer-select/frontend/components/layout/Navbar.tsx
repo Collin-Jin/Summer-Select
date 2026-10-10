@@ -91,11 +91,11 @@ export function Navbar({
       style={{ background: "var(--color-brand-500)", borderBottom: "1px solid var(--color-brand-600)" }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between gap-4 h-16">
           {/* Brand wordmark */}
           <Link
             href={isSignedIn ? "/dashboard" : "/"}
-            className="flex items-center gap-2.5 group"
+            className="flex flex-shrink-0 items-center gap-2.5 group"
           >
             <div className="flex flex-col leading-none">
               <span
@@ -117,8 +117,9 @@ export function Navbar({
             </div>
           </Link>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* Desktop nav links. Below xl there isn't room for every label, so the
+              menu button is used instead; labels never wrap onto two lines. */}
+          <div className="hidden xl:flex flex-shrink-0 items-center gap-1">
             {visibleLinks.map(({ href, label, labelZh, icon: Icon, paid, member, development }) => {
               const isActive = isLinkActive(href, pathname);
               return (
@@ -126,7 +127,7 @@ export function Navbar({
                   key={href}
                   href={href}
                   className={clsx(
-                    "relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
+                    "relative flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
                     isActive
                       ? "text-white bg-white/15"
                       : "text-white/70 hover:text-white hover:bg-white/10"
@@ -149,20 +150,21 @@ export function Navbar({
           </div>
 
           {/* Right controls */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden xl:flex min-w-0 items-center gap-3">
             {/* Language toggle */}
             <LanguageToggle />
 
             {/* Account: sign out when signed in, log in otherwise */}
             <div
-              className="flex items-center gap-2 pl-3"
+              className="flex min-w-0 items-center gap-2 pl-3"
               style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}
             >
               {isSignedIn ? (
                 <>
                   {userEmail && (
                     <span
-                      className="text-xs max-w-[140px] truncate"
+                      className="min-w-0 max-w-[140px] truncate text-xs"
+                      title={userEmail}
                       style={{ color: "rgba(255,255,255,0.7)" }}
                     >
                       {userEmail}
@@ -171,7 +173,7 @@ export function Navbar({
                   <button
                     onClick={handleSignOut}
                     title="Sign out"
-                    className="p-1.5 rounded-lg transition-all"
+                    className="flex-shrink-0 p-1.5 rounded-lg transition-all"
                     style={{ color: "rgba(255,255,255,0.7)" }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLButtonElement).style.color = "var(--color-brand-coral)";
@@ -200,7 +202,7 @@ export function Navbar({
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 rounded-lg transition-colors"
+            className="xl:hidden p-2 rounded-lg transition-colors"
             style={{ color: "#FFFFFB", background: "rgba(255,255,255,0.1)" }}
             onClick={() => setMobileOpen((o) => !o)}
             aria-label="Toggle menu"
@@ -213,6 +215,7 @@ export function Navbar({
       {/* Mobile menu */}
       {mobileOpen && (
         <div
+          className="xl:hidden"
           style={{
             borderTop: "1px solid rgba(255,255,255,0.15)",
             background: "var(--color-brand-600)",
@@ -227,7 +230,7 @@ export function Navbar({
                   href={href}
                   onClick={() => setMobileOpen(false)}
                   className={clsx(
-                    "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
+                    "flex items-center gap-2 whitespace-nowrap px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
                     isActive
                       ? "text-white bg-white/15"
                       : "text-white/70 hover:text-white hover:bg-white/10"
@@ -242,6 +245,15 @@ export function Navbar({
                 </Link>
               );
             })}
+            {isSignedIn && userEmail && (
+              <p
+                className="truncate px-3 pt-2 text-xs"
+                style={{ color: "rgba(255,255,255,0.7)" }}
+                title={userEmail}
+              >
+                {userEmail}
+              </p>
+            )}
             <div
               className="pt-3 flex items-center justify-between"
               style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}
