@@ -31,7 +31,7 @@ Both views list published programs only and run with the owner's privileges so t
 |---|---|
 | `is_admin()` | True when the JWT e-mail is the admin's. Must match `ADMIN_EMAILS` in `lib/admin/config.ts`. |
 | `match_documents(query_embedding, match_threshold, match_count)` | Vector search over `program_documents`; `SECURITY DEFINER`, callable only by paid users and the admin |
-| `admin_list_users()`, `admin_update_user(...)` | Member management; `SECURITY DEFINER`, each checks `is_admin()` itself |
+| `admin_list_users()`, `admin_update_user(...)` | Member management (the list includes the first and last name from the account metadata); `SECURITY DEFINER`, each checks `is_admin()` itself |
 | `admin_set_is_paid(...)` | Sets `is_paid` past the `profiles` guard trigger. Not executable by `anon` or `authenticated`, so it can only be called with elevated credentials (SQL editor or service role) |
 | `programs_with_essays()` | Counts of published example essays and prompts per program (no essay text). `SECURITY DEFINER`, callable by everyone, so a program page can link to its essays even though the essays are paid-only |
 | `admin_reorder_prompts(...)`, `admin_reorder_interviews(...)` | Atomic drag-and-drop reordering; `SECURITY DEFINER`, check `is_admin()` |
@@ -53,8 +53,9 @@ Extension: `vector` (pgvector).
 | `20261009214149` | `favorites_planner` (rating, notes, status and `updated_at` on `favorites`, with a touch trigger and tighter grants) |
 | `20261010043303` | `remove_program_category` (drops `primary_category_en/zh` from `summer_programs` and recreates both program views without them) |
 | `20261010045438` | `error_reports_and_essay_counts` (the `error_reports` table: anyone can insert, only the admin can read, update or delete, plus an insert throttle trigger; and `programs_with_essays()`) |
+| `20261010190538` | `member_names_and_blocked_sign_ins` (`admin_list_users()` returns first and last name; the `blocked_sign_ins` table records sign-ins turned away by the one-device rule, insertable only by the blocked account itself, readable and clearable only by the admin, with a per-account throttle) |
 
-All nine are already applied to the production project. Do not re-run them there.
+All ten are already applied to the production project. Do not re-run them there.
 
 ### Known gap
 

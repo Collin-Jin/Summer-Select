@@ -394,6 +394,28 @@ export interface Database {
         Relationships: [];
       };
       /**
+       * Sign-ins turned away by the one-device rule. A member can only add
+       * rows about themselves; only the admin can read or clear them (RLS).
+       */
+      blocked_sign_ins: {
+        Row: {
+          id: string;
+          created_at: string;
+          user_id: string;
+          user_agent: string | null;
+          country: string | null;
+          city: string | null;
+        };
+        Insert: {
+          user_id: string;
+          user_agent?: string | null;
+          country?: string | null;
+          city?: string | null;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      /**
        * Problem reports from visitors. Anyone can insert; only the admin can
        * read, update or delete (RLS).
        */
