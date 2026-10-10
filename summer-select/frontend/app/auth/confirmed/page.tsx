@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { CheckCircle2, LogIn } from "lucide-react";
+import { ArrowRight, CheckCircle2, LogIn } from "lucide-react";
 import { AuthCardShell } from "@/components/auth/AuthCardShell";
+import { getViewer } from "@/lib/viewer";
 
 export const metadata = {
   title: "Email Confirmed",
@@ -8,9 +9,13 @@ export const metadata = {
 
 /**
  * Shown after a new user clicks the verification link in their signup email.
- * The auth callback exchanges the code and redirects here.
+ * The auth callback exchanges the code and redirects here. If the link was
+ * opened in the same browser they signed up in they are already signed in and
+ * can carry on; otherwise they are asked to sign in.
  */
-export default function EmailConfirmedPage() {
+export default async function EmailConfirmedPage() {
+  const { user } = await getViewer();
+
   return (
     <AuthCardShell showBrandHeader={false}>
       <div className="p-8 text-center">
@@ -24,10 +29,12 @@ export default function EmailConfirmedPage() {
           Email confirmed!
         </h1>
         <p className="text-sm text-slate-500 leading-relaxed mb-6">
-          Your account is verified. Sign in to continue to Summer Select.
+          {user
+            ? "Your account is verified and you're signed in."
+            : "Your account is verified. Sign in to continue to Summer Select."}
         </p>
         <Link
-          href="/login"
+          href={user ? "/dashboard" : "/login"}
           className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white transition-all hover:opacity-95"
           style={{
             background: "var(--color-brand-500)",
@@ -35,8 +42,8 @@ export default function EmailConfirmedPage() {
             boxShadow: "0 2px 12px rgba(91,95,151,0.35)",
           }}
         >
-          <LogIn className="h-4 w-4" />
-          Sign In
+          {user ? <ArrowRight className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+          {user ? "Continue to Summer Select" : "Sign In"}
         </Link>
       </div>
     </AuthCardShell>

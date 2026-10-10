@@ -92,7 +92,8 @@ function LinkExpiredAlert() {
   if (params.get("reason") !== "link_expired") return null;
   return (
     <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-      This link has expired or already been used. Request a new verification or reset email.
+      This link has expired or was already used. If you already confirmed your email, just sign in below.
+      Otherwise request a new verification or reset email, and open the newest one.
     </div>
   );
 }
@@ -394,7 +395,7 @@ function LoginPageContent() {
               {resendStatus === "sent" && (
                 <div className="mb-4 px-4 py-3 rounded-xl border text-sm text-center"
                   style={{ background: "#F0FDF4", borderColor: "#BBF7D0", color: "#166534" }}>
-                  Verification email resent successfully.
+                  A new verification email is on its way. Open the newest one; links in older emails may no longer work.
                 </div>
               )}
               {resendStatus === "error" && resendError && (

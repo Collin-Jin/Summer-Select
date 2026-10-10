@@ -6,6 +6,9 @@ import {
   DEVICE_SESSION_COOKIE,
   deviceSessionCookieOptions,
 } from "@/lib/session";
+import { isSafeNextPath } from "@/lib/access";
+
+const CONFIRMED_PATH = "/auth/confirmed";
 
 /**
  * Auth callback route — exchanges Supabase's PKCE `code` for a session,
@@ -17,7 +20,9 @@ import {
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const requestedNext = searchParams.get("next");
+  // Only same-site paths: anything else would make this an open redirect.
+  const next = isSafeNextPath(requestedNext) ? requestedNext : "/dashboard";
 
   if (code) {
     const supabase = await supabaseServer();
@@ -43,6 +48,18 @@ export async function GET(request: Request) {
       }
 
       return NextResponse.redirect(new URL(next, origin));
+    }
+
+    // Supabase checks the e-mail link itself before sending the visitor here
+    // with a code, so for a sign-up confirmation the address is already
+    // confirmed even if we can't turn the code into a session. That happens
+    // when the link is opened in a different browser or app than the one used
+    // to sign up (the secret that pairs the two lives in that browser), or when
+    // a newer verification e-mail has since replaced the one they clicked. They
+    // still deserve the confirmation page; they just sign in themselves.
+    console.error("auth callback: code exchange failed:", error?.message);
+    if (next === CONFIRMED_PATH) {
+      return NextResponse.redirect(new URL(CONFIRMED_PATH, origin));
     }
   }
 
